@@ -6,14 +6,8 @@ export const EditScreenInfo = ({ path }: { path: string }) => {
     'Change any of the text, save the file, and your app will automatically update.';
 
   return (
-    <View>
-      <View className={styles.getStartedContainer}>
-        <Text className={styles.getStartedText}>{title}</Text>
-        <View className={styles.codeHighlightContainer + styles.homeScreenFilename}>
-          <Text>{path}</Text>
-        </View>
-        <Text className={styles.getStartedText}>{description}</Text>
-      </View>
+     <View className="flex-1 items-center justify-center bg-blue">
+      <Text className="text-lg font-bold text-green-500">Hello, NativeWind!</Text>
     </View>
   );
 };
