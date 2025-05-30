@@ -9,6 +9,18 @@ import { RFValue } from 'react-native-responsive-fontsize';
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
 
+export const homeimage = {
+
+}
+export const carouselImages = {
+  battery :require("../assets/Homepage/CAR BATTERY.jpg"),
+  battery1: require("../assets/Homepage/CAR BATTERY.jpg"),
+   battery2: require("../assets/Homepage/CAR BATTERY.jpg"),
+}
+   
+  
+ 
+
 export const icons = {
   zoom: require('../assets/icons/zoom.png'),
   magnify: require('../assets/icons/magnifying-glass.png'),
@@ -94,6 +106,45 @@ export const icons = {
   teacher: require('../assets/icons/teacher.png'),
 };
 
+export const Styles = {
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff', // optional, to set background
+  },
+  container: {
+    padding: 16,
+    flex: 1,
+  },
+  searchBar: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 12,
+    backgroundColor: '#FFF4A4',
+    
+  },
+  item: {
+    padding: 10,
+    fontSize: 18,
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
+  },
+  searchBackground: {
+    marginBottom: 12,
+    padding: 2,
+    borderRadius: 8,
+    
+  },
+};
+
+
+
+
+
+
+
 export const screens = {
   main_layout: 'MainLayout',
   home: 'Home',
@@ -148,7 +199,7 @@ export const COLORS = {
     900: '#040d2b',
   },
   // Primary
-  primary: '#1640D6',
+  primary: '#9b111e',
   primary80: 'rgba(78, 85, 175, 0.8)',
   primary60: 'rgba(78, 85, 175, 0.6)',
   primary20: 'rgba(78, 85, 175, 0.2)',
