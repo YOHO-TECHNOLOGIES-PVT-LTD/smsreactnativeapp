@@ -8,6 +8,7 @@ import ForgotPasswordScreen from '~/features/authentication/Forgot-Password/Forg
 import RegisterScreen from '~/features/authentication/Register-Screen/RegisterScreen';
 import OtpVerificationScreen from '~/features/authentication/Otp-verification/OtpVerificationScreen';
 import SetNewPasswordScreen from '~/features/authentication/SetNew-Password/SetNewPasswordScreen';
+import NotificationScreen from './notification-screen/NotificationScreen';
 
 export {
   HomeScreen,
@@ -20,4 +21,5 @@ export {
   RegisterScreen,
   OtpVerificationScreen,
   SetNewPasswordScreen,
+  NotificationScreen,
 };
