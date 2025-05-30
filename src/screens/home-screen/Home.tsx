@@ -5,6 +5,7 @@ const HomeScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Text>Home Page</Text>
+      <Text style={styles.dummytext}>hii,vigneshwari</Text>
     </SafeAreaView>
   );
 };
@@ -16,4 +17,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 20,
   },
+  dummytext:{
+    color:"red",
+    textAlign:"center",
+    borderWidth:20,
+  }
 });
