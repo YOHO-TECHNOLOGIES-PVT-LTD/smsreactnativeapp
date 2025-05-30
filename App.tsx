@@ -6,6 +6,7 @@ import { store } from '~/store';
 import { NavigationContainer } from '@react-navigation/native';
 import Routes from '~/routes';
 
+
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
     'Poppins-Bold': require('./src/assets/fonts/Poppins-Bold.ttf'),
