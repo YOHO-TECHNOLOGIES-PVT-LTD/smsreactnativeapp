@@ -148,7 +148,7 @@ export const COLORS = {
     900: '#040d2b',
   },
   // Primary
-  primary: '#1640D6',
+  primary: '#9b111e',
   primary80: 'rgba(78, 85, 175, 0.8)',
   primary60: 'rgba(78, 85, 175, 0.6)',
   primary20: 'rgba(78, 85, 175, 0.2)',
