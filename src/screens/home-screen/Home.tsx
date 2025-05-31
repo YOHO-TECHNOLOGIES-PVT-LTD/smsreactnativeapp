@@ -30,7 +30,7 @@ const HomeScreen = () => {
               justifyContent: 'center',
               borderColor: COLORS.grey60,
             }}
-            onPress={() => {navigation.openDrawer()}}>
+            onPress={() => {navigation.openDrawer()}}> 
             <Image source={icons.menu} style={{ width: 20, height: 20 }} resizeMode="contain" />
           </TouchableOpacity>
         }

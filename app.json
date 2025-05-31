@@ -4,6 +4,8 @@
     "slug": "smsreactnativeapp",
     "version": "1.0.0",
 
+
+    
     "web": {
       "favicon": "./src/assets/icon.png"
     },
