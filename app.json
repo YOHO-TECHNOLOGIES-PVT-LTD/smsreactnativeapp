@@ -5,11 +5,7 @@
     "version": "1.0.0",
 
     "web": {
-<<<<<<< HEAD
-      // "favicon": "./assets/favicon.png"
-=======
       "favicon": "./src/assets/icon.png"
->>>>>>> 8c547657cafe0c251f62424afca82b9a10eb4a19
     },
 
     "experiments": {
