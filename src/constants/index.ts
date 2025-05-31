@@ -8,17 +8,6 @@ import { RFValue } from 'react-native-responsive-fontsize';
 // Device Dimensions
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
-
-export const homeimage = {
-
-}
-export const carouselImages = {
-  battery :require("../assets/Homepage/CAR BATTERY.jpg"),
-  battery1: require("../assets/Homepage/CAR BATTERY.jpg"),
-   battery2: require("../assets/Homepage/CAR BATTERY.jpg"),
-}
-   
-  
  
 
 export const icons = {

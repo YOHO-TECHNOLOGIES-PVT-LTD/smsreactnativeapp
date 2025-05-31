@@ -1,4 +1,4 @@
-import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useState } from 'react';
 import Header from '~/components/Header';
 import { COLORS, icons, screens, SIZES } from '~/constants';
@@ -7,8 +7,15 @@ import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
 import  TitleSearchBar  from '../../components/HomePage/SearchBar'
-import App from '../../components/HomePage/Gridimage'
-import AutoSlidingCarousel from '../../components/HomePage/Scrollimage'
+
+
+// cpmponent pages
+import App from '../../components/HomePage/App'
+import AutoSlidingCarousel from '../../components/HomePage/AutoSlidingCarousel'
+import Offercard from '../../components/HomePage/offercard'
+import Scrollmultipleimage from '../../components/HomePage/Scrollmultipleimage'
+import Slideshow from '../../components/HomePage/Slideshow'
+import BlinkingImage from '../../components/HomePage/BlinkingCardsContainer'
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -73,12 +80,20 @@ const HomeScreen = () => {
           </View>
         }
       />
-      <View>
-        <Text>Home Page</Text>
-        <TitleSearchBar/>
-        <App />
-      </View>
-      <ImageSlider />
+      <ScrollView>
+        <View>
+
+          <Text>Home Page</Text>
+          <TitleSearchBar />
+          < AutoSlidingCarousel />
+          <App />
+          < Offercard/>
+          <BlinkingImage />
+          <Slideshow />
+          {/* <Scrollmultipleimage /> */}
+         
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
