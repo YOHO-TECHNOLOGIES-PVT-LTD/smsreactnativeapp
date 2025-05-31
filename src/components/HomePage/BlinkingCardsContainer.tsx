@@ -13,18 +13,22 @@ import {
     Dimensions,
     ScrollView,
 } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 
-// 📦 Assets
-import maintenance from '../../assets/Homepage/Annual_maintenance.jpg';
-import carbattery from '../../assets/Homepage/Car_battery.jpg';
-import carpainting from '../../assets/Homepage/Car_painting.jpg';
+// image
+import person1 from '../../assets/Homepage/DELIVERY COMPANY/PERSON_1.jpg';
+import person2 from '../../assets/Homepage/DELIVERY COMPANY/PERSON_2.jpg';
+import person3 from '../../assets/Homepage/DELIVERY COMPANY/PERSON_3.jpg';
+import person4 from '../../assets/Homepage/DELIVERY COMPANY/PERSON_4.jpg';
 
-// 🧩 Cards data
+
+
+
 const cards = [
-    { title: 'Annual Maintenance', image: maintenance },
-    { title: 'Car Battery', image: carbattery },
-    { title: 'Car Painting', image: carpainting },
-    { title: 'Car Painting', image: carpainting },
+    { title: 'ABC Delivery company,chennai', image: person1 },
+    { title: 'ABC Delivery company,chennai', image: person2 },
+    { title: 'ABC Delivery company,chennai', image: person3 },
+    { title: 'ABC Delivery company,chennai', image: person4 },
 ];
 
 // 💡 Blinking Image Component
@@ -35,7 +39,7 @@ const BlinkingImage = ({ source }) => {
         Animated.loop(
             Animated.sequence([
                 Animated.timing(opacity, {
-                    toValue: 0,
+                    toValue: 1,
                     duration: 4000,
                     useNativeDriver: true,
                 }),
@@ -54,35 +58,52 @@ const BlinkingImage = ({ source }) => {
 };
 
 // 📦 Card Component
+// 📦 Card Component
 const Card = ({ title, image }) => (
     <View style={styles.card}>
         <BlinkingImage source={image} />
         <Text style={styles.title}>{title}</Text>
+        <TouchableOpacity style={styles.cardButton} onPress={() => console.log(`${title} button pressed`)}>
+            <Text style={styles.buttonText}>UseMe</Text>
+        </TouchableOpacity>
     </View>
 );
+
 
 // 📦 Main Component
 const BlinkingCardsContainer = () => {
     return (
-        <ScrollView contentContainerStyle={styles.container} horizontal showsHorizontalScrollIndicator={false}>
-            {cards.map((card, index) => (
-                <Card key={index} title={card.title} image={card.image} />
-            ))}
-        </ScrollView>
-    );
+        <View>
+            <View>
+                <Text style={styles.headingtext}>Our Delivery Company</Text>
+            </View>
+            <ScrollView
+                contentContainerStyle={styles.container}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+            >
+                {cards.map((card, index) => (
+                    <Card key={index} title={card.title} image={card.image} label={card.label} />
+                ))}
+            </ScrollView>
+
+
+        </View>
+            );
 };
 
 // 💅 Styles
 const CARD_WIDTH = 100;
-const CARD_HEIGHT = 180;
+const CARD_HEIGHT = 150;
 const CARD_SPACING = 16;
 
 const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 10,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10
+        paddingVertical: 1,
+        marginBottom:11
     },
     card: {
         width: CARD_WIDTH,
@@ -100,14 +121,33 @@ const styles = StyleSheet.create({
     },
     image: {
         width: '100%',
-        height: 120,
+        height: 80,
         resizeMode: 'cover',
     },
     title: {
         marginTop: 8,
-        fontSize: 14,
+        fontSize: 10,
         fontWeight: 'bold',
         color: '#333',
+        textAlign: 'center',
+    },
+    headingtext: {
+        fontWeight: 'bold',
+        fontSize: 26,
+        marginBottom: 3,
+        padding:9
+    },
+    cardButton: {
+        marginTop: 8,
+        backgroundColor: '#9b111e',
+        paddingVertical: 3,
+        paddingHorizontal: 10,
+        borderRadius: 15,
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
         textAlign: 'center',
     },
 });

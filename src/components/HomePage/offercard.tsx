@@ -1,3 +1,7 @@
+
+//OUR PERIODIC WORK
+
+
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, Animated } from 'react-native';
 
@@ -64,9 +68,9 @@ const OfferCard = () => {
         { title: 'Bodypainting', image: carpainting },
         { title: 'Break Checking', image: carbreak },
         { title: 'Car wash', image: carwash, label: 'Offer' },
-        { title: 'Dismantle checking', image: cardismantle },
+        { title: 'Dismantle ', image: cardismantle },
         { title: 'Steering checking', image: steering },
-        { title: 'Suspension Check', image: carsuspension },
+        { title: 'Suspension ', image: carsuspension },
         { title: 'Gear Check', image: cargear },
     ];
 
@@ -97,12 +101,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'flex-start',
+    
     },
     card: {
         flexBasis: '30%',
-        marginRight: '3.33%', // 3 cards per row (100% - 2 * 3.33%)
+        marginRight: '3.33%', 
         marginBottom: 15,
-        borderRadius: 15,
+        borderRadius: 17,
         backgroundColor: '#fff',
         overflow: 'hidden',
         alignItems: 'center',
@@ -115,7 +120,7 @@ const styles = StyleSheet.create({
     },
     imageWrapper: {
         width: '100%',
-        height: 100,
+        height: 60,
     },
     image: {
         width: '100%',
@@ -138,7 +143,7 @@ const styles = StyleSheet.create({
     },
     cardText: {
         padding: 6,
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
         color: '#333',
         textAlign: 'center',

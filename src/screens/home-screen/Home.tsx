@@ -16,6 +16,7 @@ import Offercard from '../../components/HomePage/offercard'
 import Scrollmultipleimage from '../../components/HomePage/Scrollmultipleimage'
 import Slideshow from '../../components/HomePage/Slideshow'
 import BlinkingImage from '../../components/HomePage/BlinkingCardsContainer'
+import Differentsize from '../../components/HomePage/Differentsize'
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -88,10 +89,10 @@ const HomeScreen = () => {
           < AutoSlidingCarousel />
           <App />
           < Offercard/>
-          <BlinkingImage />
           <Slideshow />
           {/* <Scrollmultipleimage /> */}
-         
+          <Differentsize/>
+          <BlinkingImage />
         </View>
       </ScrollView>
     </SafeAreaView>
