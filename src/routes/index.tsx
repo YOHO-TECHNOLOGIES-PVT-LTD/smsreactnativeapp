@@ -8,6 +8,7 @@ import {
   ForgotPasswordScreen,
   HomeScreen,
   LoginScreen,
+  NotificationScreen,
   OtpVerificationScreen,
   ProfileScreen,
   RegisterScreen,
@@ -32,6 +33,7 @@ export type RootStackParamList = {
   OtpVerificationScreen: undefined;
   SetNewPasswordScreen: undefined;
   ForgotPasswordScreen: undefined;
+  NotificationScreen: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -80,6 +82,7 @@ const Routes: React.FC = () => {
       <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
       <Stack.Screen name="SparePartsScreen" component={SparePartsScreen} />
       <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
     </Stack.Navigator>
   );
 
