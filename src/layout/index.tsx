@@ -21,6 +21,7 @@ import { setSelectedTab } from '../store/tab/tabSlice';
 import { COLORS, FONTS, SIZES, icons, screens, bottom_tabs, SPACING } from '../constants';
 import { HomeScreen, ServicesScreen, SosScreen, SparePartsScreen, ProfileScreen } from '~/screens';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { widthPercentageToDP } from 'react-native-responsive-screen';
 
 type TabButtonProps = {
   label: string;
@@ -190,7 +191,7 @@ const MainLayout: React.FC = () => {
 
       <SafeAreaView
         edges={['bottom']}
-        style={{ backgroundColor: COLORS.white, marginTop: -SPACING.xl_01 }}>
+        style={{ backgroundColor: COLORS.white, marginTop: widthPercentageToDP(-8) }}>
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 4 }}
