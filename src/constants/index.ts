@@ -8,7 +8,6 @@ import { RFValue } from 'react-native-responsive-fontsize';
 // Device Dimensions
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
- 
 
 export const icons = {
   magnify: require('../assets/icons/magnifying-glass.png'),
@@ -91,24 +90,6 @@ export const icons = {
 };
 
 export const Styles = {
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff', // optional, to set background
-  },
-  container: {
-    padding: 16,
-    flex: 1,
-  },
-  searchBar: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 12,
-    backgroundColor: '#FFF4A4',
-    
-  },
   item: {
     padding: 10,
     fontSize: 18,
@@ -119,15 +100,8 @@ export const Styles = {
     marginBottom: 12,
     padding: 2,
     borderRadius: 8,
-    
   },
 };
-
-
-
-
-
-
 
 export const screens = {
   main_layout: 'MainLayout',

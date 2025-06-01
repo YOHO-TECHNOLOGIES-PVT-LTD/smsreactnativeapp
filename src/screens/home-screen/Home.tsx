@@ -1,4 +1,12 @@
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import React, { useState } from 'react';
 import Header from '~/components/Header';
 import { COLORS, FONTS, icons, screens, SIZES, SPACING } from '~/constants';
@@ -6,17 +14,16 @@ import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
-import  TitleSearchBar  from '../../components/HomePage/SearchBar'
-
+import TitleSearchBar from '../../components/HomePage/SearchBar';
 
 // cpmponent pages
-import App from '../../components/HomePage/App'
-import AutoSlidingCarousel from '../../components/HomePage/AutoSlidingCarousel'
-import Offercard from '../../components/HomePage/offercard'
-import Scrollmultipleimage from '../../components/HomePage/Scrollmultipleimage'
-import Slideshow from '../../components/HomePage/Slideshow'
-import BlinkingImage from '../../components/HomePage/BlinkingCardsContainer'
-import Differentsize from '../../components/HomePage/Differentsize'
+import App from '../../components/HomePage/App';
+import AutoSlidingCarousel from '../../components/HomePage/AutoSlidingCarousel';
+import Offercard from '../../components/HomePage/offercard';
+import Scrollmultipleimage from '../../components/HomePage/Scrollmultipleimage';
+import Slideshow from '../../components/HomePage/Slideshow';
+import BlinkingImage from '../../components/HomePage/BlinkingCardsContainer';
+import Differentsize from '../../components/HomePage/Differentsize';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -82,16 +89,15 @@ const HomeScreen = () => {
       />
       <ScrollView>
         <View>
-
-          <Text>Home Page</Text>
           <TitleSearchBar />
-          < AutoSlidingCarousel />
+          <AutoSlidingCarousel />
           <App />
-          < Offercard/>
-          <Slideshow />
+          <Offercard />
+          {/* <Slideshow /> */}
           {/* <Scrollmultipleimage /> */}
-          <Differentsize/>
+          {/* <Differentsize /> */}
           <BlinkingImage />
+          <View style={{ marginBottom: 45 }}></View>
         </View>
       </ScrollView>
     </SafeAreaView>
