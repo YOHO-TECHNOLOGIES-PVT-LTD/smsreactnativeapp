@@ -16,7 +16,7 @@ import {
   Platform,
   ActivityIndicator,
   Easing,
-} from "react-native"
+} from 'react-native';
 import {
   User,
   Edit,
@@ -59,173 +59,173 @@ import {
   Activity,
   Gauge,
   MoreVertical,
-} from "lucide-react-native"
-import * as ImagePicker from "expo-image-picker"
-import { LinearGradient } from "expo-linear-gradient"
+} from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width, height } = Dimensions.get("window")
+const { width, height } = Dimensions.get('window');
 
 // Enhanced Professional Color Palette - Refined for better professional look
 const COLORS = {
   // Primary colors - Refined Deep Crimson Theme
-  primary: "#8B0000", // Darker, more professional crimson
-  primaryLight: "#B22222", // Refined lighter crimson
-  primaryDark: "#660000", // Deeper dark crimson
-  primaryUltraLight: "#FFF5F5", // Softer ultra light
-  primaryBorder: "#FFB3B3", // Softer border
+  primary: '#8B0000', // Darker, more professional crimson
+  primaryLight: '#B22222', // Refined lighter crimson
+  primaryDark: '#660000', // Deeper dark crimson
+  primaryUltraLight: '#FFF5F5', // Softer ultra light
+  primaryBorder: '#FFB3B3', // Softer border
 
   // Background colors
-  background: "#8B0000",
-  backgroundGradient: ["#8B0000", "#660000"],
+  background: '#8B0000',
+  backgroundGradient: ['#8B0000', '#660000'],
 
   // Card colors with sophisticated combinations
-  cardPrimary: "#FFFFFF",
-  cardSecondary: "#F8FAFC",
-  cardTertiary: "#F1F5F9",
-  cardAccent: "#FEF7FF",
-  cardSuccess: "#F0FDF4",
-  cardWarning: "#FFFBEB",
-  cardError: "#FEF2F2",
-  cardInfo: "#EFF6FF",
+  cardPrimary: '#FFFFFF',
+  cardSecondary: '#F8FAFC',
+  cardTertiary: '#F1F5F9',
+  cardAccent: '#FEF7FF',
+  cardSuccess: '#F0FDF4',
+  cardWarning: '#FFFBEB',
+  cardError: '#FEF2F2',
+  cardInfo: '#EFF6FF',
 
   // Accent colors - More professional amber/gold
-  accent: "#D97706", // Deeper, more professional amber
-  accentLight: "#F59E0B", // Refined lighter amber
-  accentDark: "#B45309", // Deeper amber
-  accentGradient: ["#D97706", "#B45309"],
+  accent: '#D97706', // Deeper, more professional amber
+  accentLight: '#F59E0B', // Refined lighter amber
+  accentDark: '#B45309', // Deeper amber
+  accentGradient: ['#D97706', '#B45309'],
 
   // Status colors
-  success: "#059669", // Deeper green
-  successLight: "#10B981",
-  successDark: "#047857",
-  warning: "#D97706", // Matching accent
-  warningLight: "#F59E0B",
-  error: "#DC2626", // More professional red
-  errorLight: "#EF4444",
-  info: "#2563EB", // Deeper blue
-  infoLight: "#3B82F6",
+  success: '#059669', // Deeper green
+  successLight: '#10B981',
+  successDark: '#047857',
+  warning: '#D97706', // Matching accent
+  warningLight: '#F59E0B',
+  error: '#DC2626', // More professional red
+  errorLight: '#EF4444',
+  info: '#2563EB', // Deeper blue
+  infoLight: '#3B82F6',
 
   // Neutral colors
-  white: "#FFFFFF",
-  black: "#000000",
-  gray50: "#F9FAFB",
-  gray100: "#F3F4F6",
-  gray200: "#E5E7EB",
-  gray300: "#D1D5DB",
-  gray400: "#9CA3AF",
-  gray500: "#6B7280",
-  gray600: "#4B5563",
-  gray700: "#374151",
-  gray800: "#1F2937",
-  gray900: "#111827",
+  white: '#FFFFFF',
+  black: '#000000',
+  gray50: '#F9FAFB',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
+  gray300: '#D1D5DB',
+  gray400: '#9CA3AF',
+  gray500: '#6B7280',
+  gray600: '#4B5563',
+  gray700: '#374151',
+  gray800: '#1F2937',
+  gray900: '#111827',
 
   // Text colors
-  textPrimary: "#1F2937",
-  textSecondary: "#4B5563",
-  textTertiary: "#6B7280",
-  textLight: "#FFFFFF",
-  textMuted: "#9CA3AF",
+  textPrimary: '#1F2937',
+  textSecondary: '#4B5563',
+  textTertiary: '#6B7280',
+  textLight: '#FFFFFF',
+  textMuted: '#9CA3AF',
 
   // Shadow colors
-  shadow: "rgba(0, 0, 0, 0.08)",
-  shadowMedium: "rgba(0, 0, 0, 0.12)",
-  shadowStrong: "rgba(0, 0, 0, 0.20)",
+  shadow: 'rgba(0, 0, 0, 0.08)',
+  shadowMedium: 'rgba(0, 0, 0, 0.12)',
+  shadowStrong: 'rgba(0, 0, 0, 0.20)',
 
   // Special gradient combinations
-  gradientPrimary: ["#8B0000", "#B22222"],
-  gradientAccent: ["#D97706", "#F59E0B"],
-  gradientSuccess: ["#059669", "#10B981"],
-  gradientInfo: ["#2563EB", "#3B82F6"],
-  gradientNeutral: ["#F8FAFC", "#F1F5F9"],
-}
+  gradientPrimary: ['#8B0000', '#B22222'],
+  gradientAccent: ['#D97706', '#F59E0B'],
+  gradientSuccess: ['#059669', '#10B981'],
+  gradientInfo: ['#2563EB', '#3B82F6'],
+  gradientNeutral: ['#F8FAFC', '#F1F5F9'],
+};
 
 // Enhanced Type Definitions
 interface Vehicle {
-  id: number
-  make: string
-  model: string
-  year: string
-  plate: string
-  color: string
-  mileage: string
-  image360: string
-  services: Service[]
-  lastService?: string
-  nextService?: string
-  healthScore?: number
-  fuelLevel?: number
-  batteryHealth?: number
-  tireHealth?: number
-  engineStatus?: "excellent" | "good" | "fair" | "poor"
+  id: number;
+  make: string;
+  model: string;
+  year: string;
+  plate: string;
+  color: string;
+  mileage: string;
+  image360: string;
+  services: Service[];
+  lastService?: string;
+  nextService?: string;
+  healthScore?: number;
+  fuelLevel?: number;
+  batteryHealth?: number;
+  tireHealth?: number;
+  engineStatus?: 'excellent' | 'good' | 'fair' | 'poor';
 }
 
 interface Service {
-  id: number
-  type: string
-  date: string
-  cost: string
-  description: string
-  status: "completed" | "pending" | "scheduled"
-  technician?: string
-  location?: string
-  duration?: string
+  id: number;
+  type: string;
+  date: string;
+  cost: string;
+  description: string;
+  status: 'completed' | 'pending' | 'scheduled';
+  technician?: string;
+  location?: string;
+  duration?: string;
 }
 
 interface Order {
-  id: number
-  date: string
-  items: OrderItem[]
-  total: string
-  status: "processing" | "shipped" | "delivered"
-  trackingNumber?: string
-  estimatedDelivery?: string
+  id: number;
+  date: string;
+  items: OrderItem[];
+  total: string;
+  status: 'processing' | 'shipped' | 'delivered';
+  trackingNumber?: string;
+  estimatedDelivery?: string;
 }
 
 interface OrderItem {
-  id: number
-  name: string
-  quantity: number
-  price: string
-  image: string
-  partNumber?: string
-  warranty?: string
+  id: number;
+  name: string;
+  quantity: number;
+  price: string;
+  image: string;
+  partNumber?: string;
+  warranty?: string;
 }
 
 interface MenuItemProps {
-  title: string
-  subtitle?: string
-  onPress?: () => void
-  rightElement?: React.ReactNode
-  showArrow?: boolean
-  icon?: React.ReactNode
-  badge?: string | number
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+  rightElement?: React.ReactNode;
+  showArrow?: boolean;
+  icon?: React.ReactNode;
+  badge?: string | number;
 }
 
 interface VehicleItemProps {
-  vehicle: Vehicle
-  onPress: () => void
+  vehicle: Vehicle;
+  onPress: () => void;
 }
 
 interface CarStatusProps {
-  label: string
-  value: number
-  color: string
-  icon: React.ReactNode
+  label: string;
+  value: number;
+  color: string;
+  icon: React.ReactNode;
 }
 
 const Profile = () => {
   // Enhanced State Management
   const [userInfo, setUserInfo] = useState({
-    name: "John Smith",
-    email: "john.smith@email.com",
-    phone: "+1 (555) 123-4567",
-    location: "New York, NY",
+    name: 'John Smith',
+    email: 'john.smith@email.com',
+    phone: '+1 (555) 123-4567',
+    location: 'New York, NY',
     profileImage: null as string | null,
-    memberSince: "January 2022",
+    memberSince: 'January 2022',
     loyaltyPoints: 450,
-    preferredServiceCenter: "Downtown Auto Service",
+    preferredServiceCenter: 'Downtown Auto Service',
     notifications: 3,
-  })
+  });
 
   const [notifications, setNotifications] = useState({
     serviceReminders: true,
@@ -233,269 +233,272 @@ const Profile = () => {
     orderUpdates: true,
     appUpdates: true,
     specialOffers: false,
-  })
+  });
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([
     {
       id: 1,
-      make: "Toyota",
-      model: "Camry",
-      year: "2020",
-      plate: "ABC-123",
-      color: "Silver",
-      mileage: "45,000",
-      image360: "https://images.unsplash.com/photo-1549924231-f129b911e442?w=400",
+      make: 'Toyota',
+      model: 'Camry',
+      year: '2020',
+      plate: 'ABC-123',
+      color: 'Silver',
+      mileage: '45,000',
+      image360: 'https://images.unsplash.com/photo-1549924231-f129b911e442?w=400',
       services: [
         {
           id: 1,
-          type: "Oil Change",
-          date: "2024-01-15",
-          cost: "$45",
-          description: "Regular oil change and filter replacement",
-          status: "completed",
-          technician: "Mike Johnson",
-          location: "Downtown Auto Service",
-          duration: "45 min",
+          type: 'Oil Change',
+          date: '2024-01-15',
+          cost: '$45',
+          description: 'Regular oil change and filter replacement',
+          status: 'completed',
+          technician: 'Mike Johnson',
+          location: 'Downtown Auto Service',
+          duration: '45 min',
         },
         {
           id: 2,
-          type: "Brake Service",
-          date: "2024-02-20",
-          cost: "$180",
-          description: "Brake pad replacement and fluid check",
-          status: "completed",
-          technician: "Sarah Williams",
-          location: "Downtown Auto Service",
-          duration: "2 hours",
+          type: 'Brake Service',
+          date: '2024-02-20',
+          cost: '$180',
+          description: 'Brake pad replacement and fluid check',
+          status: 'completed',
+          technician: 'Sarah Williams',
+          location: 'Downtown Auto Service',
+          duration: '2 hours',
         },
         {
           id: 3,
-          type: "Tire Rotation",
-          date: "2024-06-01",
-          cost: "$35",
-          description: "Scheduled tire rotation service",
-          status: "scheduled",
-          technician: "David Miller",
-          location: "Downtown Auto Service",
-          duration: "30 min",
+          type: 'Tire Rotation',
+          date: '2024-06-01',
+          cost: '$35',
+          description: 'Scheduled tire rotation service',
+          status: 'scheduled',
+          technician: 'David Miller',
+          location: 'Downtown Auto Service',
+          duration: '30 min',
         },
       ],
-      lastService: "2024-02-20",
-      nextService: "2024-06-01",
+      lastService: '2024-02-20',
+      nextService: '2024-06-01',
       healthScore: 92,
       fuelLevel: 75,
       batteryHealth: 95,
       tireHealth: 88,
-      engineStatus: "excellent",
+      engineStatus: 'excellent',
     },
     {
       id: 2,
-      make: "Honda",
-      model: "Civic",
-      year: "2019",
-      plate: "XYZ-789",
-      color: "Blue",
-      mileage: "32,000",
-      image360: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400",
+      make: 'Honda',
+      model: 'Civic',
+      year: '2019',
+      plate: 'XYZ-789',
+      color: 'Blue',
+      mileage: '32,000',
+      image360: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400',
       services: [
         {
           id: 4,
-          type: "Engine Tune-up",
-          date: "2024-01-10",
-          cost: "$200",
-          description: "Complete engine diagnostic and tune-up",
-          status: "completed",
-          technician: "Robert Chen",
-          location: "Eastside Auto Care",
-          duration: "3 hours",
+          type: 'Engine Tune-up',
+          date: '2024-01-10',
+          cost: '$200',
+          description: 'Complete engine diagnostic and tune-up',
+          status: 'completed',
+          technician: 'Robert Chen',
+          location: 'Eastside Auto Care',
+          duration: '3 hours',
         },
       ],
-      lastService: "2024-01-10",
-      nextService: "2024-07-10",
+      lastService: '2024-01-10',
+      nextService: '2024-07-10',
       healthScore: 87,
       fuelLevel: 45,
       batteryHealth: 82,
       tireHealth: 90,
-      engineStatus: "good",
+      engineStatus: 'good',
     },
-  ])
+  ]);
 
   const [orders, setOrders] = useState<Order[]>([
     {
       id: 1,
-      date: "2024-03-15",
-      total: "$245.99",
-      status: "delivered",
-      trackingNumber: "TRK123456789",
-      estimatedDelivery: "Delivered on March 18, 2024",
+      date: '2024-03-15',
+      total: '$245.99',
+      status: 'delivered',
+      trackingNumber: 'TRK123456789',
+      estimatedDelivery: 'Delivered on March 18, 2024',
       items: [
         {
           id: 101,
-          name: "Synthetic Engine Oil 5W-30",
+          name: 'Synthetic Engine Oil 5W-30',
           quantity: 2,
-          price: "$39.99",
-          image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200",
-          partNumber: "OIL-5W30-SYN",
-          warranty: "30 days",
+          price: '$39.99',
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200',
+          partNumber: 'OIL-5W30-SYN',
+          warranty: '30 days',
         },
         {
           id: 102,
-          name: "Oil Filter",
+          name: 'Oil Filter',
           quantity: 1,
-          price: "$12.99",
-          image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200",
-          partNumber: "FLT-OIL-1234",
-          warranty: "90 days",
+          price: '$12.99',
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200',
+          partNumber: 'FLT-OIL-1234',
+          warranty: '90 days',
         },
       ],
     },
     {
       id: 2,
-      date: "2024-04-22",
-      total: "$189.50",
-      status: "shipped",
-      trackingNumber: "TRK987654321",
-      estimatedDelivery: "Expected by April 26, 2024",
+      date: '2024-04-22',
+      total: '$189.50',
+      status: 'shipped',
+      trackingNumber: 'TRK987654321',
+      estimatedDelivery: 'Expected by April 26, 2024',
       items: [
         {
           id: 201,
-          name: "Brake Pads Set",
+          name: 'Brake Pads Set',
           quantity: 1,
-          price: "$89.50",
-          image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200",
-          partNumber: "BRK-PAD-2022",
-          warranty: "1 year",
+          price: '$89.50',
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200',
+          partNumber: 'BRK-PAD-2022',
+          warranty: '1 year',
         },
       ],
     },
-  ])
+  ]);
 
   // Modal States
-  const [editProfileModal, setEditProfileModal] = useState(false)
-  const [addVehicleModal, setAddVehicleModal] = useState(false)
-  const [vehicleDetailModal, setVehicleDetailModal] = useState(false)
-  const [orderDetailModal, setOrderDetailModal] = useState(false)
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const [photoUploadModal, setPhotoUploadModal] = useState(false)
-  const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false)
-  const [helpCentreModal, setHelpCentreModal] = useState(false)
-  const [termsModal, setTermsModal] = useState(false)
+  const [editProfileModal, setEditProfileModal] = useState(false);
+  const [addVehicleModal, setAddVehicleModal] = useState(false);
+  const [vehicleDetailModal, setVehicleDetailModal] = useState(false);
+  const [orderDetailModal, setOrderDetailModal] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [photoUploadModal, setPhotoUploadModal] = useState(false);
+  const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false);
+  const [helpCentreModal, setHelpCentreModal] = useState(false);
+  const [termsModal, setTermsModal] = useState(false);
 
   // Side Menu State - Modified for individual dropdowns
-  const [sideMenuVisible, setSideMenuVisible] = useState(false)
+  const [sideMenuVisible, setSideMenuVisible] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     vehicles: false,
     orders: false,
     settings: false,
-  })
+  });
 
   // Form States
-  const [editForm, setEditForm] = useState({ ...userInfo })
+  const [editForm, setEditForm] = useState({ ...userInfo });
   const [vehicleForm, setVehicleForm] = useState({
-    make: "",
-    model: "",
-    year: "",
-    plate: "",
-    color: "",
-    mileage: "",
-  })
+    make: '',
+    model: '',
+    year: '',
+    plate: '',
+    color: '',
+    mileage: '',
+  });
 
   // Enhanced Animation References
   const slideAnims = useRef(
     Array(8)
       .fill(0)
-      .map(() => new Animated.Value(0)),
-  ).current
+      .map(() => new Animated.Value(0))
+  ).current;
   const fadeAnims = useRef(
     Array(8)
       .fill(0)
-      .map(() => new Animated.Value(1)),
-  ).current
-  const headerOpacity = useRef(new Animated.Value(1)).current
-  const cardScale = useRef(new Animated.Value(1)).current
+      .map(() => new Animated.Value(1))
+  ).current;
+  const headerOpacity = useRef(new Animated.Value(1)).current;
+  const cardScale = useRef(new Animated.Value(1)).current;
 
   // Side Menu Animation - Modified for left to right
-  const sideMenuTranslateX = useRef(new Animated.Value(-width)).current
-  const overlayOpacity = useRef(new Animated.Value(0)).current
+  const sideMenuTranslateX = useRef(new Animated.Value(-width)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
 
   // 360 Degree Car Image State
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [expandedTerm, setExpandedTerm] = useState<number | null>(null)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
 
   // Enhanced Pan Responder for 360° Car View
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderMove: (evt, gestureState) => {
-        const dx = gestureState.dx
-        const sensitivity = 5
+        const dx = gestureState.dx;
+        const sensitivity = 5;
 
         if (Math.abs(dx) > sensitivity) {
-          const direction = dx > 0 ? -1 : 1
-          const newIndex = (currentImageIndex + direction + 36) % 36
-          setCurrentImageIndex(newIndex)
+          const direction = dx > 0 ? -1 : 1;
+          const newIndex = (currentImageIndex + direction + 36) % 36;
+          setCurrentImageIndex(newIndex);
         }
       },
       onPanResponderRelease: () => {},
-    }),
-  ).current
+    })
+  ).current;
 
   // Terms and Conditions Data
   const termsData = [
     {
       id: 1,
-      title: "Acceptance of Terms",
+      title: 'Acceptance of Terms',
       content:
-        "By accessing or using our services, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you may not use our services.",
+        'By accessing or using our services, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you may not use our services.',
     },
     {
       id: 2,
-      title: "Service Description",
+      title: 'Service Description',
       content:
-        "Our platform provides vehicle maintenance and repair services, including but not limited to scheduling appointments, ordering parts, and tracking service history.",
+        'Our platform provides vehicle maintenance and repair services, including but not limited to scheduling appointments, ordering parts, and tracking service history.',
     },
     {
       id: 3,
-      title: "User Responsibilities",
+      title: 'User Responsibilities',
       content:
-        "You are responsible for providing accurate vehicle information, maintaining the confidentiality of your account credentials, and ensuring your vehicle is available at scheduled service times.",
+        'You are responsible for providing accurate vehicle information, maintaining the confidentiality of your account credentials, and ensuring your vehicle is available at scheduled service times.',
     },
     {
       id: 4,
-      title: "Payments and Fees",
+      title: 'Payments and Fees',
       content:
-        "All services must be paid in full at the time of service unless otherwise agreed. We accept various payment methods as listed in our payment section. Late payments may incur additional fees.",
+        'All services must be paid in full at the time of service unless otherwise agreed. We accept various payment methods as listed in our payment section. Late payments may incur additional fees.',
     },
     {
       id: 5,
-      title: "Cancellation Policy",
+      title: 'Cancellation Policy',
       content:
-        "Appointments may be cancelled or rescheduled up to 24 hours in advance without penalty. Late cancellations may be subject to a fee equal to 50% of the service cost.",
+        'Appointments may be cancelled or rescheduled up to 24 hours in advance without penalty. Late cancellations may be subject to a fee equal to 50% of the service cost.',
     },
     {
       id: 6,
-      title: "Limitation of Liability",
+      title: 'Limitation of Liability',
       content:
-        "We are not liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.",
+        'We are not liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.',
     },
-  ]
+  ];
 
   // Enhanced Effects
   useEffect(() => {
-    const savedImage = getUserProfileImage()
+    const savedImage = getUserProfileImage();
     if (savedImage) {
-      setUserInfo((prev) => ({ ...prev, profileImage: savedImage }))
-      setEditForm((prev) => ({ ...prev, profileImage: savedImage }))
+      setUserInfo((prev) => ({ ...prev, profileImage: savedImage }));
+      setEditForm((prev) => ({ ...prev, profileImage: savedImage }));
     }
-    ;(async () => {
-      if (Platform.OS !== "web") {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (status !== "granted") {
-          Alert.alert("Permission required", "Sorry, we need camera roll permissions to upload photos.")
+    (async () => {
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permission required',
+            'Sorry, we need camera roll permissions to upload photos.'
+          );
         }
       }
-    })()
+    })();
 
     // Simple entrance animations
     slideAnims.forEach((anim, index) => {
@@ -504,19 +507,19 @@ const Profile = () => {
         duration: 300,
         delay: index * 50,
         useNativeDriver: true,
-      }).start()
-    })
-  }, [])
+      }).start();
+    });
+  }, []);
 
   // Side Menu Functions - Modified for left to right animation
   const openSideMenu = () => {
-    setSideMenuVisible(true)
+    setSideMenuVisible(true);
     // Reset all dropdowns when opening
     setExpandedSections({
       vehicles: false,
       orders: false,
       settings: false,
-    })
+    });
     Animated.parallel([
       Animated.timing(sideMenuTranslateX, {
         toValue: 0,
@@ -529,8 +532,8 @@ const Profile = () => {
         duration: 300,
         useNativeDriver: true,
       }),
-    ]).start()
-  }
+    ]).start();
+  };
 
   const closeSideMenu = () => {
     Animated.parallel([
@@ -546,31 +549,31 @@ const Profile = () => {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      setSideMenuVisible(false)
+      setSideMenuVisible(false);
       setExpandedSections({
         vehicles: false,
         orders: false,
         settings: false,
-      })
-    })
-  }
+      });
+    });
+  };
 
   // Toggle individual sections
-  const toggleSection = (section: "vehicles" | "orders" | "settings") => {
+  const toggleSection = (section: 'vehicles' | 'orders' | 'settings') => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
-    }))
-  }
+    }));
+  };
 
   // Utility Functions
   const saveUserProfileImage = (imageUri: string) => {
-    console.log("Saving profile image to local storage:", imageUri)
-  }
+    console.log('Saving profile image to local storage:', imageUri);
+  };
 
   const getUserProfileImage = () => {
-    return null
-  }
+    return null;
+  };
 
   const animateCardPress = (callback: () => void) => {
     Animated.sequence([
@@ -584,21 +587,21 @@ const Profile = () => {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start(() => callback && callback())
-  }
+    ]).start(() => callback && callback());
+  };
 
   // Enhanced Event Handlers
   const handleEditProfile = () => {
-    setEditForm({ ...userInfo })
-    setEditProfileModal(true)
-  }
+    setEditForm({ ...userInfo });
+    setEditProfileModal(true);
+  };
 
   const handleSaveProfile = () => {
-    setUserInfo({ ...editForm })
+    setUserInfo({ ...editForm });
     if (editForm.profileImage) {
-      saveUserProfileImage(editForm.profileImage)
+      saveUserProfileImage(editForm.profileImage);
     }
-    setEditProfileModal(false)
+    setEditProfileModal(false);
 
     Animated.sequence([
       Animated.timing(headerOpacity, {
@@ -611,125 +614,125 @@ const Profile = () => {
         duration: 200,
         useNativeDriver: true,
       }),
-    ]).start()
+    ]).start();
 
-    Alert.alert("Success", "Profile updated successfully!")
-  }
+    Alert.alert('Success', 'Profile updated successfully!');
+  };
 
   const handleAddVehicle = () => {
     if (!vehicleForm.make || !vehicleForm.model || !vehicleForm.year || !vehicleForm.plate) {
-      Alert.alert("Error", "Please fill in all required fields")
-      return
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
     }
 
     const newVehicle: Vehicle = {
       id: vehicles.length + 1,
       ...vehicleForm,
-      image360: "https://images.unsplash.com/photo-1549924231-f129b911e442?w=400",
+      image360: 'https://images.unsplash.com/photo-1549924231-f129b911e442?w=400',
       services: [],
       healthScore: 100,
       fuelLevel: 100,
       batteryHealth: 100,
       tireHealth: 100,
-      engineStatus: "excellent",
-    }
+      engineStatus: 'excellent',
+    };
 
-    setVehicles([...vehicles, newVehicle])
-    setVehicleForm({ make: "", model: "", year: "", plate: "", color: "", mileage: "" })
-    setAddVehicleModal(false)
+    setVehicles([...vehicles, newVehicle]);
+    setVehicleForm({ make: '', model: '', year: '', plate: '', color: '', mileage: '' });
+    setAddVehicleModal(false);
 
-    Alert.alert("Success", "Vehicle added successfully!")
-  }
+    Alert.alert('Success', 'Vehicle added successfully!');
+  };
 
   const handleVehiclePress = (vehicle: Vehicle) => {
-    setSelectedVehicle(vehicle)
-    setCurrentImageIndex(0)
-    setVehicleDetailModal(true)
-  }
+    setSelectedVehicle(vehicle);
+    setCurrentImageIndex(0);
+    setVehicleDetailModal(true);
+  };
 
   const handleOrderPress = (order: Order) => {
-    setSelectedOrder(order)
-    setOrderDetailModal(true)
-  }
+    setSelectedOrder(order);
+    setOrderDetailModal(true);
+  };
 
   const handleDeleteVehicle = (vehicleId: number) => {
-    Alert.alert("Delete Vehicle", "Are you sure you want to delete this vehicle?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Delete Vehicle', 'Are you sure you want to delete this vehicle?', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Delete",
-        style: "destructive",
+        text: 'Delete',
+        style: 'destructive',
         onPress: () => {
-          setVehicles(vehicles.filter((v) => v.id !== vehicleId))
-          setVehicleDetailModal(false)
-          Alert.alert("Success", "Vehicle deleted successfully")
+          setVehicles(vehicles.filter((v) => v.id !== vehicleId));
+          setVehicleDetailModal(false);
+          Alert.alert('Success', 'Vehicle deleted successfully');
         },
       },
-    ])
-  }
+    ]);
+  };
 
   const pickImage = async () => {
-    setPhotoUploadModal(true)
+    setPhotoUploadModal(true);
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
-      })
+      });
 
       if (!result.canceled) {
-        const newImageUri = result.assets[0].uri
-        setEditForm({ ...editForm, profileImage: newImageUri })
-        saveUserProfileImage(newImageUri)
-        Alert.alert("Success", "Profile photo updated!")
+        const newImageUri = result.assets[0].uri;
+        setEditForm({ ...editForm, profileImage: newImageUri });
+        saveUserProfileImage(newImageUri);
+        Alert.alert('Success', 'Profile photo updated!');
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to upload image. Please try again.")
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
     } finally {
-      setPhotoUploadModal(false)
+      setPhotoUploadModal(false);
     }
-  }
+  };
 
   const takePhoto = async () => {
-    setPhotoUploadModal(true)
+    setPhotoUploadModal(true);
     try {
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
-      })
+      });
 
       if (!result.canceled) {
-        const newImageUri = result.assets[0].uri
-        setEditForm({ ...editForm, profileImage: newImageUri })
-        saveUserProfileImage(newImageUri)
-        Alert.alert("Success", "Profile photo updated!")
+        const newImageUri = result.assets[0].uri;
+        setEditForm({ ...editForm, profileImage: newImageUri });
+        saveUserProfileImage(newImageUri);
+        Alert.alert('Success', 'Profile photo updated!');
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to take photo. Please try again.")
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
     } finally {
-      setPhotoUploadModal(false)
+      setPhotoUploadModal(false);
     }
-  }
+  };
 
   const handlePhotoUpload = () => {
-    Alert.alert("Upload Photo", "Choose photo source", [
-      { text: "Take Photo", onPress: takePhoto },
-      { text: "Choose from Gallery", onPress: pickImage },
-      { text: "Cancel", style: "cancel", onPress: () => setPhotoUploadModal(false) },
-    ])
-  }
+    Alert.alert('Upload Photo', 'Choose photo source', [
+      { text: 'Take Photo', onPress: takePhoto },
+      { text: 'Choose from Gallery', onPress: pickImage },
+      { text: 'Cancel', style: 'cancel', onPress: () => setPhotoUploadModal(false) },
+    ]);
+  };
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Logout",
-        style: "destructive",
-        onPress: () => Alert.alert("Success", "You have been logged out successfully"),
+        text: 'Logout',
+        style: 'destructive',
+        onPress: () => Alert.alert('Success', 'You have been logged out successfully'),
       },
-    ])
-  }
+    ]);
+  };
 
   // Enhanced Component Definitions
   const MenuItem: React.FC<MenuItemProps> = ({
@@ -745,8 +748,7 @@ const Profile = () => {
       <TouchableOpacity
         style={styles.menuItem}
         onPress={() => onPress && animateCardPress(onPress)}
-        activeOpacity={0.8}
-      >
+        activeOpacity={0.8}>
         <View style={styles.menuItemContent}>
           {icon && <View style={styles.menuItemIcon}>{icon}</View>}
           <View style={styles.menuItemText}>
@@ -763,19 +765,22 @@ const Profile = () => {
           {rightElement || (showArrow && <ChevronRight size={20} color={COLORS.gray400} />)}
         </View>
       </TouchableOpacity>
-    )
-  }
+    );
+  };
 
   const VehicleItem: React.FC<VehicleItemProps> = ({ vehicle, onPress }) => {
     const getHealthColor = (score: number) => {
-      if (score >= 90) return COLORS.success
-      if (score >= 70) return COLORS.accent
-      return COLORS.error
-    }
+      if (score >= 90) return COLORS.success;
+      if (score >= 70) return COLORS.accent;
+      return COLORS.error;
+    };
 
     return (
       <View style={styles.menuItem}>
-        <TouchableOpacity style={styles.menuItemContent} onPress={() => animateCardPress(onPress)} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.menuItemContent}
+          onPress={() => animateCardPress(onPress)}
+          activeOpacity={0.8}>
           <View style={[styles.menuItemIcon, styles.vehicleIconContainer]}>
             <Car size={22} color={COLORS.accent} />
           </View>
@@ -785,7 +790,11 @@ const Profile = () => {
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </Text>
               {vehicle.healthScore && (
-                <View style={[styles.healthBadge, { backgroundColor: getHealthColor(vehicle.healthScore) }]}>
+                <View
+                  style={[
+                    styles.healthBadge,
+                    { backgroundColor: getHealthColor(vehicle.healthScore) },
+                  ]}>
                   <Text style={styles.healthBadgeText}>{vehicle.healthScore}%</Text>
                 </View>
               )}
@@ -803,30 +812,29 @@ const Profile = () => {
           <ChevronRight size={20} color={COLORS.gray400} />
         </TouchableOpacity>
       </View>
-    )
-  }
+    );
+  };
 
   const OrderItem = ({ order }: { order: Order }) => {
     const getStatusColor = () => {
       switch (order.status) {
-        case "processing":
-          return COLORS.warning
-        case "shipped":
-          return COLORS.info
-        case "delivered":
-          return COLORS.success
+        case 'processing':
+          return COLORS.warning;
+        case 'shipped':
+          return COLORS.info;
+        case 'delivered':
+          return COLORS.success;
         default:
-          return COLORS.gray500
+          return COLORS.gray500;
       }
-    }
+    };
 
     return (
       <View style={styles.menuItem}>
         <TouchableOpacity
           style={styles.menuItemContent}
           onPress={() => animateCardPress(() => handleOrderPress(order))}
-          activeOpacity={0.8}
-        >
+          activeOpacity={0.8}>
           <View style={[styles.menuItemIcon, styles.orderIconContainer]}>
             <ShoppingCart size={22} color={COLORS.info} />
           </View>
@@ -835,29 +843,31 @@ const Profile = () => {
             <Text style={styles.menuItemSubtitle}>
               {order.date} • {order.items.length} items • {order.total}
             </Text>
-            {order.estimatedDelivery && <Text style={styles.estimatedDeliveryText}>{order.estimatedDelivery}</Text>}
+            {order.estimatedDelivery && (
+              <Text style={styles.estimatedDeliveryText}>{order.estimatedDelivery}</Text>
+            )}
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
             <Text style={styles.statusText}>{order.status}</Text>
           </View>
         </TouchableOpacity>
       </View>
-    )
-  }
+    );
+  };
 
   const ServiceItem = ({ service }: { service: Service }) => {
     const getStatusColor = (status: string) => {
       switch (status) {
-        case "completed":
-          return COLORS.success
-        case "pending":
-          return COLORS.warning
-        case "scheduled":
-          return COLORS.info
+        case 'completed':
+          return COLORS.success;
+        case 'pending':
+          return COLORS.warning;
+        case 'scheduled':
+          return COLORS.info;
         default:
-          return COLORS.gray500
+          return COLORS.gray500;
       }
-    }
+    };
 
     return (
       <View style={styles.serviceItem}>
@@ -896,24 +906,41 @@ const Profile = () => {
           <Text style={styles.serviceCost}>{service.cost}</Text>
         </View>
       </View>
-    )
-  }
+    );
+  };
 
-  const Switch = ({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) => (
+  const Switch = ({
+    checked,
+    onChange,
+  }: {
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+  }) => (
     <TouchableOpacity
       style={[styles.switch, { backgroundColor: checked ? COLORS.accent : COLORS.gray300 }]}
       onPress={() => onChange(!checked)}
-      activeOpacity={0.8}
-    >
+      activeOpacity={0.8}>
       <View style={[styles.switchThumb, { transform: [{ translateX: checked ? 20 : 2 }] }]} />
     </TouchableOpacity>
-  )
+  );
 
-  const TermsItem = ({ term, isExpanded, onToggle }: { term: any; isExpanded: boolean; onToggle: () => void }) => (
+  const TermsItem = ({
+    term,
+    isExpanded,
+    onToggle,
+  }: {
+    term: any;
+    isExpanded: boolean;
+    onToggle: () => void;
+  }) => (
     <TouchableOpacity style={styles.faqItem} onPress={onToggle} activeOpacity={0.8}>
       <View style={styles.faqHeader}>
         <Text style={styles.faqQuestion}>{term.title}</Text>
-        {isExpanded ? <ChevronUp size={20} color={COLORS.gray500} /> : <ChevronDown size={20} color={COLORS.gray500} />}
+        {isExpanded ? (
+          <ChevronUp size={20} color={COLORS.gray500} />
+        ) : (
+          <ChevronDown size={20} color={COLORS.gray500} />
+        )}
       </View>
       {isExpanded && (
         <View style={styles.faqAnswer}>
@@ -921,7 +948,7 @@ const Profile = () => {
         </View>
       )}
     </TouchableOpacity>
-  )
+  );
 
   // Enhanced Car Status Component
   const CarStatusBar = ({ label, value, color, icon }: CarStatusProps) => {
@@ -938,8 +965,8 @@ const Profile = () => {
           <View style={[styles.carStatusBarFill, { width: `${value}%`, backgroundColor: color }]} />
         </View>
       </View>
-    )
-  }
+    );
+  };
 
   // Individual Dropdown Section Component - Reduced height
   const DropdownSection = ({
@@ -949,11 +976,11 @@ const Profile = () => {
     onToggle,
     children,
   }: {
-    title: string
-    icon: React.ReactNode
-    isExpanded: boolean
-    onToggle: () => void
-    children: React.ReactNode
+    title: string;
+    icon: React.ReactNode;
+    isExpanded: boolean;
+    onToggle: () => void;
+    children: React.ReactNode;
   }) => (
     <View style={styles.dropdownSection}>
       <TouchableOpacity style={styles.dropdownSectionHeader} onPress={onToggle} activeOpacity={0.8}>
@@ -987,8 +1014,7 @@ const Profile = () => {
         <TouchableOpacity
           style={[styles.addButton, styles.fullWidthButton]}
           onPress={() => setAddVehicleModal(true)}
-          activeOpacity={0.8}
-        >
+          activeOpacity={0.8}>
           <Plus size={16} color={COLORS.white} />
           <Text style={styles.addButtonText}></Text>
         </TouchableOpacity>
@@ -1007,12 +1033,13 @@ const Profile = () => {
               <Car size={48} color={COLORS.gray300} />
             </View>
             <Text style={styles.emptyStateText}>No vehicles added yet</Text>
-            <Text style={styles.emptyStateSubtext}>Add your first vehicle to track services and maintenance</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Add your first vehicle to track services and maintenance
+            </Text>
             <TouchableOpacity
               style={[styles.addButton, styles.fullWidthButton]}
               onPress={() => setAddVehicleModal(true)}
-              activeOpacity={0.8}
-            >
+              activeOpacity={0.8}>
               <Plus size={16} color={COLORS.white} />
               <Text style={styles.addButtonText}>Add Vehicle</Text>
             </TouchableOpacity>
@@ -1029,7 +1056,10 @@ const Profile = () => {
             </View>
             <Text style={styles.sectionTitle}>Maintenance Tips</Text>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tipsContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tipsContainer}>
             <View style={styles.tipCard}>
               <View style={styles.tipIconContainer}>
                 <Gauge size={24} color={COLORS.accent} />
@@ -1063,7 +1093,7 @@ const Profile = () => {
         </View>
       )}
     </>
-  )
+  );
 
   const renderOrdersContent = () => (
     <View style={styles.section}>
@@ -1092,7 +1122,7 @@ const Profile = () => {
         )}
       </View>
     </View>
-  )
+  );
 
   const renderSettingsContent = () => (
     <>
@@ -1111,7 +1141,9 @@ const Profile = () => {
             rightElement={
               <Switch
                 checked={notifications.serviceReminders}
-                onChange={(value) => setNotifications((prev) => ({ ...prev, serviceReminders: value }))}
+                onChange={(value) =>
+                  setNotifications((prev) => ({ ...prev, serviceReminders: value }))
+                }
               />
             }
             showArrow={false}
@@ -1163,7 +1195,9 @@ const Profile = () => {
             rightElement={
               <Switch
                 checked={notifications.specialOffers}
-                onChange={(value) => setNotifications((prev) => ({ ...prev, specialOffers: value }))}
+                onChange={(value) =>
+                  setNotifications((prev) => ({ ...prev, specialOffers: value }))
+                }
               />
             }
             showArrow={false}
@@ -1270,13 +1304,17 @@ const Profile = () => {
             icon={<Trash2 size={20} color={COLORS.error} />}
             onPress={() => {
               Alert.alert(
-                "Delete Account",
-                "Are you sure you want to permanently delete your account? This action cannot be undone.",
+                'Delete Account',
+                'Are you sure you want to permanently delete your account? This action cannot be undone.',
                 [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Delete", style: "destructive", onPress: () => Alert.alert("Account deleted") },
-                ],
-              )
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => Alert.alert('Account deleted'),
+                  },
+                ]
+              );
             }}
           />
           <View style={styles.separator} />
@@ -1289,7 +1327,7 @@ const Profile = () => {
         </View>
       </View>
     </>
-  )
+  );
 
   // Main Render
   return (
@@ -1300,8 +1338,7 @@ const Profile = () => {
           colors={COLORS.gradientPrimary}
           style={styles.headerGradient}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+          end={{ x: 1, y: 1 }}>
           <View style={styles.profileSection}>
             <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
               <View style={styles.profileImageContainer}>
@@ -1463,18 +1500,22 @@ const Profile = () => {
         <View style={styles.sideMenuContainer}>
           {/* Overlay */}
           <Animated.View style={[styles.sideMenuOverlay, { opacity: overlayOpacity }]}>
-            <TouchableOpacity style={styles.overlayTouchable} onPress={closeSideMenu} activeOpacity={1} />
+            <TouchableOpacity
+              style={styles.overlayTouchable}
+              onPress={closeSideMenu}
+              activeOpacity={1}
+            />
           </Animated.View>
 
           {/* Side Menu Panel - Modified for left positioning */}
-          <Animated.View style={[styles.sideMenuPanel, { transform: [{ translateX: sideMenuTranslateX }] }]}>
+          <Animated.View
+            style={[styles.sideMenuPanel, { transform: [{ translateX: sideMenuTranslateX }] }]}>
             {/* Side Menu Header */}
             <LinearGradient
               colors={COLORS.gradientPrimary}
               style={styles.sideMenuHeader}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
+              end={{ x: 1, y: 1 }}>
               <Text style={styles.sideMenuTitle}>Menu</Text>
               <TouchableOpacity onPress={closeSideMenu} style={styles.closeButton}>
                 <X size={24} color={COLORS.white} />
@@ -1488,8 +1529,7 @@ const Profile = () => {
                 title="Vehicles"
                 icon={<Car size={22} color={COLORS.accent} />}
                 isExpanded={expandedSections.vehicles}
-                onToggle={() => toggleSection("vehicles")}
-              >
+                onToggle={() => toggleSection('vehicles')}>
                 {renderVehiclesContent()}
               </DropdownSection>
 
@@ -1498,8 +1538,7 @@ const Profile = () => {
                 title="Orders"
                 icon={<ShoppingCart size={22} color={COLORS.info} />}
                 isExpanded={expandedSections.orders}
-                onToggle={() => toggleSection("orders")}
-              >
+                onToggle={() => toggleSection('orders')}>
                 {renderOrdersContent()}
               </DropdownSection>
 
@@ -1508,8 +1547,7 @@ const Profile = () => {
                 title="Settings"
                 icon={<Settings size={22} color={COLORS.textSecondary} />}
                 isExpanded={expandedSections.settings}
-                onToggle={() => toggleSection("settings")}
-              >
+                onToggle={() => toggleSection('settings')}>
                 {renderSettingsContent()}
               </DropdownSection>
             </ScrollView>
@@ -1523,8 +1561,7 @@ const Profile = () => {
         visible={editProfileModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setEditProfileModal(false)}
-      >
+        onRequestClose={() => setEditProfileModal(false)}>
         <View style={styles.modalContainer}>
           <LinearGradient colors={COLORS.gradientPrimary} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setEditProfileModal(false)}>
@@ -1541,7 +1578,10 @@ const Profile = () => {
               <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
                 <View style={styles.editProfileImageContainer}>
                   {editForm.profileImage ? (
-                    <Image source={{ uri: editForm.profileImage }} style={styles.editProfileImage} />
+                    <Image
+                      source={{ uri: editForm.profileImage }}
+                      style={styles.editProfileImage}
+                    />
                   ) : (
                     <View style={styles.editPlaceholderImage}>
                       <User size={40} color={COLORS.gray400} />
@@ -1610,8 +1650,7 @@ const Profile = () => {
         visible={addVehicleModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setAddVehicleModal(false)}
-      >
+        onRequestClose={() => setAddVehicleModal(false)}>
         <View style={styles.modalContainer}>
           <LinearGradient colors={COLORS.gradientPrimary} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setAddVehicleModal(false)}>
@@ -1701,8 +1740,7 @@ const Profile = () => {
         visible={vehicleDetailModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setVehicleDetailModal(false)}
-      >
+        onRequestClose={() => setVehicleDetailModal(false)}>
         {selectedVehicle && (
           <View style={styles.modalContainer}>
             <LinearGradient colors={COLORS.gradientPrimary} style={styles.modalHeader}>
@@ -1721,7 +1759,11 @@ const Profile = () => {
               {/* Enhanced 360 Degree Car View */}
               <View style={styles.car360Container}>
                 <View style={styles.car360View} {...panResponder.panHandlers}>
-                  <Image source={{ uri: selectedVehicle.image360 }} style={styles.car360Image} resizeMode="contain" />
+                  <Image
+                    source={{ uri: selectedVehicle.image360 }}
+                    style={styles.car360Image}
+                    resizeMode="contain"
+                  />
                 </View>
                 <View style={styles.car360Controls}>
                   <TouchableOpacity style={styles.rotateButton} activeOpacity={0.8}>
@@ -1780,7 +1822,7 @@ const Profile = () => {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Engine Status</Text>
-                  <Text style={[styles.infoValue, { textTransform: "capitalize" }]}>
+                  <Text style={[styles.infoValue, { textTransform: 'capitalize' }]}>
                     {selectedVehicle.engineStatus}
                   </Text>
                 </View>
@@ -1790,7 +1832,9 @@ const Profile = () => {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Next Service</Text>
-                  <Text style={[styles.infoValue, { color: COLORS.accent }]}>{selectedVehicle.nextService}</Text>
+                  <Text style={[styles.infoValue, { color: COLORS.accent }]}>
+                    {selectedVehicle.nextService}
+                  </Text>
                 </View>
               </View>
 
@@ -1798,7 +1842,9 @@ const Profile = () => {
               <View style={styles.serviceHistorySection}>
                 <Text style={styles.sectionTitle}>Service History</Text>
                 {selectedVehicle.services.length > 0 ? (
-                  selectedVehicle.services.map((service) => <ServiceItem key={service.id} service={service} />)
+                  selectedVehicle.services.map((service) => (
+                    <ServiceItem key={service.id} service={service} />
+                  ))
                 ) : (
                   <View style={styles.emptyState}>
                     <View style={styles.emptyIconContainer}>
@@ -1821,8 +1867,7 @@ const Profile = () => {
         visible={orderDetailModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setOrderDetailModal(false)}
-      >
+        onRequestClose={() => setOrderDetailModal(false)}>
         {selectedOrder && (
           <View style={styles.modalContainer}>
             <LinearGradient colors={COLORS.gradientPrimary} style={styles.modalHeader}>
@@ -1848,14 +1893,13 @@ const Profile = () => {
                       styles.statusBadge,
                       {
                         backgroundColor:
-                          selectedOrder.status === "delivered"
+                          selectedOrder.status === 'delivered'
                             ? COLORS.success
-                            : selectedOrder.status === "shipped"
+                            : selectedOrder.status === 'shipped'
                               ? COLORS.info
                               : COLORS.warning,
                       },
-                    ]}
-                  >
+                    ]}>
                     <Text style={styles.statusText}>{selectedOrder.status}</Text>
                   </View>
                 </View>
@@ -1892,8 +1936,12 @@ const Profile = () => {
                       <Text style={styles.orderItemName}>{item.name}</Text>
                       <Text style={styles.orderItemPrice}>{item.price}</Text>
                       <Text style={styles.orderItemQuantity}>Quantity: {item.quantity}</Text>
-                      {item.partNumber && <Text style={styles.orderItemPartNumber}>Part #: {item.partNumber}</Text>}
-                      {item.warranty && <Text style={styles.orderItemWarranty}>Warranty: {item.warranty}</Text>}
+                      {item.partNumber && (
+                        <Text style={styles.orderItemPartNumber}>Part #: {item.partNumber}</Text>
+                      )}
+                      {item.warranty && (
+                        <Text style={styles.orderItemWarranty}>Warranty: {item.warranty}</Text>
+                      )}
                     </View>
                   </View>
                 ))}
@@ -1918,8 +1966,7 @@ const Profile = () => {
         visible={privacyPolicyModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setPrivacyPolicyModal(false)}
-      >
+        onRequestClose={() => setPrivacyPolicyModal(false)}>
         <View style={styles.modalContainer}>
           <LinearGradient colors={COLORS.gradientPrimary} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setPrivacyPolicyModal(false)}>
@@ -1931,22 +1978,26 @@ const Profile = () => {
 
           <ScrollView style={styles.modalContent}>
             <Text style={styles.privacyText}>
-              Last updated: January 2024{"\n\n"}
-              We respect your privacy and are committed to protecting your personal data. This privacy policy explains
-              how we collect, use, and safeguard your information when you use our services.{"\n\n"}
-              <Text style={styles.privacySectionTitle}>Information We Collect{"\n"}</Text>• Personal identification
-              information (name, email, phone number){"\n"}• Vehicle information (make, model, year, license plate)
-              {"\n"}• Service history and preferences{"\n"}• Payment information (securely processed by third-party
-              providers){"\n\n"}
-              <Text style={styles.privacySectionTitle}>How We Use Your Information{"\n"}</Text>• To provide and maintain
-              our services{"\n"}• To process transactions and send notifications{"\n"}• To improve our services and user
-              experience{"\n"}• To communicate with you about your account and services
-              {"\n\n"}
-              <Text style={styles.privacySectionTitle}>Data Security{"\n"}</Text>
-              We implement appropriate security measures to protect your personal information against unauthorized
-              access, alteration, disclosure, or destruction.{"\n\n"}
-              <Text style={styles.privacySectionTitle}>Contact Us{"\n"}</Text>
-              If you have questions about this privacy policy, please contact us at privacy@autoservice.com
+              Last updated: January 2024{'\n\n'}
+              We respect your privacy and are committed to protecting your personal data. This
+              privacy policy explains how we collect, use, and safeguard your information when you
+              use our services.{'\n\n'}
+              <Text style={styles.privacySectionTitle}>Information We Collect{'\n'}</Text>• Personal
+              identification information (name, email, phone number){'\n'}• Vehicle information
+              (make, model, year, license plate)
+              {'\n'}• Service history and preferences{'\n'}• Payment information (securely processed
+              by third-party providers){'\n\n'}
+              <Text style={styles.privacySectionTitle}>How We Use Your Information{'\n'}</Text>• To
+              provide and maintain our services{'\n'}• To process transactions and send
+              notifications{'\n'}• To improve our services and user experience{'\n'}• To communicate
+              with you about your account and services
+              {'\n\n'}
+              <Text style={styles.privacySectionTitle}>Data Security{'\n'}</Text>
+              We implement appropriate security measures to protect your personal information
+              against unauthorized access, alteration, disclosure, or destruction.{'\n\n'}
+              <Text style={styles.privacySectionTitle}>Contact Us{'\n'}</Text>
+              If you have questions about this privacy policy, please contact us at
+              privacy@autoservice.com
             </Text>
           </ScrollView>
         </View>
@@ -1957,8 +2008,7 @@ const Profile = () => {
         visible={helpCentreModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setHelpCentreModal(false)}
-      >
+        onRequestClose={() => setHelpCentreModal(false)}>
         <View style={styles.modalContainer}>
           <LinearGradient colors={COLORS.gradientPrimary} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setHelpCentreModal(false)}>
@@ -1975,32 +2025,32 @@ const Profile = () => {
               <View style={styles.faqItem}>
                 <Text style={styles.faqQuestion}>How do I book a service?</Text>
                 <Text style={styles.faqAnswer}>
-                  You can book a service by navigating to the Services tab and selecting the type of service you need.
-                  Choose your preferred date and time, and confirm your booking.
+                  You can book a service by navigating to the Services tab and selecting the type of
+                  service you need. Choose your preferred date and time, and confirm your booking.
                 </Text>
               </View>
 
               <View style={styles.faqItem}>
                 <Text style={styles.faqQuestion}>How can I track my parts order?</Text>
                 <Text style={styles.faqAnswer}>
-                  Go to the Orders tab in your profile to view all your orders. Click on any order to see detailed
-                  tracking information and current status.
+                  Go to the Orders tab in your profile to view all your orders. Click on any order
+                  to see detailed tracking information and current status.
                 </Text>
               </View>
 
               <View style={styles.faqItem}>
                 <Text style={styles.faqQuestion}>Can I cancel or reschedule my appointment?</Text>
                 <Text style={styles.faqAnswer}>
-                  Yes, you can cancel or reschedule your appointment up to 24 hours before the scheduled time without
-                  any penalty. Contact us or use the app to make changes.
+                  Yes, you can cancel or reschedule your appointment up to 24 hours before the
+                  scheduled time without any penalty. Contact us or use the app to make changes.
                 </Text>
               </View>
 
               <View style={styles.faqItem}>
                 <Text style={styles.faqQuestion}>What payment methods do you accept?</Text>
                 <Text style={styles.faqAnswer}>
-                  We accept all major credit cards, debit cards, and digital payment methods including Apple Pay and
-                  Google Pay.
+                  We accept all major credit cards, debit cards, and digital payment methods
+                  including Apple Pay and Google Pay.
                 </Text>
               </View>
             </View>
@@ -2029,8 +2079,7 @@ const Profile = () => {
         visible={termsModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setTermsModal(false)}
-      >
+        onRequestClose={() => setTermsModal(false)}>
         <View style={styles.modalContainer}>
           <LinearGradient colors={COLORS.gradientPrimary} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setTermsModal(false)}>
@@ -2042,7 +2091,7 @@ const Profile = () => {
 
           <ScrollView style={styles.modalContent}>
             <Text style={styles.termsHeader}>
-              Last updated: January 2024{"\n\n"}
+              Last updated: January 2024{'\n\n'}
               Please read these Terms and Conditions carefully before using our service.
             </Text>
 
@@ -2058,8 +2107,8 @@ const Profile = () => {
         </View>
       </Modal>
     </View>
-  )
-}
+  );
+};
 
 // Enhanced Professional Styles
 const styles = StyleSheet.create({
@@ -2068,7 +2117,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 24,
     paddingHorizontal: 20,
     shadowColor: COLORS.shadowStrong,
@@ -2078,18 +2127,18 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   headerGradient: {
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 24,
     paddingHorizontal: 20,
-    marginTop: Platform.OS === "ios" ? -60 : -40,
+    marginTop: Platform.OS === 'ios' ? -60 : -40,
     marginHorizontal: -20,
   },
   profileSection: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   profileImageContainer: {
-    position: "relative",
+    position: 'relative',
     shadowColor: COLORS.shadowStrong,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -2108,21 +2157,21 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     backgroundColor: COLORS.white,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 4,
     borderColor: COLORS.accent,
   },
   cameraIcon: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 2,
     right: 2,
     backgroundColor: COLORS.accent,
     borderRadius: 16,
     width: 32,
     height: 32,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 3,
     borderColor: COLORS.white,
     shadowColor: COLORS.shadowStrong,
@@ -2136,13 +2185,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 6,
   },
   profileName: {
     fontSize: 24,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.white,
     marginRight: 8,
   },
@@ -2153,13 +2202,13 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   editProfileButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.accent,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    alignSelf: "flex-start",
+    alignSelf: 'flex-start',
     shadowColor: COLORS.shadowMedium,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
@@ -2169,13 +2218,13 @@ const styles = StyleSheet.create({
   editProfileText: {
     fontSize: 14,
     color: COLORS.white,
-    fontWeight: "600",
+    fontWeight: '600',
     marginLeft: 6,
   },
   menuButton: {
     padding: 12,
     borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     shadowColor: COLORS.shadowMedium,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -2190,15 +2239,15 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 16,
   },
   sectionTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 20,
     marginTop: 12,
@@ -2208,8 +2257,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: COLORS.cardSecondary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 14,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -2219,7 +2268,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.textPrimary,
     letterSpacing: 0.3,
   },
@@ -2234,14 +2283,14 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: 1,
     borderColor: COLORS.gray100,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   menuItem: {
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
   menuItemContent: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 18,
     minHeight: 76,
   },
@@ -2250,8 +2299,8 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: COLORS.cardSecondary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 14,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -2269,14 +2318,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuItemTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   menuItemTitle: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
     flex: 1,
     letterSpacing: 0.2,
@@ -2291,7 +2340,7 @@ const styles = StyleSheet.create({
   menuItemBadgeText: {
     color: COLORS.white,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   menuItemSubtitle: {
     fontSize: 14,
@@ -2299,9 +2348,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   vehicleItemHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   healthBadge: {
@@ -2313,24 +2362,24 @@ const styles = StyleSheet.create({
   healthBadgeText: {
     color: COLORS.white,
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   nextServiceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 6,
   },
   nextServiceText: {
     fontSize: 13,
     color: COLORS.accent,
     marginLeft: 4,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   estimatedDeliveryText: {
     fontSize: 13,
     color: COLORS.info,
     marginTop: 2,
-    fontStyle: "italic",
+    fontStyle: 'italic',
   },
   separator: {
     height: 1,
@@ -2338,7 +2387,7 @@ const styles = StyleSheet.create({
     marginLeft: 82,
   },
   statsContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     paddingHorizontal: 20,
     marginBottom: 32,
     gap: 12,
@@ -2347,7 +2396,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 20,
     padding: 24,
-    alignItems: "center",
+    alignItems: 'center',
     shadowColor: COLORS.shadowMedium,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
@@ -2374,8 +2423,8 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     backgroundColor: COLORS.cardSecondary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -2385,19 +2434,19 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 32,
-    fontWeight: "800",
+    fontWeight: '800',
     color: COLORS.textPrimary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 13,
     color: COLORS.textSecondary,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: '600',
+    textAlign: 'center',
   },
   addButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.accent,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -2411,11 +2460,11 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: COLORS.white,
     fontSize: 5,
-    fontWeight: "700",
+    fontWeight: '700',
     marginLeft: 6,
   },
   emptyState: {
-    alignItems: "center",
+    alignItems: 'center',
     padding: 48,
   },
   emptyIconContainer: {
@@ -2423,8 +2472,8 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     backgroundColor: COLORS.cardSecondary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -2434,14 +2483,14 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 15,
     color: COLORS.textSecondary,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
   },
@@ -2458,8 +2507,8 @@ const styles = StyleSheet.create({
   statusText: {
     color: COLORS.white,
     fontSize: 12,
-    fontWeight: "700",
-    textTransform: "capitalize",
+    fontWeight: '700',
+    textTransform: 'capitalize',
   },
   serviceItem: {
     backgroundColor: COLORS.cardSecondary,
@@ -2475,14 +2524,14 @@ const styles = StyleSheet.create({
     borderLeftColor: COLORS.accent,
   },
   serviceHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
   serviceType: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
   },
   serviceDescription: {
@@ -2492,14 +2541,14 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   serviceDetailsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     marginBottom: 12,
     gap: 12,
   },
   serviceDetailItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   serviceDetailText: {
     fontSize: 13,
@@ -2507,25 +2556,25 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   serviceFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   serviceDate: {
     fontSize: 13,
     color: COLORS.textTertiary,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   serviceCost: {
     fontSize: 17,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.accent,
   },
   switch: {
     width: 48,
     height: 28,
     borderRadius: 14,
-    justifyContent: "center",
+    justifyContent: 'center',
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -2545,7 +2594,7 @@ const styles = StyleSheet.create({
   },
   // Enhanced Side Menu Styles with Individual Dropdowns - Left to Right
   sideMenuContainer: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
@@ -2553,7 +2602,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   sideMenuOverlay: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
@@ -2564,7 +2613,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sideMenuPanel: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     bottom: 0,
@@ -2577,21 +2626,21 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
   sideMenuHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
   },
   closeButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   sideMenuTitle: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.white,
     marginLeft: 16,
   },
@@ -2602,9 +2651,9 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.gray100,
   },
   dropdownSectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 20,
     backgroundColor: COLORS.white,
@@ -2612,8 +2661,8 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.gray100,
   },
   dropdownSectionTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
   dropdownSectionIconContainer: {
@@ -2621,8 +2670,8 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
     backgroundColor: COLORS.cardSecondary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 14,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -2632,7 +2681,7 @@ const styles = StyleSheet.create({
   },
   dropdownSectionTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.textPrimary,
     letterSpacing: 0.3,
   },
@@ -2641,8 +2690,8 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: COLORS.cardSecondary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -2662,11 +2711,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardPrimary,
   },
   modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 20,
     shadowColor: COLORS.shadowMedium,
     shadowOffset: { width: 0, height: 2 },
@@ -2676,12 +2725,12 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.white,
   },
   saveButton: {
     fontSize: 17,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.accent,
   },
   modalContent: {
@@ -2689,11 +2738,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   photoSection: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 40,
   },
   editProfileImageContainer: {
-    position: "relative",
+    position: 'relative',
     marginBottom: 12,
   },
   editProfileImage: {
@@ -2708,21 +2757,21 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     backgroundColor: COLORS.cardSecondary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 4,
     borderColor: COLORS.accent,
   },
   editCameraIcon: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 4,
     right: 4,
     backgroundColor: COLORS.accent,
     borderRadius: 20,
     width: 40,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 4,
     borderColor: COLORS.white,
     shadowColor: COLORS.shadowMedium,
@@ -2734,14 +2783,14 @@ const styles = StyleSheet.create({
   photoHint: {
     fontSize: 15,
     color: COLORS.textSecondary,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   formSection: {
     marginBottom: 24,
   },
   fieldLabel: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
     marginBottom: 12,
   },
@@ -2759,10 +2808,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   car360Container: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 24,
     backgroundColor: COLORS.cardSecondary,
     borderRadius: 20,
@@ -2776,20 +2825,20 @@ const styles = StyleSheet.create({
   car360View: {
     width: 200,
     height: 200,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   car360Image: {
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
     borderRadius: 16,
   },
   car360Controls: {
     marginTop: 16,
   },
   rotateButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.accent,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -2803,13 +2852,13 @@ const styles = StyleSheet.create({
   rotateButtonText: {
     color: COLORS.white,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
     marginLeft: 8,
   },
   car360Hint: {
     fontSize: 12,
     color: COLORS.textSecondary,
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 8,
   },
   vehicleHealthSection: {
@@ -2829,34 +2878,34 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   carStatusLabelContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
   carStatusIconContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   carStatusLabel: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    fontWeight: "500",
+    fontWeight: '500',
     marginLeft: 6,
   },
   carStatusValue: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
   },
   carStatusBarBackground: {
     height: 8,
     backgroundColor: COLORS.gray200,
     borderRadius: 4,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   carStatusBarFill: {
-    height: "100%",
+    height: '100%',
     borderRadius: 4,
   },
   vehicleInfoSection: {
@@ -2871,19 +2920,19 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
   },
   infoLabel: {
     fontSize: 15,
     color: COLORS.textSecondary,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   infoValue: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
   },
   serviceHistorySection: {
@@ -2901,41 +2950,41 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   orderSummaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
   },
   orderSummaryLabel: {
     fontSize: 15,
     color: COLORS.textSecondary,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   orderSummaryValue: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
   },
   orderTotal: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.accent,
   },
   trackingButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   trackingText: {
     fontSize: 14,
     color: COLORS.accent,
     marginRight: 4,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   orderItemsSection: {
     marginBottom: 24,
   },
   orderItemCard: {
-    flexDirection: "row",
+    flexDirection: 'row',
     backgroundColor: COLORS.white,
     padding: 20,
     borderRadius: 16,
@@ -2959,13 +3008,13 @@ const styles = StyleSheet.create({
   },
   orderItemName: {
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: '500',
     color: COLORS.textPrimary,
     marginBottom: 4,
   },
   orderItemPrice: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.accent,
     marginBottom: 2,
   },
@@ -2982,19 +3031,19 @@ const styles = StyleSheet.create({
   orderItemWarranty: {
     fontSize: 12,
     color: COLORS.success,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   loadingOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingContainer: {
     backgroundColor: COLORS.white,
     padding: 32,
     borderRadius: 20,
-    alignItems: "center",
+    alignItems: 'center',
     shadowColor: COLORS.shadowStrong,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -3006,7 +3055,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: COLORS.textPrimary,
     marginTop: 16,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   privacyText: {
     fontSize: 15,
@@ -3014,7 +3063,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   privacySectionTitle: {
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
     fontSize: 17,
   },
@@ -3023,7 +3072,7 @@ const styles = StyleSheet.create({
   },
   helpSectionTitle: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.textPrimary,
     marginBottom: 16,
   },
@@ -3039,13 +3088,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   faqHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   faqQuestion: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
     flex: 1,
     marginRight: 16,
@@ -3057,8 +3106,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   contactButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.cardWarning,
     padding: 20,
     borderRadius: 16,
@@ -3073,7 +3122,7 @@ const styles = StyleSheet.create({
   },
   contactButtonText: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.accent,
     marginLeft: 16,
   },
@@ -3084,16 +3133,16 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   activityItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
   },
   activityIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   activityContent: {
@@ -3101,7 +3150,7 @@ const styles = StyleSheet.create({
   },
   activityTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
     marginBottom: 2,
   },
@@ -3131,13 +3180,13 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: COLORS.cardSecondary,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
   },
   tipTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.textPrimary,
     marginBottom: 8,
   },
@@ -3148,9 +3197,9 @@ const styles = StyleSheet.create({
   },
   fullWidthButton: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     marginLeft: 10,
   },
-})
+});
 
 export default Profile
