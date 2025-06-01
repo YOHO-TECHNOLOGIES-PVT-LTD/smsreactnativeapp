@@ -4,6 +4,7 @@ import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
 import { store } from '~/store';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Routes from '~/routes';
 
 export default function App() {
@@ -21,10 +22,12 @@ export default function App() {
   return (
     <>
       <Provider store={store}>
-        <NavigationContainer>
-          <Routes />
-          <Toast />
-        </NavigationContainer>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <Routes />
+            <Toast />
+          </NavigationContainer>
+        </SafeAreaProvider>
       </Provider>
     </>
   );
