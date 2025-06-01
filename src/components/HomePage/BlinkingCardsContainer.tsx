@@ -131,4 +131,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DELIVERY_COMPANY;
+export default BlinkingCardsContainer;
