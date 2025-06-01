@@ -3,9 +3,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import toast from '../utils/toast';
 import CustomDrawer from '../tabs/CustomDrawer';
-
 import {
+  BookingCartScreen,
+  BookingsScreen,
+  FAQsScreen,
   ForgotPasswordScreen,
+  HelpCenterScreen,
   HomeScreen,
   LoginScreen,
   NotificationScreen,
@@ -14,6 +17,7 @@ import {
   RegisterScreen,
   ServicesScreen,
   SetNewPasswordScreen,
+  SettingsScreen,
   SosScreen,
   SparePartsScreen,
 } from '~/screens';
@@ -34,6 +38,11 @@ export type RootStackParamList = {
   SetNewPasswordScreen: undefined;
   ForgotPasswordScreen: undefined;
   NotificationScreen: undefined;
+  SettingsScreen: undefined;
+  BookingCartScreen: undefined;
+  BookingsScreen: undefined;
+  FAQsScreen: undefined;
+  HelpCenterScreen: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -83,6 +92,11 @@ const Routes: React.FC = () => {
       <Stack.Screen name="SparePartsScreen" component={SparePartsScreen} />
       <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+      <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+      <Stack.Screen name="BookingsScreen" component={BookingsScreen} />
+      <Stack.Screen name="BookingCartSceen" component={BookingCartScreen} />
+      <Stack.Screen name="HelpCenterScreen" component={HelpCenterScreen} />
+      <Stack.Screen name="FAQsScreen" component={FAQsScreen} />
     </Stack.Navigator>
   );
 

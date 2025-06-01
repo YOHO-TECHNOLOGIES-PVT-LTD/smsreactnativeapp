@@ -10,23 +10,16 @@ export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export const icons = {
-  zoom: require('../assets/icons/zoom.png'),
   magnify: require('../assets/icons/magnifying-glass.png'),
   voice: require('../assets/icons/voice.png'),
   close_mark: require('../assets/icons/close.png'),
   menu_dots: require('../assets/icons/menu-dots-vertical.png'),
   single_tick: require('../assets/icons/icons8-done-32.png'),
   double_tick: require('../assets/icons/[CITYPNG.COM]HD Grey Double Tick Check Mark Icon WhatsApp PNG - 2000x2000.png'),
-  home_filled: require('../assets/icons/home_filled.png'),
-  home_outlined: require('../assets/icons/home_outlined.png'),
-  course_filled: require('../assets/icons/course-filled.png'),
-  course_outlined: require('../assets/icons/course-outlined.png'),
-  class_filled: require('../assets/icons/class-filled.png'),
-  class_outlined: require('../assets/icons/class-outlined.png'),
+  home_filled: require('../assets/icons/home-filled.png'),
+  home_outlined: require('../assets/icons/home-outlined.png'),
   calendar_filled: require('../assets/icons/calendar-filled.png'),
   calendar_outlined: require('../assets/icons/calendar-outlined.png'),
-  account_filled: require('../assets/icons/account-filled.png'),
-  account_outlined: require('../assets/icons/account-outlined.png'),
   stats_filled: require('../assets/icons/stats-filled.png'),
   stats_outlined: require('../assets/icons/stats-outlined.png'),
   add_filled: require('../assets/icons/add-filled.png'),
@@ -35,8 +28,6 @@ export const icons = {
   more_outlined: require('../assets/icons/more_outlined.png'),
   more_filled: require('../assets/icons/more_filled.png'),
   notification: require('../assets/icons/notification.png'),
-  community_filled: require('../assets/icons/community-filled.png'),
-  community_outlined: require('../assets/icons/community-outline.png'),
   search: require('../assets/icons/search.png'),
   search_two: require('../assets/icons/search_two.png'),
   filter: require('../assets/icons/filter.png'),
@@ -52,21 +43,17 @@ export const icons = {
   down: require('../assets/icons/down.png'),
   menu: require('../assets/icons/menu.png'),
   card_background: require('../assets/icons/card-background.png'),
-  logo: require('../assets/icons/logo.png'),
+  // logo: require('../assets/icons/logo.png'),
   girl: require('../assets/icons/girl.png'),
-  white_triangle: require('../assets/icons/white_rectangle.png'),
   background: require('../assets/icons/background.png'),
-  onboarding_1: require('../assets/icons/onboarding_1.png'),
-  onboarding_2: require('../assets/icons/onboarding_2.png'),
-  onboarding_3: require('../assets/icons/onboarding_3.png'),
-  attendance_background: require('../assets/icons/attendance_baground.png'),
+  profile_background: require('../assets/icons/attendance_baground.png'),
   left_arrow: require('../assets/icons/left_arrow.png'),
   right_arrow: require('../assets/icons/right_arrow.png'),
-  activity_background: require('../assets/icons/activity_background.png'),
-  payment_background: require('../assets/icons/payment.png'),
-  class_background: require('../assets/icons/class_background.png'),
-  course_background: require('../assets/icons/course_back.png'),
-  ticket_background: require('../assets/icons/ticket_back.png'),
+  spares_background: require('../assets/icons/activity_background.png'),
+  services_background: require('../assets/icons/payment.png'),
+  home_background: require('../assets/icons/class_background.png'),
+  booking_background: require('../assets/icons/course_back.png'),
+  cart_background: require('../assets/icons/ticket_back.png'),
   logs_outlined: require('../assets/icons/log-outlined.png'),
   logs_filled: require('../assets/icons/log-filled.png'),
   payment_outlined: require('../assets/icons/payment-outlined.png'),
@@ -77,9 +64,6 @@ export const icons = {
   help_filled: require('../assets/icons/help-center-filled.png'),
   tick: require('../assets/icons/check.png'),
   pending: require('../assets/icons/pending.png'),
-  live_class: require('../assets/icons/live.png'),
-  online_class: require('../assets/icons/online_class.png'),
-  offline_class: require('../assets/icons/offline_class.png'),
   logout: require('../assets/icons/logout.png'),
   calendar_color: require('../assets/icons/calendar.png'),
   course_fee: require('../assets/icons/course-fee.png'),
@@ -92,6 +76,17 @@ export const icons = {
   scholarship: require('../assets/icons/scholarship.png'),
   library: require('../assets/icons/library.png'),
   teacher: require('../assets/icons/teacher.png'),
+  sos: require('../assets/icons/sos.png'),
+  services_filled: require('../assets/icons/services-filled.png'),
+  services_outlined: require('../assets/icons/services-outlined.png'),
+  spare_filled: require('../assets/icons/spare-filled.png'),
+  spare_outlined: require('../assets/icons/spare-outlined.png'),
+  booking_filled: require('../assets/icons/booking-filled.png'),
+  booking_outlined: require('../assets/icons/booking-outlined.png'),
+  cart_filled: require('../assets/icons/cart-filled.png'),
+  cart_outlined: require('../assets/icons/cart-outlined.png'),
+  faq: require('../assets/icons/conversation.png'),
+  settings: require('../assets/icons/setting.png'),
 };
 
 export const screens = {
@@ -107,22 +102,32 @@ export const bottom_tabs = [
   {
     id: 0,
     label: screens.home,
+    icon: icons.home_outlined,
+    activeIcon: icons.home_filled,
   },
   {
     id: 1,
     label: screens.services,
+    icon: icons.services_outlined,
+    activeIcon: icons.services_filled,
   },
   {
     id: 2,
     label: screens.sos,
+    icon: icons.sos,
+    activeIcon: icons.sos,
   },
   {
     id: 3,
     label: screens.spare_parts,
+    icon: icons.spare_outlined,
+    activeIcon: icons.spare_filled,
   },
   {
     id: 4,
     label: screens.profile,
+    icon: icons.user_outlined,
+    activeIcon: icons.user_filled,
   },
 ];
 
@@ -135,6 +140,14 @@ export const COLORS = {
   error60: 'rgba(246, 86, 93, 0.6)',
   error20: 'rgba(246, 86, 93, 0.2)',
   error08: 'rgba(246, 86, 93, 0.08)',
+
+  // Warning
+  warning: 'rgba(255, 199, 46, 1)',
+  warning80: 'rgba(255, 199, 46, 0.8)',
+  warning60: 'rgba(255, 199, 46, 0.6)',
+  warning40: 'rgba(255, 199, 46, 0.4)',
+  warning20: 'rgba(255, 199, 46, 0.2)',
+  warning08: 'rgba(255, 199, 46, 0.08)',
 
   indigo: {
     100: '#d0d9f7',
@@ -149,13 +162,16 @@ export const COLORS = {
   },
   // Primary
   primary: '#9b111e',
-  primary80: 'rgba(78, 85, 175, 0.8)',
-  primary60: 'rgba(78, 85, 175, 0.6)',
-  primary20: 'rgba(78, 85, 175, 0.2)',
-  primary08: 'rgba(78, 85, 175, 0.08)',
+  primary_01: '#c22d3e',
+  primary_02: '#e0646f',
+  primary_03: '#f09ca3',
+  primary_04: '#f8d4d8',
+  primary_text: '#600912',
+  primary_borders: '#7f0d18',
+  primary_active: '#40060c',
 
   // Secondary
-  secondary: 'rgba(161, 219, 245, 1)',
+  secondary: 'rgba(161, 219, 245)',
   secondary80: 'rgba(161, 219, 245, 0.8)',
   secondary60: 'rgba(161, 219, 245, 0.6)',
   secondary40: 'rgba(161, 219, 245, 0.4)',
@@ -164,6 +180,7 @@ export const COLORS = {
   secondary08: 'rgba(161, 219, 245, 0.08)',
 
   // Success
+  success_green: '#82dd55',
   success: 'rgba(253, 212, 70, 1)',
   success80: 'rgba(253, 212, 70, 0.8)',
   success60: 'rgba(253, 212, 70, 0.6)',
@@ -240,19 +257,21 @@ export const COLORS = {
 
 export const SIZES = {
   // global sizes
-  base: wp('4%'), // Responsive base size
-  small: wp('2%'), // Responsive base size
   extraSmall: wp('1%'), // Responsive base size
-  font: RFValue(14), // Responsive font size
+  small: wp('2%'), // Responsive base size
   radius: wp('3%'), // Responsive radius
+  base: wp('4%'), // Responsive base size
   padding: wp('5%'), // Responsive padding
-  margin: wp('4%'), // Responsive margin
+  margin: wp('6%'), // Responsive margin
   extra: wp('7%'),
+  font: RFValue(14), // Responsive font size
 
   // font sizes
   largeTitle: 40,
   h1: 30,
   h2: 22,
+  h2_01: 20,
+  h2_02: 18,
   h3: 16,
   h4: 14,
   h5: 12,
@@ -283,6 +302,16 @@ export const FONTS = {
   h2: {
     fontFamily: 'Poppins-Bold',
     fontSize: SIZES.h2,
+    lineHeight: 30,
+  },
+  h2_01: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: SIZES.h2_01,
+    lineHeight: 30,
+  },
+  h2_02: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: SIZES.h2_02,
     lineHeight: 30,
   },
   h3: {
@@ -356,7 +385,15 @@ export const FONTS = {
 export const SPACING = {
   small: wp('4%'), // Responsive small spacing
   medium: wp('8%'), // Responsive medium spacing
+  medium_01: wp('9%'), // Responsive medium spacing
+  medium_02: wp('10%'), // Responsive medium spacing
   large: wp('12%'), // Responsive large spacing
+  xl: wp('16%'), // Responsive extra large spacing
+  xl_01: wp('18%'), // Responsive extra large spacing
+  xl_02: wp('20%'), // Responsive extra large spacing
+  xl_03: wp('22%'), // Responsive extra large spacing
+  xxl: wp('24%'), // Responsive extra extra large spacing
+  xxxl: wp('32%'), // Responsive extra extra extra large spacing
 };
 
 // Elevation

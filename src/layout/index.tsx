@@ -17,10 +17,10 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useDrawerProgress } from '@react-navigation/drawer';
 import { useSelector, useDispatch } from 'react-redux';
-
 import { setSelectedTab } from '../store/tab/tabSlice';
-import { COLORS, FONTS, SIZES, icons, screens, bottom_tabs } from '../constants';
+import { COLORS, FONTS, SIZES, icons, screens, bottom_tabs, SPACING } from '../constants';
 import { HomeScreen, ServicesScreen, SosScreen, SparePartsScreen, ProfileScreen } from '~/screens';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabButtonProps = {
   label: string;
@@ -29,6 +29,7 @@ type TabButtonProps = {
   onPress: () => void;
   outerContainerStyle?: any;
   innerContainerStyle?: any;
+  isScanButton?: boolean;
 };
 
 const TabButton: React.FC<TabButtonProps> = ({
@@ -38,41 +39,58 @@ const TabButton: React.FC<TabButtonProps> = ({
   onPress,
   outerContainerStyle,
   innerContainerStyle,
+  isScanButton = false,
 }) => (
   <TouchableWithoutFeedback onPress={onPress}>
     <Animated.View
-      style={[{ flex: 1, alignItems: 'center', justifyContent: 'center' }, outerContainerStyle]}>
+      style={[
+        {
+          flex: isScanButton ? 0 : 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          top: isScanButton ? -30 : 0,
+        },
+        outerContainerStyle,
+      ]}>
       <Animated.View
         style={[
           {
             flexDirection: 'column',
-            width: '100%',
-            height: 50,
-            alignItems: 'center',
+            width: isScanButton ? 60 : '100%',
+            height: isScanButton ? SPACING.xl : SPACING.small,
+            borderRadius: isScanButton ? 32.5 : 25,
+            backgroundColor: isScanButton ? COLORS.primary : '',
             justifyContent: 'center',
-            borderRadius: 25,
+            alignItems: 'center',
+            elevation: isScanButton ? 5 : 0,
+            shadowColor: COLORS.primary,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isScanButton ? 0.3 : 0,
+            shadowRadius: 6,
           },
           innerContainerStyle,
         ]}>
         <View
           style={{
-            backgroundColor: isFocused ? COLORS.secondary30 : '',
-            paddingHorizontal: 15,
+            backgroundColor: isScanButton ? '' : isFocused ? COLORS.primary_04 : COLORS.white,
+            paddingHorizontal: 10,
             paddingVertical: 5,
-            borderRadius: 25,
+            borderRadius: 50,
           }}>
           <Image
             source={icon}
             style={{
-              width: 20,
-              height: 20,
-              tintColor: isFocused ? COLORS.primary : COLORS.grey,
+              width: isScanButton ? 45 : 25,
+              height: isScanButton ? 45 : 25,
+              tintColor: isScanButton ? '' : isFocused ? COLORS.primary_borders : '',
             }}
           />
         </View>
-        <Text numberOfLines={1} style={{ color: COLORS.grey, ...FONTS.h6 }}>
-          {label}
-        </Text>
+        {!isScanButton && (
+          <Text numberOfLines={1} style={{ color: COLORS.primary_text, ...FONTS.h6 }}>
+            {label}
+          </Text>
+        )}
       </Animated.View>
     </Animated.View>
   </TouchableWithoutFeedback>
@@ -85,7 +103,6 @@ const MainLayout: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
   const selectedTab = useSelector((state: any) => state.tabReducer.selectedTab);
 
-  // Drawer animation style
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { perspective: 1000 },
@@ -108,7 +125,6 @@ const MainLayout: React.FC = () => {
     overflow: 'hidden',
   }));
 
-  // Shared values for tab colors
   const tabColors = {
     [screens.home]: useSharedValue(COLORS.white),
     [screens.services]: useSharedValue(COLORS.white),
@@ -117,7 +133,6 @@ const MainLayout: React.FC = () => {
     [screens.profile]: useSharedValue(COLORS.white),
   };
 
-  // Animated color styles for tabs
   const tabColorStyles = Object.keys(tabColors).reduce(
     (acc, key) => {
       acc[key] = useAnimatedStyle(() => ({ backgroundColor: tabColors[key].value }));
@@ -136,7 +151,7 @@ const MainLayout: React.FC = () => {
       flatListRef.current?.scrollToIndex({ index, animated: false });
     }
     for (const screen of Object.keys(tabColors)) {
-      tabColors[screen].value = withTiming(screen === selectedTab ? COLORS.primary : COLORS.white, {
+      tabColors[screen].value = withTiming(screen === selectedTab ? COLORS.white : COLORS.white, {
         duration: 200,
       });
     }
@@ -173,7 +188,9 @@ const MainLayout: React.FC = () => {
         />
       </View>
 
-      <View style={{ height: 80, justifyContent: 'flex-end', marginTop: -35 }}>
+      <SafeAreaView
+        edges={['bottom']}
+        style={{ backgroundColor: COLORS.white, marginTop: -SPACING.xl_01 }}>
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 4 }}
@@ -190,27 +207,34 @@ const MainLayout: React.FC = () => {
         />
         <View
           style={{
-            flex: 1,
             flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             paddingHorizontal: SIZES.radius,
-            paddingBottom: 10,
+            paddingBottom: Platform.OS === 'android' ? 10 : 0,
+            paddingTop: 5,
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             backgroundColor: COLORS.white,
             elevation: 10,
           }}>
-          {bottom_tabs.map((tab, index) => (
-            <TabButton
-              key={tab.id}
-              label={tab.label}
-              icon={selectedTab === tab.label ? icons.account_filled : icons.account_outlined}
-              isFocused={selectedTab === tab.label}
-              innerContainerStyle={tabColorStyles[tab.label]}
-              onPress={() => dispatch(setSelectedTab(tab.label))}
-            />
-          ))}
+          {bottom_tabs.map((tab) => {
+            const isScanButton = tab.label === screens.sos;
+            const isFocused = selectedTab === tab.label;
+            return (
+              <TabButton
+                key={tab.id}
+                label={tab.label}
+                icon={isScanButton ? tab.icon : isFocused ? tab.activeIcon : tab.icon}
+                isFocused={isFocused}
+                innerContainerStyle={tabColorStyles[tab.label]}
+                onPress={() => dispatch(setSelectedTab(tab.label))}
+                isScanButton={isScanButton}
+              />
+            );
+          })}
         </View>
-      </View>
+      </SafeAreaView>
     </Animated.View>
   );
 };
