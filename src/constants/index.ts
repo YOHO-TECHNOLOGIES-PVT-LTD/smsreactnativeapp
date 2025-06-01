@@ -248,6 +248,8 @@ export const SIZES = {
   padding: wp('5%'), // Responsive padding
   margin: wp('4%'), // Responsive margin
   extra: wp('7%'),
+  full: wp("100%"),
+  half: wp("50%"),
 
   // font sizes
   largeTitle: 40,
