@@ -1,52 +1,50 @@
 import React, { useState } from 'react';
-import {
-    SafeAreaView,
-    View,
-    TextInput,
-    FlatList,
-    Text,
-    StyleSheet,
-} from 'react-native';
-import { Styles } from '~/constants';
-
-const DATA = [
-    { id: '1', name: 'Apple' },
-    { id: '2', name: 'Banana' },
-    { id: '3', name: 'Cherry' },
-    { id: '4', name: 'Date' },
-    { id: '5', name: 'Elderberry' },
-];
+import { Image, StyleSheet } from 'react-native';
+import { SafeAreaView, View, TextInput } from 'react-native';
+import { COLORS, FONTS, icons, Styles } from '~/constants';
 
 const SearchBarExample = () => {
-    const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-    const filteredData = DATA.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    return (
-        <SafeAreaView style={Styles.safeArea}>
-            <View style={Styles.container}>
-                <TextInput
-                    style={Styles.searchBar}
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                />
-
-                {/* IF WE USE DATA TO FILTER WE CAN USE */}
-                {/* <FlatList
-                    data={filteredData}
-                    keyExtractor={item => item.id}
-                    renderItem={({ item }) => (
-                        <Text style={styles.item}>{item.name}</Text>
-                    )}
-                /> */}
-            </View>
-        </SafeAreaView>
-    );
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Search..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        <Image source={icons.search} style={styles.searchIcon} />
+      </View>
+    </SafeAreaView>
+  );
 };
 
-
-
 export default SearchBarExample;
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff', // optional, to set background
+  },
+  container: {
+    padding: 15,
+  },
+  searchBar: {
+    height: 45,
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    backgroundColor: COLORS.error08,
+    ...FONTS.body4,
+  },
+  searchIcon: {
+    width: 15,
+    height: 15,
+    tintColor: COLORS.primary_text,
+    position: 'absolute',
+    right: 25,
+    top: 30,
+    resizeMode: 'contain',
+  },
+});

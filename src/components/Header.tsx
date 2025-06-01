@@ -47,9 +47,7 @@ const Header: React.FC<HeaderProps> = ({
                 resizeMode: 'cover',
               } as ImageStyle
             }
-            source={{
-              uri: 'https://img.freepik.com/free-vector/harvard-hall-university-buildings-vector-cartoon-style_1308-160402.jpg',
-            }}
+            source={require('../assets/logo.png')}
             onError={() => setError(true)}
           />
         )}

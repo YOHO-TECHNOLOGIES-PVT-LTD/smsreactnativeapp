@@ -1,23 +1,29 @@
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import React, { useState } from 'react';
 import Header from '~/components/Header';
-import { COLORS, icons, screens, SIZES } from '~/constants';
+import { COLORS, FONTS, icons, screens, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
-import  TitleSearchBar  from '../../components/HomePage/SearchBar'
-
+import TitleSearchBar from '../../components/HomePage/SearchBar';
 
 // cpmponent pages
-import App from '../../components/HomePage/App'
-import AutoSlidingCarousel from '../../components/HomePage/AutoSlidingCarousel'
-import Offercard from '../../components/HomePage/offercard'
-import Scrollmultipleimage from '../../components/HomePage/Scrollmultipleimage'
-import Slideshow from '../../components/HomePage/Slideshow'
-import DELIVERY_COMPANY from '../../components/HomePage/BlinkingCardsContainer'
-import Differentsize from '../../components/HomePage/Differentsize'
-import HorizontalScroll from '../../components/HomePage/HorizontalScroll'
+import App from '../../components/HomePage/App';
+import AutoSlidingCarousel from '../../components/HomePage/AutoSlidingCarousel';
+import Offercard from '../../components/HomePage/offercard';
+import Scrollmultipleimage from '../../components/HomePage/Scrollmultipleimage';
+import Slideshow from '../../components/HomePage/Slideshow';
+import BlinkingImage from '../../components/HomePage/BlinkingCardsContainer';
+import Differentsize from '../../components/HomePage/Differentsize';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -32,7 +38,6 @@ const HomeScreen = () => {
           paddingHorizontal: SIZES.padding,
           alignItems: 'center',
         }}
-        logo={icons.logo}
         leftComponent={
           <TouchableOpacity
             style={{
@@ -42,7 +47,9 @@ const HomeScreen = () => {
               justifyContent: 'center',
               borderColor: COLORS.grey60,
             }}
-            onPress={() => {navigation.openDrawer()}}>
+            onPress={() => {
+              navigation.openDrawer();
+            }}>
             <Image source={icons.menu} style={{ width: 20, height: 20 }} resizeMode="contain" />
           </TouchableOpacity>
         }
@@ -68,9 +75,7 @@ const HomeScreen = () => {
                 dispatch(setSelectedTab(screens.profile));
               }}>
               <Image
-                source={{
-                  uri: 'https://avatar.iran.liara.run/public/boy?username=Ash',
-                }}
+                source={require('../../assets/images/profile_picture.jpg')}
                 style={{
                   width: 40,
                   height: 40,
@@ -84,19 +89,16 @@ const HomeScreen = () => {
       />
       <ScrollView>
         <View>
-
-          <Text>Home Page</Text>
           <TitleSearchBar />
-          < AutoSlidingCarousel />
+          <AutoSlidingCarousel />
           <App />
-          < Offercard/>
-          <Slideshow />
+          <Offercard />
+          {/* <Slideshow /> */}
           {/* <Scrollmultipleimage /> */}
-          <Differentsize/>
-          <DELIVERY_COMPANY />
-          </View>
-        <HorizontalScroll/>
-        
+          {/* <Differentsize /> */}
+          <BlinkingImage />
+          <View style={{ marginBottom: 45 }}></View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -109,5 +111,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.white,
     marginTop: 35,
+  },
+  btn: {
+    backgroundColor: 'red',
+    padding: SIZES.padding,
+    marginVertical: SIZES.padding,
+    borderRadius: SIZES.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -31,7 +31,7 @@ const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({ label, icon, isFocu
         alignItems: 'center',
         paddingLeft: SIZES.radius,
         borderRadius: SIZES.small,
-        backgroundColor: isFocused ? COLORS.transparentBlack1 : undefined,
+        backgroundColor: isFocused ? COLORS.error08 : undefined,
       }}
       onPress={onPress}>
       <Image
@@ -39,13 +39,13 @@ const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({ label, icon, isFocu
         style={{
           width: 20,
           height: 20,
-          tintColor: COLORS.white,
+          tintColor: COLORS.primary,
         }}
       />
       <Text
         style={{
-          marginLeft: 15,
-          color: COLORS.white,
+          marginLeft: SIZES.radius,
+          color: COLORS.primary,
           ...FONTS.h4,
         }}>
         {label}
@@ -58,7 +58,7 @@ type DrawerContentProps = {
   navigation: DrawerNavigationProp<any>;
 };
 
-const StudentDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
+const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
   const dispatch = useDispatch();
   const selectedTab = useSelector((state: RootState) => state.tabReducer.selectedTab);
   const [error, setError] = useState(false);
@@ -111,7 +111,7 @@ const StudentDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             onPress={() => navigation.closeDrawer()}>
             <Image
               source={icons?.cross}
-              style={{ height: 20, width: 20, tintColor: COLORS.white }}
+              style={{ height: 20, width: 20, tintColor: COLORS.primary }}
             />
           </TouchableOpacity>
         </View>
@@ -123,13 +123,15 @@ const StudentDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             navigation.navigate('MainLayout');
           }}>
           <Image
-            source={{ uri: 'https://avatar.iran.liara.run/public/boy?username=Ash' }}
+            source={require('../assets/images/profile_picture.jpg')}
             onError={() => setError(true)}
             style={{ width: 50, height: 50, borderRadius: 25 }}
           />
           <View style={{ marginLeft: SIZES.radius, flex: 1 }}>
-            <Text style={{ color: COLORS.white, ...FONTS.h4, flexShrink: 1 }}>Username</Text>
-            <Text style={{ color: COLORS.lightGrey80, ...FONTS.h6 }}>ID: N/A</Text>
+            <Text style={{ color: COLORS.primary_text, ...FONTS.h2_01, flexShrink: 1 }}>
+              YM User
+            </Text>
+            <Text style={{ color: COLORS.primary_text, ...FONTS.h5 }}>ID: #YMU_1234</Text>
           </View>
         </TouchableOpacity>
 
@@ -145,7 +147,9 @@ const StudentDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
           />
           <CustomDrawerItem
             label={screens.services}
-            icon={selectedTab === screens.services ? icons.course_filled : icons.course_outlined}
+            icon={
+              selectedTab === screens.services ? icons.services_filled : icons.services_outlined
+            }
             isFocused={selectedTab === screens.services}
             onPress={() => {
               dispatch(setSelectedTab(screens.services));
@@ -153,19 +157,8 @@ const StudentDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             }}
           />
           <CustomDrawerItem
-            label={screens.sos}
-            icon={selectedTab === screens.sos ? icons.class_filled : icons.class_outlined}
-            isFocused={selectedTab === screens.sos}
-            onPress={() => {
-              dispatch(setSelectedTab(screens.sos));
-              navigation.navigate('MainLayout');
-            }}
-          />
-          <CustomDrawerItem
             label={screens.spare_parts}
-            icon={
-              selectedTab === screens.spare_parts ? icons.calendar_filled : icons.calendar_outlined
-            }
+            icon={selectedTab === screens.spare_parts ? icons.spare_filled : icons.spare_outlined}
             isFocused={selectedTab === screens.spare_parts}
             onPress={() => {
               dispatch(setSelectedTab(screens.spare_parts));
@@ -174,59 +167,56 @@ const StudentDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
           />
           <CustomDrawerItem
             label={screens.profile}
-            icon={selectedTab === screens.profile ? icons.account_filled : icons.account_outlined}
+            icon={selectedTab === screens.profile ? icons.user_filled : icons.user_outlined}
             isFocused={selectedTab === screens.profile}
             onPress={() => {
               dispatch(setSelectedTab(screens.profile));
               navigation.navigate('MainLayout');
             }}
           />
-
+          <CustomDrawerItem
+            label="Bookings"
+            icon={icons.booking_outlined}
+            onPress={() => navigation.navigate('BookingsScreen')}
+          />
+          <CustomDrawerItem
+            label="Booking Cart"
+            icon={icons.cart_outlined}
+            onPress={() => navigation.navigate('BookingCartScreen')}
+          />
+          <CustomDrawerItem
+            label="Settings"
+            icon={icons.settings}
+            onPress={() => navigation.navigate('SettingsScreen')}
+          />
+          <CustomDrawerItem
+            label="Help Center"
+            icon={icons.help_outlined}
+            onPress={() => navigation.navigate('HelpCenterScreen')}
+          />
+          <CustomDrawerItem
+            label="FAQs"
+            icon={icons.faq}
+            onPress={() => navigation.navigate('FAQsScreen')}
+          />
           <View
             style={{
               height: 1,
               marginVertical: SIZES.radius,
               marginLeft: SIZES.radius,
-              backgroundColor: COLORS.lightGray1,
+              backgroundColor: COLORS.primary_text,
             }}
           />
-
-          <CustomDrawerItem
-            label="Activity Logs"
-            icon={icons.logs_outlined}
-            onPress={() => navigation.navigate('ActivityLogScreen')}
-          />
-          <CustomDrawerItem
-            label="Bookings"
-            icon={icons.payment_outlined}
-            onPress={() => navigation.navigate('PaymentScreen')}
-          />
-          <CustomDrawerItem
-            label="Booking Cart"
-            icon={icons.ticket_outlined}
-            onPress={() => navigation.navigate('TicketsScreen')}
-          />
-          <CustomDrawerItem
-            label="Help Center"
-            icon={icons.help_outlined}
-            onPress={() => navigation.navigate('HelpcenterScreen')}
-          />
-          <CustomDrawerItem
-            label="FAQs"
-            icon={icons.help_outlined}
-            onPress={() => navigation.navigate('HelpcenterScreen')}
-          />
-        </View>
-
-        <View style={{ marginBottom: SIZES.padding }}>
-          <CustomDrawerItem label="Logout" icon={icons.logout} onPress={handleLogout} />
+          <View style={{ marginTop: SIZES.radius }}>
+            <CustomDrawerItem label="Logout" icon={icons.logout} onPress={handleLogout} />
+          </View>
         </View>
       </View>
     </DrawerContentScrollView>
   );
 };
 
-const StudentDrawer: React.FC = () => {
+const ServiceDrawer: React.FC = () => {
   const Drawer = createDrawerNavigator();
   const animatedValue = useSharedValue(0);
   const navigation = useNavigation<DrawerNavigationProp<any>>();
@@ -245,16 +235,16 @@ const StudentDrawer: React.FC = () => {
             flex: 1,
             width: '100%',
             paddingRight: 20,
-            backgroundColor: COLORS.primary,
+            backgroundColor: COLORS.primary_04,
           },
           headerShown: false,
         }}
         initialRouteName="MainLayout"
-        drawerContent={(props) => <StudentDrawerContent navigation={props.navigation} />}>
+        drawerContent={(props) => <ServiceDrawerContent navigation={props.navigation} />}>
         <Drawer.Screen name="MainLayout" component={MainLayout} />
       </Drawer.Navigator>
     </View>
   );
 };
 
-export default StudentDrawer;
+export default ServiceDrawer;
