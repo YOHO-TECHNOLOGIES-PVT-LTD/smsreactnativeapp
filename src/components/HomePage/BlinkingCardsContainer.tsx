@@ -1,5 +1,5 @@
 
-//div------6
+//DELIVERY COMPANY
 
 
 
@@ -71,7 +71,7 @@ const Card = ({ title, image }) => (
 
 
 // 📦 Main Component
-const BlinkingCardsContainer = () => {
+const DELIVERY_COMPANY = () => {
     return (
         <View>
             <View>
@@ -152,4 +152,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default BlinkingCardsContainer;
+export default DELIVERY_COMPANY;

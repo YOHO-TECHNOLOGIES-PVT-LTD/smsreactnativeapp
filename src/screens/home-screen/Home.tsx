@@ -15,8 +15,9 @@ import AutoSlidingCarousel from '../../components/HomePage/AutoSlidingCarousel'
 import Offercard from '../../components/HomePage/offercard'
 import Scrollmultipleimage from '../../components/HomePage/Scrollmultipleimage'
 import Slideshow from '../../components/HomePage/Slideshow'
-import BlinkingImage from '../../components/HomePage/BlinkingCardsContainer'
+import DELIVERY_COMPANY from '../../components/HomePage/BlinkingCardsContainer'
 import Differentsize from '../../components/HomePage/Differentsize'
+import HorizontalScroll from '../../components/HomePage/HorizontalScroll'
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -92,8 +93,10 @@ const HomeScreen = () => {
           <Slideshow />
           {/* <Scrollmultipleimage /> */}
           <Differentsize/>
-          <BlinkingImage />
-        </View>
+          <DELIVERY_COMPANY />
+          </View>
+        <HorizontalScroll/>
+        
       </ScrollView>
     </SafeAreaView>
   );
