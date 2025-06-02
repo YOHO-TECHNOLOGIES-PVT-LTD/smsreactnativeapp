@@ -90,7 +90,7 @@ const COLORS = {
   cardInfo: '#EFF6FF',
 
   // Accent colors - More professional amber/gold
-  accent: ['#D97706', '#F59E0B'],
+  // accent: ['#D97706', '#F59E0B'],
   accentLight: ['#F8FAFC', '#F1F5F9'], // Refined lighter amber
   accentDark: 'rgba(255, 132, 13, 0.08)', // Deeper amber
   accentinfo: ['#2563EB', '#3B82F6'],

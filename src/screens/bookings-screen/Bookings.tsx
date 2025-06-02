@@ -154,25 +154,25 @@ const Bookings = () => {
   const [tab, setTab] = useState<'All Orders' | 'Spare Parts' | 'Services'>('All Orders');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredOrders = allOrders.filter(order => {
+  const filteredOrders = allOrders.filter((order) => {
     // Filter by tab
-    const matchesTab = 
-      tab === 'All Orders' || 
-      (tab === 'Spare Parts' && order.type === 'spare') || 
+    const matchesTab =
+      tab === 'All Orders' ||
+      (tab === 'Spare Parts' && order.type === 'spare') ||
       (tab === 'Services' && order.type === 'service');
-    
+
     // Filter by search query (case insensitive)
-    const matchesSearch = 
+    const matchesSearch =
       searchQuery === '' ||
       order.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return matchesTab && matchesSearch;
   });
 
   // Counts for the summary cards
   const totalOrders = allOrders.length;
-  const completedOrders = allOrders.filter(order => {
+  const completedOrders = allOrders.filter((order) => {
     const orderDate = order.date ? new Date(order.date) : null;
     const today = new Date();
     return orderDate && orderDate < today;
@@ -206,7 +206,9 @@ const Bookings = () => {
               <Text style={styles.text}>Total Orders</Text>
             </View>
             <View style={styles.countCard}>
-              <Text style={{ color: COLORS.success_green, ...FONTS.h4 }}>{completedOrders}</Text>
+              <Text style={{ color: COLORS.success_lightgreen, ...FONTS.h4 }}>
+                {completedOrders}
+              </Text>
               <Text style={styles.text}>Completed</Text>
             </View>
             <View style={styles.countCard}>
@@ -218,9 +220,12 @@ const Bookings = () => {
           <View style={styles.tabContainer}>
             {/* search bar */}
             <View>
-              <TextInput style={styles.searchInput} placeholder="Search for your orders..."
-              value={searchQuery}
-                onChangeText={setSearchQuery} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search for your orders..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
               <TouchableOpacity style={styles.searchButton}>
                 <Image
                   source={icons.search}
@@ -287,7 +292,7 @@ const Bookings = () => {
           </View>
           {/* orderlist */}
           <ScrollView style={{ marginVertical: SIZES.radius }} showsVerticalScrollIndicator={false}>
-           {filteredOrders.length > 0 ? (
+            {filteredOrders.length > 0 ? (
               filteredOrders.map((item, index) => (
                 <BookingCard key={index} data={item} onPress={() => {}} />
               ))

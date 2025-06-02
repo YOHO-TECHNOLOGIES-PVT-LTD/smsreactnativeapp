@@ -24,21 +24,19 @@ const SOS = () => {
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
 
-
   const handleChange = (text) => {
-  if (/^\d*$/.test(text)) {
-    setValue(text);
-    const num = parseInt(text);
-    if (!isNaN(num) && num >= 10 && num <= 100) {
-      setError(false);
-    } else if (text !== '') {
-      setError(true);
-    } else {
-      setError(false);
+    if (/^\d*$/.test(text)) {
+      setValue(text);
+      const num = parseInt(text);
+      if (!isNaN(num) && num >= 10 && num <= 100) {
+        setError(false);
+      } else if (text !== '') {
+        setError(true);
+      } else {
+        setError(false);
+      }
     }
-  }
-};
-
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,11 +58,7 @@ const SOS = () => {
             onPress={() => {
               navigation.openDrawer();
             }}>
-            <Image
-              source={icons.menu}
-              style={{ width: 20, height: 20 }}
-              resizeMode="contain"
-            />
+            <Image source={icons.menu} style={{ width: 20, height: 20 }} resizeMode="contain" />
           </TouchableOpacity>
         }
         rightComponent={
@@ -76,7 +70,9 @@ const SOS = () => {
                 borderRadius: 25,
                 borderColor: COLORS.primary,
               }}
-              onPress={() => {}}
+              onPress={() => {
+                navigation.navigate('NotificationScreen');
+              }}
             />
 
             <TouchableOpacity
@@ -116,11 +112,11 @@ const SOS = () => {
           <View style={styles.Textcontainer}>
             <TextInput
               style={styles.input}
-              placeholder="                  -     -     -     -     -     -     -    -     -   "
+              placeholder=""
               value={value}
               onChangeText={handleChange}
               keyboardType="numeric"
-              maxLength={10} 
+              maxLength={10}
             />
           </View>
 

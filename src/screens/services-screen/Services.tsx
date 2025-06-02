@@ -494,7 +494,9 @@ const Services = () => {
                 borderRadius: 25,
                 borderColor: COLORS.primary,
               }}
-              onPress={() => {}}
+              onPress={() => {
+                navigation.navigate('NotificationScreen');
+              }}
             />
 
             <TouchableOpacity>
@@ -641,7 +643,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    marginTop: SIZES.newbody,
+    marginTop: 35,
   },
   header: {
     backgroundColor: COLORS.primary,

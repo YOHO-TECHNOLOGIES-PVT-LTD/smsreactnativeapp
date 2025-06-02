@@ -13,6 +13,8 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   interpolate,
+  withRepeat,
+  interpolateColor,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useDrawerProgress } from '@react-navigation/drawer';
@@ -41,61 +43,96 @@ const TabButton: React.FC<TabButtonProps> = ({
   outerContainerStyle,
   innerContainerStyle,
   isScanButton = false,
-}) => (
-  <TouchableWithoutFeedback onPress={onPress}>
-    <Animated.View
-      style={[
-        {
-          flex: isScanButton ? 0 : 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          top: isScanButton ? -30 : 0,
-        },
-        outerContainerStyle,
-      ]}>
+}) => {
+  const radialPulse = useSharedValue(0);
+
+  useEffect(() => {
+    if (isScanButton) {
+      radialPulse.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
+    }
+  }, [isScanButton]);
+
+  const radialGlowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: radialPulse.value }],
+    opacity: interpolate(radialPulse.value, [0.9, 1], [0.5, 0]),
+    backgroundColor: 'rgba(255, 0, 0, 0.4)',
+    borderRadius: 100,
+  }));
+
+  return (
+    <TouchableWithoutFeedback onPress={onPress}>
       <Animated.View
         style={[
           {
-            flexDirection: 'column',
-            width: isScanButton ? 60 : '100%',
-            height: isScanButton ? SPACING.xl : SPACING.small,
-            borderRadius: isScanButton ? 32.5 : 25,
-            backgroundColor: isScanButton ? COLORS.primary : '',
-            justifyContent: 'center',
+            flex: isScanButton ? 0 : 1,
             alignItems: 'center',
-            elevation: isScanButton ? 5 : 0,
-            shadowColor: COLORS.primary,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: isScanButton ? 0.3 : 0,
-            shadowRadius: 6,
+            justifyContent: 'center',
+            top: isScanButton ? -15 : 0,
           },
-          innerContainerStyle,
+          outerContainerStyle,
         ]}>
-        <View
-          style={{
-            backgroundColor: isScanButton ? '' : isFocused ? COLORS.primary_04 : COLORS.white,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            borderRadius: 50,
-          }}>
-          <Image
-            source={icon}
-            style={{
-              width: isScanButton ? 45 : 25,
-              height: isScanButton ? 45 : 25,
-              tintColor: isScanButton ? '' : isFocused ? COLORS.primary_borders : '',
-            }}
+        {isScanButton && (
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                width: 80,
+                height: 80,
+                zIndex: -1,
+              },
+              radialGlowStyle,
+            ]}
           />
-        </View>
-        {!isScanButton && (
-          <Text numberOfLines={1} style={{ color: COLORS.primary_text, ...FONTS.h6 }}>
-            {label}
-          </Text>
         )}
+
+        <Animated.View
+          style={[
+            {
+              flexDirection: 'column',
+              width: isScanButton ? 45 : '100%',
+              height: isScanButton ? 45 : SPACING.small,
+              borderRadius: isScanButton ? 32.5 : 25,
+              backgroundColor: isScanButton ? COLORS.primary : '',
+              justifyContent: 'center',
+              alignItems: 'center',
+              elevation: isScanButton ? 5 : 0,
+              shadowColor: COLORS.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isScanButton ? 0.3 : 0,
+              shadowRadius: 6,
+            },
+            innerContainerStyle,
+          ]}>
+          <View
+            style={{
+              backgroundColor: isScanButton ? '' : isFocused ? COLORS.primary_04 : COLORS.white,
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 50,
+            }}>
+            <Image
+              source={icon}
+              style={{
+                width: isScanButton ? 35 : 25,
+                height: isScanButton ? 35 : 25,
+                tintColor: isScanButton
+                  ? undefined
+                  : isFocused
+                    ? COLORS.primary_borders
+                    : undefined,
+              }}
+            />
+          </View>
+          {!isScanButton && (
+            <Text numberOfLines={1} style={{ color: COLORS.primary_text, ...FONTS.h7 }}>
+              {label}
+            </Text>
+          )}
+        </Animated.View>
       </Animated.View>
-    </Animated.View>
-  </TouchableWithoutFeedback>
-);
+    </TouchableWithoutFeedback>
+  );
+};
 
 const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
@@ -103,6 +140,33 @@ const MainLayout: React.FC = () => {
   const { width } = useWindowDimensions();
   const flatListRef = useRef<FlatList>(null);
   const selectedTab = useSelector((state: any) => state.tabReducer.selectedTab);
+
+  const sosAnimation = useSharedValue(1);
+  // const radialPulse = useSharedValue(0);
+
+  const sosAnimatedStyle = useAnimatedStyle(() => {
+    const scale = interpolate(sosAnimation.value, [0, 1], [1, 1.2]);
+    const opacity = interpolate(sosAnimation.value, [0, 1], [0.8, 1]);
+    const backgroundColor = interpolateColor(
+      sosAnimation.value,
+      [0, 0.5, 1],
+      ['rgba(255,0,0,0.2)', 'rgba(255,0,0,0.6)', 'rgba(255,0,0,1)']
+    );
+
+    return {
+      transform: [{ scale }],
+      opacity,
+      backgroundColor,
+      borderRadius: 999,
+    };
+  });
+
+  // const radialGlowStyle = useAnimatedStyle(() => ({
+  //   transform: [{ scale: radialPulse.value }],
+  //   opacity: interpolate(radialPulse.value, [0.9, 1], [0.5, 0]),
+  //   backgroundColor: 'rgba(255, 0, 0, 0.4)',
+  //   borderRadius: 100,
+  // }));
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -126,35 +190,20 @@ const MainLayout: React.FC = () => {
     overflow: 'hidden',
   }));
 
-  const tabColors = {
-    [screens.home]: useSharedValue(COLORS.white),
-    [screens.services]: useSharedValue(COLORS.white),
-    [screens.sos]: useSharedValue(COLORS.white),
-    [screens.spare_parts]: useSharedValue(COLORS.white),
-    [screens.profile]: useSharedValue(COLORS.white),
-  };
+  useEffect(() => {
+    sosAnimation.value = withRepeat(withTiming(1, { duration: 600 }), -1, true);
 
-  const tabColorStyles = Object.keys(tabColors).reduce(
-    (acc, key) => {
-      acc[key] = useAnimatedStyle(() => ({ backgroundColor: tabColors[key].value }));
-      return acc;
-    },
-    {} as Record<string, any>
-  );
+    // radialPulse.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
+  }, [sosAnimation]);
 
   useEffect(() => {
     if (!selectedTab) dispatch(setSelectedTab(screens.home));
-  }, []);
+  }, [dispatch, selectedTab]);
 
   useEffect(() => {
     const index = bottom_tabs.findIndex((t) => t.label === selectedTab);
     if (index !== -1) {
       flatListRef.current?.scrollToIndex({ index, animated: false });
-    }
-    for (const screen of Object.keys(tabColors)) {
-      tabColors[screen].value = withTiming(screen === selectedTab ? COLORS.white : COLORS.white, {
-        duration: 200,
-      });
     }
   }, [selectedTab]);
 
@@ -163,9 +212,9 @@ const MainLayout: React.FC = () => {
       <View style={{ backgroundColor: COLORS.white }}>
         <FlatList
           ref={flatListRef}
-          onScrollToIndexFailed={({ index, averageItemLength }) => {
+          onScrollToIndexFailed={({ index }) => {
             flatListRef.current?.scrollToOffset({
-              offset: index * averageItemLength,
+              offset: index * SIZES.width,
               animated: true,
             });
           }}
@@ -189,49 +238,46 @@ const MainLayout: React.FC = () => {
         />
       </View>
 
-      <SafeAreaView
-        edges={['bottom']}
-        style={{ backgroundColor: COLORS.white, marginTop: widthPercentageToDP(-10) }}>
-        <LinearGradient
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 4 }}
-          colors={[COLORS.transparent, COLORS.grey]}
-          style={{
-            position: 'absolute',
-            top: -20,
-            left: 0,
-            right: 0,
-            height: 100,
-            borderTopLeftRadius: 15,
-            borderTopRightRadius: 15,
-          }}
-        />
+      <SafeAreaView edges={['bottom']} style={{ backgroundColor: COLORS.white }}>
         <View
           style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: COLORS.white,
+            paddingHorizontal: SIZES.radius,
+            paddingTop: 5,
+            paddingBottom: Platform.OS === 'android' ? 10 : 20, // Adjust for nav bar height
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            paddingHorizontal: SIZES.radius,
-            paddingBottom: Platform.OS === 'android' ? 10 : 0,
-            paddingTop: 5,
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            backgroundColor: COLORS.white,
             elevation: 10,
           }}>
           {bottom_tabs.map((tab) => {
             const isScanButton = tab.label === screens.sos;
             const isFocused = selectedTab === tab.label;
+
             return (
-              <TabButton
+              <View
                 key={tab.id}
-                label={tab.label}
-                icon={isScanButton ? tab.icon : isFocused ? tab.activeIcon : tab.icon}
-                isFocused={isFocused}
-                innerContainerStyle={tabColorStyles[tab.label]}
-                onPress={() => dispatch(setSelectedTab(tab.label))}
-                isScanButton={isScanButton}
-              />
+                style={{
+                  flex: isScanButton ? 0 : 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  top: isScanButton ? -20 : 0,
+                }}>
+                <TabButton
+                  label={tab.label}
+                  icon={isScanButton ? tab.icon : isFocused ? tab.activeIcon : tab.icon}
+                  isFocused={isFocused}
+                  onPress={() => dispatch(setSelectedTab(tab.label))}
+                  isScanButton={isScanButton}
+                  outerContainerStyle={isScanButton ? sosAnimatedStyle : {}}
+                />
+              </View>
             );
           })}
         </View>

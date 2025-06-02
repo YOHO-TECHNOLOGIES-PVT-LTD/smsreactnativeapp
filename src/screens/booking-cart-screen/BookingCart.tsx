@@ -4,10 +4,10 @@ import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-
 //pages
-import TitleBar from '../../components/Bookings/TitleBar'
-import Grid1 from '../../components/Bookings/Grid1'
+import TitleBar from '../../components/Bookings/TitleBar';
+import Grid1 from '../../components/Bookings/Grid1';
+import { COLORS, FONTS } from '~/constants';
 
 const Settings = () => {
   const navigation = useNavigation();
@@ -22,8 +22,7 @@ const Settings = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <Grid1/>
-        
+        <Grid1 />
       </ScrollView>
     </GestureHandlerRootView>
   );
@@ -33,15 +32,13 @@ export default Settings;
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: '10%',
-    paddingHorizontal: '5%',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: '12%',
     paddingHorizontal: 16,
-    backgroundColor: 'red',
+    backgroundColor: COLORS.primary,
     paddingBottom: 16,
   },
   backButton: {
@@ -51,9 +48,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 20,
-    color: 'white',
+    ...FONTS.h3,
     marginLeft: 12,
-    fontWeight: '600',
+    color: COLORS.white,
   },
 });
