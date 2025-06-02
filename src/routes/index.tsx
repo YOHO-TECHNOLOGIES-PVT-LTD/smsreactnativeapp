@@ -94,7 +94,7 @@ const Routes: React.FC = () => {
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
       <Stack.Screen name="BookingsScreen" component={BookingsScreen} />
-      <Stack.Screen name="BookingCartSceen" component={BookingCartScreen} />
+      <Stack.Screen name="BookingCartScreen" component={BookingCartScreen} />
       <Stack.Screen name="HelpCenterScreen" component={HelpCenterScreen} />
       <Stack.Screen name="FAQsScreen" component={FAQsScreen} />
     </Stack.Navigator>
