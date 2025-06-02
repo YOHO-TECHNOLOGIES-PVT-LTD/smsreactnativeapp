@@ -57,9 +57,7 @@ const Services = () => {
                 dispatch(setSelectedTab(screens.profile));
               }}>
               <Image
-                source={{
-                  uri: 'https://avatar.iran.liara.run/public/boy?username=Ash',
-                }}
+                source={require('../../assets/images/profile_picture.jpg')}
                 style={{
                   width: 40,
                   height: 40,
