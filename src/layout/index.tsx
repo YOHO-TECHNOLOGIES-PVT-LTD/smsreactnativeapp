@@ -191,7 +191,7 @@ const MainLayout: React.FC = () => {
 
       <SafeAreaView
         edges={['bottom']}
-        style={{ backgroundColor: COLORS.white, marginTop: widthPercentageToDP(-8) }}>
+        style={{ backgroundColor: COLORS.white, marginTop: widthPercentageToDP(-10) }}>
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 4 }}

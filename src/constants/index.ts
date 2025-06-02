@@ -194,7 +194,9 @@ export const COLORS = {
   secondary08: 'rgba(161, 219, 245, 0.08)',
 
   // Success
-  success_green: '#82dd55',
+  sucesss_darkgreen: '#218c75',
+  success_lightgreen: '#82dd55',
+  success_lightgreen_01: 'rgba(220, 252, 231, 0.8)',
   success: 'rgba(253, 212, 70, 1)',
   success80: 'rgba(253, 212, 70, 0.8)',
   success60: 'rgba(253, 212, 70, 0.6)',
