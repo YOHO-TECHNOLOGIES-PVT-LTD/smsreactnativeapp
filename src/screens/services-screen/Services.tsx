@@ -1,4 +1,15 @@
-import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, StatusBar, Dimensions, FlatList, ScrollView } from 'react-native';
+import {
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  StatusBar,
+  Dimensions,
+  FlatList,
+  ScrollView,
+} from 'react-native';
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
@@ -29,371 +40,370 @@ import {
 import { JSX } from 'react/jsx-runtime';
 
 const contentSections = {
-			'Periodic Services': {
-				title: 'Scheduled Packages',
-        packages: [
+  'Periodic Services': {
+    title: 'Scheduled Packages',
+    packages: [
+      {
+        id: `basic `,
+        title: `Basic Service `,
+        warranty: `1000 Kms or 1 Month Warranty `,
+        frequency: 'Every 5000 Kms or 3 Months (Recommended)',
+        duration: '4 Hrs ',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
           {
-            id: `basic `,
-            title: `Basic Service `,
-            warranty: `1000 Kms or 1 Month Warranty `,
-            frequency: 'Every 5000 Kms or 3 Months (Recommended)',
-            duration: '4 Hrs ',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              {
-                name: 'Wiper Fluid Replacement',
-                icon: <Droplets className='w-4 h-4' />,
-              },
-              {
-                name: 'Battery Water Top Up',
-                icon: <Battery className='w-4 h-4' />,
-              },
-              { name: 'Car Wash', icon: <Car className='w-4 h-4' /> },
-              {
-                name: 'Interior Vacuuming (Carpet & Seats)',
-                icon: <Wind className='w-4 h-4' />,
-              },
-              {
-                name: 'Engine Oil Replacement',
-                icon: <Settings className='w-4 h-4' />,
-              },
-            ],
-            additionalCount: 4,
-            price: '₹2,500',
-            discountPrice: '₹2,000',
-            isRecommended: false,
+            name: 'Wiper Fluid Replacement',
+            icon: <Droplets className="h-4 w-4" />,
           },
           {
-            id: 'standard',
-            title: 'Standard Service',
-            warranty: '1000 Kms or 1 Month Warranty',
-            frequency: 'Every 10,000 Kms or 6 Months (Recommended)',
-            duration: '6 Hrs ',
-            isRecommended: true,
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              { name: 'Car Scanning', icon: <Search className='w-4 h-4' /> },
-              {
-                name: 'Wiper Fluid Replacement',
-                icon: <Droplets className='w-4 h-4' />,
-              },
-              {
-                name: 'Battery Water Top up',
-                icon: <Battery className='w-4 h-4' />,
-              },
-              { name: 'Car Wash', icon: <Car className='w-4 h-4' /> },
-              {
-                name: 'Interior Vacuuming (Carpet & Seats)',
-                icon: <Wind className='w-4 h-4' />,
-              },
-            ],
-            additionalCount: 10,
-            price: '₹4,500',
-            discountPrice: '₹3,500',
+            name: 'Battery Water Top Up',
+            icon: <Battery className="h-4 w-4" />,
+          },
+          { name: 'Car Wash', icon: <Car className="h-4 w-4" /> },
+          {
+            name: 'Interior Vacuuming (Carpet & Seats)',
+            icon: <Wind className="h-4 w-4" />,
+          },
+          {
+            name: 'Engine Oil Replacement',
+            icon: <Settings className="h-4 w-4" />,
           },
         ],
-			},
-      'AC Services & Repair': {
-        title: 'AC Services & Repair',
-        packages: [
-          {
-            id: 'ac-basic',
-            title: 'AC Gas Refill',
-            warranty: '6 Months Warranty',
-            frequency: 'As Required',
-            duration: '2 Hrs ',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              { name: 'AC Gas Top Up', icon: <Zap className='w-4 h-4' /> },
-              { name: 'AC Performance Check', icon: <Search className='w-4 h-4' /> },
-              { name: 'Temperature Testing', icon: <Settings className='w-4 h-4' /> },
-              { name: 'Cooling System Inspection', icon: <Wind className='w-4 h-4' /> },
-            ],
-            additionalCount: 3,
-            price: '₹2,000',
-            discountPrice: '₹1,500',
-            isRecommended: false,
-          },
-          {
-            id: 'ac-complete',
-            title: 'Complete AC Service',
-            warranty: '1 Year Warranty',
-            frequency: 'Every 12 Months',
-            duration: '4 Hrs ',
-            isRecommended: true,
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              { name: 'AC Deep Cleaning', icon: <Wind className='w-4 h-4' /> },
-              { name: 'Filter Replacement', icon: <Settings className='w-4 h-4' /> },
-              { name: 'Condenser Cleaning', icon: <Droplets className='w-4 h-4' /> },
-              { name: 'Compressor Check', icon: <Zap className='w-4 h-4' /> },
-              { name: 'AC Gas Refill', icon: <Battery className='w-4 h-4' /> },
-            ],
-            additionalCount: 5,
-            price: '₹6,000',
-            discountPrice: '₹4,500',
-          },
-        ],
+        additionalCount: 4,
+        price: '₹2,500',
+        discountPrice: '₹2,000',
+        isRecommended: false,
       },
-      'Batteries': {
-        title: 'Battery Services',
-        packages: [
+      {
+        id: 'standard',
+        title: 'Standard Service',
+        warranty: '1000 Kms or 1 Month Warranty',
+        frequency: 'Every 10,000 Kms or 6 Months (Recommended)',
+        duration: '6 Hrs ',
+        isRecommended: true,
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          { name: 'Car Scanning', icon: <Search className="h-4 w-4" /> },
           {
-            id: 'battery-check',
-            title: 'Battery Health Check',
-            warranty: '1 Month Warranty',
-            frequency: 'Every 6 Months',
-            duration: '1 Hrs ',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              { name: 'Battery Voltage Test', icon: <Battery className='w-4 h-4' /> },
-              { name: 'Terminal Cleaning', icon: <Settings className='w-4 h-4' /> },
-              { name: 'Load Test', icon: <Zap className='w-4 h-4' /> },
-              { name: 'Water Level Check', icon: <Droplets className='w-4 h-4' /> },
-            ],
-            additionalCount: 2,
-            price: '₹1500',
-            discountPrice: '₹1200',
-            isRecommended: false,
+            name: 'Wiper Fluid Replacement',
+            icon: <Droplets className="h-4 w-4" />,
           },
           {
-            id: 'battery-replace',
-            title: 'Battery Replacement',
-            warranty: '2 Years Warranty',
-            frequency: 'Every 3-4 Years',
-            duration: '1 Hrs',
-            isRecommended: true,
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              { name: 'Old Battery Removal', icon: <Battery className='w-4 h-4' /> },
-              { name: 'New Battery Installation', icon: <Settings className='w-4 h-4' /> },
-              { name: 'Terminal Connection', icon: <Zap className='w-4 h-4' /> },
-              { name: 'Performance Testing', icon: <Search className='w-4 h-4' /> },
-            ],
-            price: '₹5000',
-            discountPrice: '₹4000',
+            name: 'Battery Water Top up',
+            icon: <Battery className="h-4 w-4" />,
+          },
+          { name: 'Car Wash', icon: <Car className="h-4 w-4" /> },
+          {
+            name: 'Interior Vacuuming (Carpet & Seats)',
+            icon: <Wind className="h-4 w-4" />,
           },
         ],
+        additionalCount: 10,
+        price: '₹4,500',
+        discountPrice: '₹3,500',
       },
-      'Tyres and Wheel Care': {
-        title: 'Tyres and Wheel Care',
-        packages: [
-          {
-            id: 'tyre-rotation',
-            title: 'Tyre Rotation & Balancing',
-            warranty: '500 Kms Warranty',
-            frequency: 'Every 10,000 Kms',
-            duration: '2 Hrs ',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              { name: 'Tyre Rotation', icon: <Car className='w-4 h-4' /> },
-              { name: 'Wheel Balancing', icon: <Settings className='w-4 h-4' /> },
-              { name: 'Pressure Check', icon: <Wind className='w-4 h-4' /> },
-              { name: 'Tread Inspection', icon: <Eye className='w-4 h-4' /> },
-            ],
-            additionalCount: 3,
-            price: '₹2000',
-            discountPrice: '₹1500',
-            isRecommended: false,
-          },
+    ],
+  },
+  'AC Services & Repair': {
+    title: 'AC Services & Repair',
+    packages: [
+      {
+        id: 'ac-basic',
+        title: 'AC Gas Refill',
+        warranty: '6 Months Warranty',
+        frequency: 'As Required',
+        duration: '2 Hrs ',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          { name: 'AC Gas Top Up', icon: <Zap className="h-4 w-4" /> },
+          { name: 'AC Performance Check', icon: <Search className="h-4 w-4" /> },
+          { name: 'Temperature Testing', icon: <Settings className="h-4 w-4" /> },
+          { name: 'Cooling System Inspection', icon: <Wind className="h-4 w-4" /> },
         ],
+        additionalCount: 3,
+        price: '₹2,000',
+        discountPrice: '₹1,500',
+        isRecommended: false,
       },
-      'Detailing Services': {
-        title: 'Car Detailing Packages',
-        packages: [
-          {
-            id: 'exterior-detail',
-            title: 'Premium Exterior Detailing',
-            warranty: '1 Month Protection',
-            frequency: 'Every 3 Months',
-            duration: '6 Hrs ',
-            isRecommended: true,
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              {
-                name: 'Paint Protection Coating',
-                icon: <Shield className='w-4 h-4' />,
-              },
-              { name: 'Deep Wash & Wax', icon: <Car className='w-4 h-4' /> },
-              {
-                name: 'Headlight Polishing',
-                icon: <Lightbulb className='w-4 h-4' />,
-              },
-              {
-                name: 'Tire Shine Application',
-                icon: <Settings className='w-4 h-4' />,
-              },
-            ],
-            additionalCount: 6,
-            price: '₹8,000',
-            discountPrice: '₹6,000',
-          },
+      {
+        id: 'ac-complete',
+        title: 'Complete AC Service',
+        warranty: '1 Year Warranty',
+        frequency: 'Every 12 Months',
+        duration: '4 Hrs ',
+        isRecommended: true,
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          { name: 'AC Deep Cleaning', icon: <Wind className="h-4 w-4" /> },
+          { name: 'Filter Replacement', icon: <Settings className="h-4 w-4" /> },
+          { name: 'Condenser Cleaning', icon: <Droplets className="h-4 w-4" /> },
+          { name: 'Compressor Check', icon: <Zap className="h-4 w-4" /> },
+          { name: 'AC Gas Refill', icon: <Battery className="h-4 w-4" /> },
         ],
-        },
-        'Car Inspection': {
-				title: 'Vehicle Inspection Services',
-				packages:[
-          {
-            id: 'full-inspection',
-            title: 'Comprehensive Vehicle Inspection',
-            warranty: 'Detailed Report Provided',
-            frequency: 'Before Purchase/Sale',
-            duration: '3 Hrs',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              {
-                name: 'Engine Diagnostics',
-                icon: <Search className='w-4 h-4' />,
-              },
-              {
-                name: 'Brake System Check',
-                icon: <Settings className='w-4 h-4' />,
-              },
-              {
-                name: 'Suspension Inspection',
-                icon: <Car className='w-4 h-4' />,
-              },
-              {
-                name: 'Electrical System Test',
-                icon: <Zap className='w-4 h-4' />,
-              },
-            ],
-            additionalCount: 12,
-            price: '₹3,000',
-            discountPrice: '₹2,500',
-            isRecommended: false,
-          },
-        ],
+        additionalCount: 5,
+        price: '₹6,000',
+        discountPrice: '₹4,500',
       },
-      'Windshields & Lights': {
-				title: 'Glass & Lighting Services',
-				packages:[
+    ],
+  },
+  Batteries: {
+    title: 'Battery Services',
+    packages: [
+      {
+        id: 'battery-check',
+        title: 'Battery Health Check',
+        warranty: '1 Month Warranty',
+        frequency: 'Every 6 Months',
+        duration: '1 Hrs ',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          { name: 'Battery Voltage Test', icon: <Battery className="h-4 w-4" /> },
+          { name: 'Terminal Cleaning', icon: <Settings className="h-4 w-4" /> },
+          { name: 'Load Test', icon: <Zap className="h-4 w-4" /> },
+          { name: 'Water Level Check', icon: <Droplets className="h-4 w-4" /> },
+        ],
+        additionalCount: 2,
+        price: '₹1500',
+        discountPrice: '₹1200',
+        isRecommended: false,
+      },
+      {
+        id: 'battery-replace',
+        title: 'Battery Replacement',
+        warranty: '2 Years Warranty',
+        frequency: 'Every 3-4 Years',
+        duration: '1 Hrs',
+        isRecommended: true,
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          { name: 'Old Battery Removal', icon: <Battery className="h-4 w-4" /> },
+          { name: 'New Battery Installation', icon: <Settings className="h-4 w-4" /> },
+          { name: 'Terminal Connection', icon: <Zap className="h-4 w-4" /> },
+          { name: 'Performance Testing', icon: <Search className="h-4 w-4" /> },
+        ],
+        price: '₹5000',
+        discountPrice: '₹4000',
+      },
+    ],
+  },
+  'Tyres and Wheel Care': {
+    title: 'Tyres and Wheel Care',
+    packages: [
+      {
+        id: 'tyre-rotation',
+        title: 'Tyre Rotation & Balancing',
+        warranty: '500 Kms Warranty',
+        frequency: 'Every 10,000 Kms',
+        duration: '2 Hrs ',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          { name: 'Tyre Rotation', icon: <Car className="h-4 w-4" /> },
+          { name: 'Wheel Balancing', icon: <Settings className="h-4 w-4" /> },
+          { name: 'Pressure Check', icon: <Wind className="h-4 w-4" /> },
+          { name: 'Tread Inspection', icon: <Eye className="h-4 w-4" /> },
+        ],
+        additionalCount: 3,
+        price: '₹2000',
+        discountPrice: '₹1500',
+        isRecommended: false,
+      },
+    ],
+  },
+  'Detailing Services': {
+    title: 'Car Detailing Packages',
+    packages: [
+      {
+        id: 'exterior-detail',
+        title: 'Premium Exterior Detailing',
+        warranty: '1 Month Protection',
+        frequency: 'Every 3 Months',
+        duration: '6 Hrs ',
+        isRecommended: true,
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
           {
-            id: 'windshield-repair',
-            title: 'Windshield Chip Repair',
-            warranty: '6 Months Warranty',
-            frequency: 'As Required',
-            duration: '1 Hrs',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              { name: 'Chip Assessment', icon: <Eye className='w-4 h-4' /> },
-              {
-                name: 'Resin Application',
-                icon: <Droplets className='w-4 h-4' />,
-              },
-              {
-                name: 'UV Curing Process',
-                icon: <Lightbulb className='w-4 h-4' />,
-              },
-              { name: 'Quality Check', icon: <Search className='w-4 h-4' /> },
-            ],
-            additionalCount: 1,
-            price: '₹1,500',
-            discountPrice: '₹1,200',
-            isRecommended: false,
+            name: 'Paint Protection Coating',
+            icon: <Shield className="h-4 w-4" />,
+          },
+          { name: 'Deep Wash & Wax', icon: <Car className="h-4 w-4" /> },
+          {
+            name: 'Headlight Polishing',
+            icon: <Lightbulb className="h-4 w-4" />,
+          },
+          {
+            name: 'Tire Shine Application',
+            icon: <Settings className="h-4 w-4" />,
           },
         ],
+        additionalCount: 6,
+        price: '₹8,000',
+        discountPrice: '₹6,000',
       },
-      'Suspension & Fitments': {
-				title: 'Suspension & Fitting Services',
-				packages:[
+    ],
+  },
+  'Car Inspection': {
+    title: 'Vehicle Inspection Services',
+    packages: [
+      {
+        id: 'full-inspection',
+        title: 'Comprehensive Vehicle Inspection',
+        warranty: 'Detailed Report Provided',
+        frequency: 'Before Purchase/Sale',
+        duration: '3 Hrs',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
           {
-            id: 'suspension-check',
-            title: 'Suspension System Check',
-            warranty: '1000 Kms Warranty',
-            frequency: 'Every 20,000 Kms',
-            duration: '3 Hrs ',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              {
-                name: 'Shock Absorber Test',
-                icon: <Settings className='w-4 h-4' />,
-              },
-              { name: 'Spring Inspection', icon: <Car className='w-4 h-4' /> },
-              { name: 'Alignment Check', icon: <Search className='w-4 h-4' /> },
-              { name: 'Bushings Inspection', icon: <Eye className='w-4 h-4' /> },
-            ],
-            additionalCount: 5,
-            price: '₹3,000',
-            discountPrice: '₹2,500',
-            isRecommended: false,
+            name: 'Engine Diagnostics',
+            icon: <Search className="h-4 w-4" />,
+          },
+          {
+            name: 'Brake System Check',
+            icon: <Settings className="h-4 w-4" />,
+          },
+          {
+            name: 'Suspension Inspection',
+            icon: <Car className="h-4 w-4" />,
+          },
+          {
+            name: 'Electrical System Test',
+            icon: <Zap className="h-4 w-4" />,
           },
         ],
+        additionalCount: 12,
+        price: '₹3,000',
+        discountPrice: '₹2,500',
+        isRecommended: false,
       },
-      'Clutch & Body Parts': {
-				title: 'Clutch & Body Repair Services',
-				packages:[
+    ],
+  },
+  'Windshields & Lights': {
+    title: 'Glass & Lighting Services',
+    packages: [
+      {
+        id: 'windshield-repair',
+        title: 'Windshield Chip Repair',
+        warranty: '6 Months Warranty',
+        frequency: 'As Required',
+        duration: '1 Hrs',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          { name: 'Chip Assessment', icon: <Eye className="h-4 w-4" /> },
           {
-            id: 'clutch-service',
-            title: 'Clutch System Service',
-            warranty: '5000 Kms Warranty',
-            frequency: 'Every 50,000 Kms',
-            duration: '8 Hrs ',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              {
-                name: 'Clutch Plate Inspection',
-                icon: <Settings className='w-4 h-4' />,
-              },
-              {
-                name: 'Pressure Plate Check',
-                icon: <Search className='w-4 h-4' />,
-              },
-              {
-                name: 'Hydraulic System Test',
-                icon: <Droplets className='w-4 h-4' />,
-              },
-              { name: 'Clutch Adjustment', icon: <Wrench className='w-4 h-4' /> },
-            ],
-            additionalCount: 4,
-            price: '₹5,000',
-            discountPrice: '₹4,000',
-            isRecommended: false,
+            name: 'Resin Application',
+            icon: <Droplets className="h-4 w-4" />,
           },
           {
-            id: 'claim-assistance',
-            title: 'Complete Claim Assistance',
-            warranty: 'Full Documentation Support',
-            frequency: 'As Required',
-            duration: '9 Hrs ',
-            image: require("../../assets/service-images/generalservice.png"),
-            services: [
-              { name: 'Damage Assessment', icon: <Eye className='w-4 h-4' /> },
-              {
-                name: 'Documentation Support',
-                icon: <FileCheck className='w-4 h-4' />,
-              },
-              {
-                name: 'Insurance Coordination',
-                icon: <Shield className='w-4 h-4' />,
-              },
-              {
-                name: 'Repair Estimation',
-                icon: <Settings className='w-4 h-4' />,
-              },
-            ],
-            additionalCount: 6,
-            price: '₹1,500',
-            discountPrice: '₹1,200',
-            isRecommended: false,
+            name: 'UV Curing Process',
+            icon: <Lightbulb className="h-4 w-4" />,
+          },
+          { name: 'Quality Check', icon: <Search className="h-4 w-4" /> },
+        ],
+        additionalCount: 1,
+        price: '₹1,500',
+        discountPrice: '₹1,200',
+        isRecommended: false,
+      },
+    ],
+  },
+  'Suspension & Fitments': {
+    title: 'Suspension & Fitting Services',
+    packages: [
+      {
+        id: 'suspension-check',
+        title: 'Suspension System Check',
+        warranty: '1000 Kms Warranty',
+        frequency: 'Every 20,000 Kms',
+        duration: '3 Hrs ',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          {
+            name: 'Shock Absorber Test',
+            icon: <Settings className="h-4 w-4" />,
+          },
+          { name: 'Spring Inspection', icon: <Car className="h-4 w-4" /> },
+          { name: 'Alignment Check', icon: <Search className="h-4 w-4" /> },
+          { name: 'Bushings Inspection', icon: <Eye className="h-4 w-4" /> },
+        ],
+        additionalCount: 5,
+        price: '₹3,000',
+        discountPrice: '₹2,500',
+        isRecommended: false,
+      },
+    ],
+  },
+  'Clutch & Body Parts': {
+    title: 'Clutch & Body Repair Services',
+    packages: [
+      {
+        id: 'clutch-service',
+        title: 'Clutch System Service',
+        warranty: '5000 Kms Warranty',
+        frequency: 'Every 50,000 Kms',
+        duration: '8 Hrs ',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          {
+            name: 'Clutch Plate Inspection',
+            icon: <Settings className="h-4 w-4" />,
+          },
+          {
+            name: 'Pressure Plate Check',
+            icon: <Search className="h-4 w-4" />,
+          },
+          {
+            name: 'Hydraulic System Test',
+            icon: <Droplets className="h-4 w-4" />,
+          },
+          { name: 'Clutch Adjustment', icon: <Wrench className="h-4 w-4" /> },
+        ],
+        additionalCount: 4,
+        price: '₹5,000',
+        discountPrice: '₹4,000',
+        isRecommended: false,
+      },
+      {
+        id: 'claim-assistance',
+        title: 'Complete Claim Assistance',
+        warranty: 'Full Documentation Support',
+        frequency: 'As Required',
+        duration: '9 Hrs ',
+        image: require('../../assets/service-images/generalservice.png'),
+        services: [
+          { name: 'Damage Assessment', icon: <Eye className="h-4 w-4" /> },
+          {
+            name: 'Documentation Support',
+            icon: <FileCheck className="h-4 w-4" />,
+          },
+          {
+            name: 'Insurance Coordination',
+            icon: <Shield className="h-4 w-4" />,
+          },
+          {
+            name: 'Repair Estimation',
+            icon: <Settings className="h-4 w-4" />,
           },
         ],
+        additionalCount: 6,
+        price: '₹1,500',
+        discountPrice: '₹1,200',
+        isRecommended: false,
       },
-		};
+    ],
+  },
+};
 
-		const navigationItems = [
-			{ name: 'Periodic Services', icon: <Wrench className='w-6 h-6' /> },
-			{ name: 'AC Services & Repair', icon: <Zap className='w-6 h-6' /> },
-			{ name: 'Batteries', icon: <Battery className='w-6 h-6' /> },
-			{ name: 'Tyres and Wheel Care', icon: <Car className='w-6 h-6' /> },
-			{ name: 'Detailing Services', icon: <Battery className='w-6 h-6' /> },
-			{ name: 'Car Inspection', icon: <Eye className='w-6 h-6' /> },
-			{ name: 'Windshields & Lights', icon: <Lightbulb className='w-6 h-6' /> },
-			{ name: 'Suspension & Fitments', icon: <Settings className='w-6 h-6' /> },
-			{ name: 'Clutch & Body Parts', icon: <FileCheck className='w-6 h-6' /> },
-			{ name: 'Insurance Claims', icon: <Shield className='w-6 h-6' /> },
-		];
-
+const navigationItems = [
+  { name: 'Periodic Services', icon: <Wrench className="h-6 w-6" /> },
+  { name: 'AC Services & Repair', icon: <Zap className="h-6 w-6" /> },
+  { name: 'Batteries', icon: <Battery className="h-6 w-6" /> },
+  { name: 'Tyres and Wheel Care', icon: <Car className="h-6 w-6" /> },
+  { name: 'Detailing Services', icon: <Battery className="h-6 w-6" /> },
+  { name: 'Car Inspection', icon: <Eye className="h-6 w-6" /> },
+  { name: 'Windshields & Lights', icon: <Lightbulb className="h-6 w-6" /> },
+  { name: 'Suspension & Fitments', icon: <Settings className="h-6 w-6" /> },
+  { name: 'Clutch & Body Parts', icon: <FileCheck className="h-6 w-6" /> },
+  { name: 'Insurance Claims', icon: <Shield className="h-6 w-6" /> },
+];
 
 type ContentSectionKey = keyof typeof contentSections;
 
@@ -409,7 +419,7 @@ const Services = () => {
   const currentContent = contentSections[activeNavItem] || contentSections['Periodic Services'];
 
   const toggleExpandServices = (packageId: string) => {
-    setExpandedServices(prev => ({
+    setExpandedServices((prev) => ({
       ...prev,
       [packageId]: !prev[packageId],
     }));
@@ -429,29 +439,24 @@ const Services = () => {
     isRecommended?: boolean;
   };
 
-
-  const [addedItems, setAddedItems] = useState<{[key: string]: boolean}>({});
-  const[product,setProduct] = useState(false);
+  const [addedItems, setAddedItems] = useState<{ [key: string]: boolean }>({});
+  const [product, setProduct] = useState(false);
 
   const addToCart = (pkg: PackageType) => {
-  if (addedItems[pkg.id]) {
-    // Item is already in cart - remove it
-    setCart(cart.filter(item => item.id !== pkg.id));
-    setAddedItems(prev => ({ ...prev, [pkg.id]: false }));
-  } else {
-    // Item not in cart - add it
-    setCart([...cart, pkg]);
-    setAddedItems(prev => ({ ...prev, [pkg.id]: true }));
-  }
-};
-
-  
+    if (addedItems[pkg.id]) {
+      // Item is already in cart - remove it
+      setCart(cart.filter((item) => item.id !== pkg.id));
+      setAddedItems((prev) => ({ ...prev, [pkg.id]: false }));
+    } else {
+      // Item not in cart - add it
+      setCart([...cart, pkg]);
+      setAddedItems((prev) => ({ ...prev, [pkg.id]: true }));
+    }
+  };
 
   const renderServiceItem = ({ item }: { item: { name: string; icon: JSX.Element } }) => (
     <View style={styles.serviceItem}>
-      <View style={styles.serviceIconContainer}>
-        {item.icon}
-      </View>
+      <View style={styles.serviceIconContainer}>{item.icon}</View>
       <Text style={styles.serviceText}>{item.name}</Text>
     </View>
   );
@@ -493,30 +498,29 @@ const Services = () => {
             />
 
             <TouchableOpacity>
-              {/* Floating Cart Button */}
-               {cart.length > 0 && (
-                 <TouchableOpacity style={styles.cartButton}
-                 onPress={() => navigation.navigate("BookingCartScreen")}>
-                   <ShoppingCart size={24} color="white" />
-                   <View style={styles.cartBadge}>
-                     <Text style={styles.cartBadgeText}>{cart.length}</Text>
-                   </View>
-                 </TouchableOpacity>
-               )}
-              
+              {cart.length > 0 && (
+                <TouchableOpacity
+                  style={styles.cartButton}
+                  onPress={() => navigation.navigate('BookingCartScreen')}>
+                  <ShoppingCart size={24} color="white" />
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>{cart.length}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
           </View>
         }
       />
 
       {/* Main content start */}
-            <StatusBar backgroundColor="#9b111e" barStyle="light-content" />
-      
+      <StatusBar backgroundColor="#9b111e" barStyle="light-content" />
+
       {/* Header */}
       {/* <View style={styles.header}>
         <Text style={styles.headerTitle}>Car Services</Text>
       </View> */}
-      
+
       <View style={styles.mainContainer}>
         {/* Sidebar Navigation */}
         <View style={styles.sidebar}>
@@ -526,33 +530,24 @@ const Services = () => {
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={[
-                  styles.navItem,
-                  activeNavItem === item.name && styles.activeNavItem,
-                ]}
-                onPress={() => setActiveNavItem(item.name as ContentSectionKey)}
-              >
-                <View style={styles.navIcon}>
-                  {item.icon}
-                </View>
-                <Text style={[
-                  styles.navText,
-                  activeNavItem === item.name && styles.activeNavText,
-                ]}>
+                style={[styles.navItem, activeNavItem === item.name && styles.activeNavItem]}
+                onPress={() => setActiveNavItem(item.name as ContentSectionKey)}>
+                <View style={styles.navIcon}>{item.icon}</View>
+                <Text style={[styles.navText, activeNavItem === item.name && styles.activeNavText]}>
                   {item.name}
                 </Text>
               </TouchableOpacity>
             )}
           />
         </View>
-        
+
         {/* Main Content */}
         <ScrollView style={styles.content}>
           <View style={styles.contentHeader}>
             <Text style={styles.contentTitle}>{currentContent.title}</Text>
             <Text style={styles.contentSubtitle}>Choose the perfect package for your vehicle</Text>
           </View>
-          
+
           {currentContent.packages.map((pkg) => (
             <View key={pkg.id} style={styles.packageCard}>
               {pkg.isRecommended && (
@@ -560,34 +555,29 @@ const Services = () => {
                   <Text style={styles.recommendedText}>RECOMMENDED</Text>
                 </View>
               )}
-              
+
               <View style={styles.durationBadge}>
-                      <Clock size={16} color="white" />
-                      <Text style={styles.durationText}>{pkg.duration}</Text>
-                    </View>
+                <Clock size={16} color="white" />
+                <Text style={styles.durationText}>{pkg.duration}</Text>
+              </View>
 
               <View style={styles.packageContent}>
                 {/* Service Image */}
                 <View style={styles.imageContainer}>
-                  <Image
-                    source={pkg.image}
-                    style={styles.serviceImage}
-                    resizeMode="cover"
-                  />
+                  <Image source={pkg.image} style={styles.serviceImage} resizeMode="cover" />
                 </View>
-                
+
                 {/* Service Details */}
                 <View style={styles.detailsContainer}>
                   <View style={styles.titleRow}>
                     <Text style={styles.packageTitle}>{pkg.title}</Text>
-                    
                   </View>
-                  
+
                   <View style={styles.warrantyRow}>
                     <Text style={styles.warrantyText}>{pkg.warranty}</Text>
                     <Text style={styles.warrantyText}>{pkg.frequency}</Text>
                   </View>
-                  
+
                   {/* Services List */}
                   <FlatList
                     data={pkg.services.slice(0, expandedServices[pkg.id] ? pkg.services.length : 4)}
@@ -596,13 +586,12 @@ const Services = () => {
                     numColumns={2}
                     columnWrapperStyle={styles.servicesGrid}
                   />
-                  
+
                   {/* Show More/Less */}
                   {pkg.additionalCount && (
                     <TouchableOpacity
                       onPress={() => toggleExpandServices(pkg.id)}
-                      style={styles.showMoreButton}
-                    >
+                      style={styles.showMoreButton}>
                       {expandedServices[pkg.id] ? (
                         <>
                           <ChevronUp size={16} color="#9b111e" />
@@ -616,41 +605,32 @@ const Services = () => {
                       )}
                     </TouchableOpacity>
                   )}
-                  
+
                   {/* Price and Button */}
                   <View style={styles.priceRow}>
                     <View>
                       <Text style={styles.originalPrice}>{pkg.price}</Text>
                       <Text style={styles.discountPrice}>{pkg.discountPrice}</Text>
                     </View>
-                    
-                 <TouchableOpacity
-                    style={[
-                      styles.addToCartButton,
-                      addedItems[pkg.id] && styles.addedButton // Optional: different style for "ADDED" state
-                    ]}
-                    onPress={() => addToCart(pkg)}
-                  >
-                    <Text style={styles.buttonText}>
-                      {addedItems[pkg.id] ? 'ADDED' : 'ADD TO CART'}
-                    </Text>
-                  </TouchableOpacity>
-                                      
-                                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.addToCartButton,
+                        addedItems[pkg.id] && styles.addedButton, // Optional: different style for "ADDED" state
+                      ]}
+                      onPress={() => addToCart(pkg)}>
+                      <Text style={styles.buttonText}>
+                        {addedItems[pkg.id] ? 'ADDED' : 'ADD TO CART'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-              
             </View>
-            
           ))}
         </ScrollView>
       </View>
-      <View style={{paddingBottom: 50}}>
-
-      </View>
-      
-      
-
+      <View style={{ paddingBottom: 50 }}></View>
     </SafeAreaView>
   );
 };
@@ -664,7 +644,7 @@ const styles = StyleSheet.create({
     marginTop: SIZES.newbody,
   },
   header: {
-    backgroundColor:  COLORS.primary,
+    backgroundColor: COLORS.primary,
     padding: SIZES.h3,
     alignItems: 'center',
   },
@@ -674,7 +654,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   mainContainer: {
-    
     flex: 1,
     flexDirection: 'row',
   },
@@ -683,7 +662,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.light,
     borderRightWidth: 1,
     borderRightColor: '#e0e0e0',
-    
   },
   navItem: {
     padding: SIZES.body3,
@@ -730,7 +708,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     position: 'relative',
-   
   },
   recommendedBadge: {
     position: 'absolute',
@@ -816,7 +793,7 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.body7,
   },
   serviceIconContainer: {
-    width:  SIZES.h2_03,
+    width: SIZES.h2_03,
     height: SIZES.h2_03,
     borderRadius: SIZES.body5,
     backgroundColor: '#f0f0f0',
@@ -896,6 +873,5 @@ const styles = StyleSheet.create({
   },
   addedButton: {
     backgroundColor: COLORS.buttonbg1,
-  }
-
+  },
 });
