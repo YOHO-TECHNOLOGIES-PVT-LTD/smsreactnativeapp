@@ -90,14 +90,12 @@ const SOS = () => {
       <TextInput
         
         style={styles.input}
-        placeholder="                  - - - - - - - - -"
+        placeholder="                  - - - - - - - - -   "
         value={value}
         onChangeText={setValue}
         keyboardType='numeric'
       />
-      
     </View>
-  
         <SosButtons/>
         
         </View>
