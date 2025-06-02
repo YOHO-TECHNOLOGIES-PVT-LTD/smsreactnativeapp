@@ -67,14 +67,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
-// Enhanced Professional Color Palette - Refined for better professional look
 const COLORS = {
   // Primary colors - Refined Deep Crimson Theme
-  primary: '#8B0000', // Darker, more professional crimson
-  primaryLight: '#B22222', // Refined lighter crimson
-  primaryDark: '#660000', // Deeper dark crimson
-  primaryUltraLight: '#FFF5F5', // Softer ultra light
-  primaryBorder: '#FFB3B3', // Softer border
+  primary: '#9b111e', 
+  primaryLight:'#c22d3e', 
+  primaryDark: '#40060c', 
+  primaryUltraLight:'#f8d4d8', 
+  primaryBorder: '#FFB3B3',
 
   // Background colors
   background: '#8B0000',
@@ -91,16 +90,16 @@ const COLORS = {
   cardInfo: '#EFF6FF',
 
   // Accent colors - More professional amber/gold
-  accent: '#D97706', // Deeper, more professional amber
-  accentLight: '#F59E0B', // Refined lighter amber
-  accentDark: '#B45309', // Deeper amber
-  accentGradient: ['#D97706', '#B45309'],
+  accent: ['#D97706', '#F59E0B'],
+  accentLight: ['#F8FAFC', '#F1F5F9'], // Refined lighter amber
+  accentDark: 'rgba(255, 132, 13, 0.08)', // Deeper amber
+  accentinfo: ['#2563EB', '#3B82F6'],
 
   // Status colors
-  success: '#059669', // Deeper green
+  success:  '#82dd55', // Deeper green
   successLight: '#10B981',
   successDark: '#047857',
-  warning: '#D97706', // Matching accent
+  warning:'rgba(255, 132, 13, 1)',// Matching accent
   warningLight: '#F59E0B',
   error: '#DC2626', // More professional red
   errorLight: '#EF4444',
@@ -110,28 +109,21 @@ const COLORS = {
   // Neutral colors
   white: '#FFFFFF',
   black: '#000000',
-  gray50: '#F9FAFB',
-  gray100: '#F3F4F6',
-  gray200: '#E5E7EB',
-  gray300: '#D1D5DB',
-  gray400: '#9CA3AF',
-  gray500: '#6B7280',
-  gray600: '#4B5563',
-  gray700: '#374151',
-  gray800: '#1F2937',
+  gray50: 'rgba(247, 247, 247, 1)',
+  gray100: 'rgba(247, 247, 247, 0.9)',
+  gray200: 'rgba(247, 247, 247, 0.8)',
+  gray300: 'rgba(247, 247, 247, 0.7)',
+  gray400: 'rgba(247, 247, 247, 0.5)',                         
+  gray500: 'rgba(247, 247, 247, 0.4)',
+  gray600: 'rgba(247, 247, 247, 0.3)',
+  gray700: 'rgba(247, 247, 247, 0.2)',
+  gray800: 'rgba(247, 247, 247, 0.08)',
   gray900: '#111827',
 
-  // Text colors
-  textPrimary: '#1F2937',
-  textSecondary: '#4B5563',
-  textTertiary: '#6B7280',
-  textLight: '#FFFFFF',
-  textMuted: '#9CA3AF',
-
   // Shadow colors
-  shadow: 'rgba(0, 0, 0, 0.08)',
-  shadowMedium: 'rgba(0, 0, 0, 0.12)',
-  shadowStrong: 'rgba(0, 0, 0, 0.20)',
+  shadow: 'rgba(255, 255, 255, 0.1)',
+  shadowMedium: 'rgba(0, 0, 0, 0.1)',
+  shadowStrong: 'rgba(0, 0, 0, 0.7)',
 
   // Special gradient combinations
   gradientPrimary: ['#8B0000', '#B22222'],
@@ -426,6 +418,7 @@ const Profile = () => {
   const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
 
   // Enhanced Pan Responder for 360° Car View
+  
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -742,10 +735,10 @@ const Profile = () => {
     subtitle,
     onPress,
     rightElement,
-    showArrow = true,
     icon,
     badge,
-  }) => {
+  }) => 
+  {
     return (
       <TouchableOpacity
         style={styles.menuItem}
@@ -764,7 +757,6 @@ const Profile = () => {
             </View>
             {subtitle && <Text style={styles.menuItemSubtitle}>{subtitle}</Text>}
           </View>
-          {rightElement || (showArrow && <ChevronRight size={20} color={COLORS.gray400} />)}
         </View>
       </TouchableOpacity>
     );
@@ -1345,10 +1337,10 @@ const Profile = () => {
             <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
               <View style={styles.profileImageContainer}>
                 {userInfo.profileImage ? (
-                  <Image source={{ uri: userInfo.profileImage }} style={styles.profileImage} />
+                   <Image source={require('../../assets/images/profile_picture.jpg')} style={{width: 100,height: 100,borderRadius: 50}}/>
                 ) : (
                   <View style={styles.placeholderImage}>
-                    <User size={40} color={COLORS.gray400} />
+                     <Image source={require('../../assets/images/profile_picture.jpg')} style={{width: 100,height: 100,borderRadius: 50}}/>
                   </View>
                 )}
                 <View style={styles.cameraIcon}>
@@ -1389,45 +1381,40 @@ const Profile = () => {
             <MenuItem
               title="Full Name"
               subtitle={userInfo.name}
-              onPress={handleEditProfile}
-              icon={<User size={20} color={COLORS.accent} />}
+              icon={<User size={20} color={COLORS.primary} />}
             />
             <View style={styles.separator} />
             <MenuItem
               title="Email Address"
               subtitle={userInfo.email}
-              onPress={handleEditProfile}
-              icon={<Mail size={20} color={COLORS.accent} />}
+              icon={<Mail size={20} color={COLORS.primary} />}
             />
             <View style={styles.separator} />
             <MenuItem
               title="Phone Number"
               subtitle={userInfo.phone}
-              onPress={handleEditProfile}
-              icon={<Phone size={20} color={COLORS.accent} />}
+              icon={<Phone size={20} color={COLORS.primary} />}
             />
             <View style={styles.separator} />
             <MenuItem
               title="Location"
               subtitle={userInfo.location}
-              onPress={handleEditProfile}
-              icon={<MapPin size={20} color={COLORS.accent} />}
+              icon={<MapPin size={20} color={COLORS.primary} />}
             />
             <View style={styles.separator} />
             <MenuItem
               title="Preferred Service Center"
               subtitle={userInfo.preferredServiceCenter}
-              onPress={handleEditProfile}
-              icon={<Wrench size={20} color={COLORS.accent} />}
+              icon={<Wrench size={20} color={COLORS.primary} />}
             />
-            <View style={styles.separator} />
+            {/* <View style={styles.separator} />
             <MenuItem
               title="Notifications"
               subtitle="View all notifications"
               onPress={() => {}}
               icon={<Bell size={20} color={COLORS.accent} />}
               badge={userInfo.notifications}
-            />
+            /> */}
           </View>
         </View>
 
@@ -1586,7 +1573,8 @@ const Profile = () => {
                     />
                   ) : (
                     <View style={styles.editPlaceholderImage}>
-                      <User size={40} color={COLORS.gray400} />
+                      <Image source={require('../../assets/images/profile_picture.jpg')} style={{width: 100,height: 100,borderRadius: 50}}/>
+                      {/* <User size={40} color={COLORS.gray400} /> */}
                     </View>
                   )}
                   <View style={styles.editCameraIcon}>
@@ -2116,7 +2104,7 @@ const Profile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.primary,
   },
   header: {
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
@@ -2152,7 +2140,7 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     borderWidth: 4,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.primary,
   },
   placeholderImage: {
     width: 90,
@@ -2162,13 +2150,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.primary,
   },
   cameraIcon: {
     position: 'absolute',
     bottom: 2,
     right: 2,
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.primary,
     borderRadius: 16,
     width: 32,
     height: 32,
@@ -2198,7 +2186,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   profileEmail: {
-    fontSize: 16,
+    fontSize: 1,
     color: COLORS.white,
     marginBottom: 12,
     opacity: 0.9,
@@ -2206,7 +2194,7 @@ const styles = StyleSheet.create({
   editProfileButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -2762,13 +2750,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.primary,
   },
   editCameraIcon: {
     position: 'absolute',
     bottom: 4,
     right: 4,
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.primary,
     borderRadius: 20,
     width: 40,
     height: 40,

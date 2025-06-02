@@ -1,20 +1,44 @@
 import React, { useState } from 'react';
-import { Image,SafeAreaView,ScrollView,StyleSheet,Text,TextInput,TouchableOpacity,View} from 'react-native';
+import {
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
-import { COLORS, icons, screens, SIZES} from '~/constants/index';
+import { COLORS, icons, screens, SIZES } from '~/constants/index';
 import Header from '~/components/Header';
-
 import MarinaMap from '~/components/SosScreen/MarinaMap';
-import SosButtons from '~/components/SosScreen/Buttons'
+import SosButtons from '~/components/SosScreen/Buttons';
 
 const SOS = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
+
+
+  const handleChange = (text) => {
+  if (/^\d*$/.test(text)) {
+    setValue(text);
+    const num = parseInt(text);
+    if (!isNaN(num) && num >= 10 && num <= 100) {
+      setError(false);
+    } else if (text !== '') {
+      setError(true);
+    } else {
+      setError(false);
+    }
+  }
+};
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -36,7 +60,11 @@ const SOS = () => {
             onPress={() => {
               navigation.openDrawer();
             }}>
-            <Image source={icons.menu} style={{ width: 20, height: 20 }} resizeMode="contain" />
+            <Image
+              source={icons.menu}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
         }
         rightComponent={
@@ -76,29 +104,29 @@ const SOS = () => {
 
       {/* Display Google Map */}
       <ScrollView>
-
-      <View style={styles.mapContainer}>
-        <MarinaMap />
-      </View> 
-        <View style={{position: "relative", top: -290}}>
-         <Text style={{ fontSize:SIZES.h3,paddingTop:50,paddingLeft:10}}>Mobile Number:</Text>
-  
-    <View style={styles.Textcontainer}>
-      <TextInput
-        
-        style={styles.input}
-        placeholder="                  - - - - - - - - -"
-        value={value}
-        onChangeText={setValue}
-        keyboardType='numeric'
-      />
-      
-    </View>
-  
-        <SosButtons/>
-        
+        <View style={styles.mapContainer}>
+          <MarinaMap />
         </View>
-        </ScrollView>
+
+        <View style={{ position: 'relative', top: -290 }}>
+          <Text style={{ fontSize: SIZES.h3, paddingTop: 50, paddingLeft: 10 }}>
+            Mobile Number:
+          </Text>
+
+          <View style={styles.Textcontainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="                  -     -     -     -     -     -     -    -     -   "
+              value={value}
+              onChangeText={handleChange}
+              keyboardType="numeric"
+              maxLength={10} 
+            />
+          </View>
+
+          <SosButtons />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -111,20 +139,19 @@ const styles = StyleSheet.create({
     marginTop: 35,
   },
   mapContainer: {
-    height: 500
+    height: 500,
   },
-   Textcontainer: {
+  Textcontainer: {
     padding: 5,
-    marginBottom:5
+    marginBottom: 5,
   },
   input: {
     height: 50,
     borderWidth: 1,
-    borderColor: '#ccc', 
+    borderColor: COLORS.dark,
     borderRadius: 8,
     paddingHorizontal: 12,
     fontSize: 16,
-    marginTop:15
+    marginTop: 15,
   },
-
 });

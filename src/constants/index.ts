@@ -225,6 +225,7 @@ export const COLORS = {
   lightGrey60: 'rgba(247, 247, 247, 0.6)',
   lightGrey20: 'rgba(247, 247, 247, 0.2)',
   lightGrey08: 'rgba(247, 247, 247, 0.08)',
+  lightGrey05:'#f2f2f2',
 
   // Light
   light: 'rgba(255, 255, 255, 1)',
