@@ -9,7 +9,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { COLORS, FONTS, icons, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import BookingCard from '~/components/Bookings/BookingCard';

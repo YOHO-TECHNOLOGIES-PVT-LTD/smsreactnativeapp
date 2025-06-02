@@ -48,14 +48,11 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
 
   return (
     <Animated.View style={[animatedStyle, { marginVertical: 5 }]}>
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={onPress}
+      <View
         style={{
-          backgroundColor: COLORS.white,
+          backgroundColor: COLORS.white2,
           borderRadius: SIZES.radius,
           padding: 10,
-          paddingVertical: 20,
           shadowColor: COLORS.primary,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.1,
@@ -71,7 +68,8 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
             borderRadius: 50,
             alignItems: 'center',
             marginRight: 15,
-            gap: 10,
+            gap: 15,
+            marginTop: 15,
           }}>
           <Image
             source={{ uri: data?.imageUrl }}
@@ -87,7 +85,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
           </View>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...FONTS.h5, color: COLORS.primary }}>{data?.name}</Text>
+          <Text style={{ ...FONTS.h4, color: COLORS.primary }}>{data?.name?.substring(0, 22)}</Text>
           <Text
             style={{
               ...FONTS.body6,
@@ -98,10 +96,12 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
             }}>
             {data?.description}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Text style={{ ...FONTS.h6, color: COLORS.primary_01 }}>{data?.compatibility}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 5 }}>
+            <Text style={{ ...FONTS.body6, color: COLORS.primary_01 }}>
+              Compatibility: {data?.compatibility}
+            </Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: 3, marginTop: 2 }}>
+          <View style={{ flexDirection: 'row', gap: 3, marginTop: 5 }}>
             <AntDesign name="calendar" size={12} color={COLORS.primary_text} />
             <Text style={{ ...FONTS.body6, color: COLORS.primary_text }}>
               {formatDateMonthandYear(data?.date)}
@@ -114,15 +114,39 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-          <TouchableOpacity style={[styles.viewBtn,{backgroundColor: COLORS.indigo[100]}]} onPress={() => {}}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: COLORS.indigo[100],
+              borderRadius: SIZES.small,
+              width: 60,
+              paddingVertical: 2,
+              paddingHorizontal: 4,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: 5,
+            }}
+            onPress={() => {}}>
+            {data?.type === 'spare' ? (
+              <Image
+                source={icons.spare_filled}
+                style={{ width: 15, height: 15 }}
+                tintColor={COLORS.indigo[500]}
+              />
+            ) : (
+              <Image
+                source={icons.services_filled}
+                style={{ width: 15, height: 15 }}
+                tintColor={COLORS.indigo[500]}
+              />
+            )}
             <Text style={{ ...FONTS.h6, color: COLORS.indigo[500] }}>{data?.type}</Text>
           </TouchableOpacity>
           <Text style={{ ...FONTS.h4, color: COLORS.primary_text }}>₹{data?.price}</Text>
           <TouchableOpacity style={styles.viewBtn} onPress={() => {}}>
-            <Text style={{ ...FONTS.h6, color: COLORS.sucesss_darkgreen }}>Delivered</Text>
+            <Text style={{ ...FONTS.h6, color: COLORS.white }}>View</Text>
           </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 };
@@ -131,8 +155,9 @@ export default BookingCard;
 
 const styles = StyleSheet.create({
   viewBtn: {
-    backgroundColor: COLORS.success_lightgreen_01,
+    backgroundColor: COLORS.primary_borders,
     borderRadius: SIZES.small,
+    width: 60,
     paddingVertical: 2,
     paddingHorizontal: 4,
     shadowColor: COLORS.primary,
@@ -140,8 +165,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    marginTop: 18,
-    marginBottom: 10,
+    marginVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
