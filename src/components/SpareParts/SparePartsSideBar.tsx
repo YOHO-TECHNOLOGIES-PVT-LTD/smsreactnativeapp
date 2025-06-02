@@ -1,36 +1,41 @@
 import { StyleSheet, Text, TouchableOpacity, FlatList, Image, View } from 'react-native';
 import React from 'react';
-import dummyimg from '../../../src/assets/spareParts-img/';
+import sparePartsData, { SparePartCategory } from '../../components/SpareParts/sparePartsData';
+import { COLORS } from '../../constants/index';
 
-type Category = {
-  label: string;
-  image: any; // local images must be imported as a module
+type Props = {
+  onCategorySelect: (category: SparePartCategory) => void;
+  selectedCategory: SparePartCategory | null;
 };
 
-const categories: Category[] = [
-  { label: 'Engine', image: dummyimg },
-  { label: 'Tyres', image: dummyimg },
-  { label: 'Brakes', image: dummyimg },
-  { label: 'AC', image: dummyimg },
-  { label: 'Battery', image: dummyimg },
-  { label: 'Engine', image: dummyimg },
-  { label: 'Tyres', image: dummyimg },
-  { label: 'Brakes', image: dummyimg },
-  { label: 'AC', image: dummyimg },
-  { label: 'Battery', image: dummyimg },
-];
-
-const SparePartsSideBar = () => {
+const SparePartsSideBar = ({ onCategorySelect, selectedCategory }: Props) => {
   return (
     <FlatList
-      data={categories}
+      showsVerticalScrollIndicator={false}
+      data={sparePartsData}
       keyExtractor={(item, index) => index.toString()}
-      renderItem={({ item }) => (
-        <TouchableOpacity style={styles.itemContainer}>
-          <Image source={item.image} style={styles.image} />
-          <Text style={styles.label}>{item.label}</Text>
-        </TouchableOpacity>
-      )}
+      renderItem={({ item }) => {
+        const isSelected = selectedCategory?.category === item.category;
+
+        return (
+          <TouchableOpacity
+            style={[
+              styles.itemContainer,
+              isSelected && styles.selectedItemContainer
+            ]}
+            onPress={() => onCategorySelect(item)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.contentContainer}>
+              <Image 
+                source={item.image} 
+                style={styles.image} 
+              />
+              <Text style={styles.label}>{item.category}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      }}
       contentContainerStyle={styles.sidebar}
     />
   );
@@ -41,23 +46,44 @@ export default SparePartsSideBar;
 const styles = StyleSheet.create({
   sidebar: {
     paddingVertical: 20,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.lightGrey,
     alignItems: 'center',
     width: 100,
+    borderRightWidth: 1,
+    borderRightColor: COLORS.primary_borders,
   },
   itemContainer: {
+    width: 92, // Fixed width (100 - 8 padding)
+    marginHorizontal: 4, // Center the item
+    marginVertical: 8,
     alignItems: 'center',
-    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: 'transparent', // Default transparent border
+    borderRadius: 8,
+  },
+  contentContainer: {
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 8,
+  },
+  selectedItemContainer: {
+    backgroundColor: COLORS.primary + '20',
   },
   image: {
-    width: 50,
-    height: 50,
+    width: 80,
+    height: 60,
     borderRadius: 8,
     marginBottom: 6,
+    backgroundColor: COLORS.light,
+    padding: 4,
+   
+  
   },
   label: {
     fontSize: 12,
-    color: '#333',
+    color: COLORS.primary_text,
     textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold',
+    paddingHorizontal: 4,
   },
 });

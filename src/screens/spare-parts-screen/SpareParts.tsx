@@ -59,9 +59,7 @@ const SpareParts = () => {
                 dispatch(setSelectedTab(screens.profile));
               }}>
               <Image
-                source={{
-                  uri: 'https://avatar.iran.liara.run/public/boy?username=Ash',
-                }}
+                source={require('../../assets/images/profile_picture.jpg')}
                 style={{
                   width: 40,
                   height: 40,
@@ -76,6 +74,7 @@ const SpareParts = () => {
        <View style={{ flex: 1 }}>
     <SparePartsPage />
   </View>
+
     </SafeAreaView>
   );
 };
