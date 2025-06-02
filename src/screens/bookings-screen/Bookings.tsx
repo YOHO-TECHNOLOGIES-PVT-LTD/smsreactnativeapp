@@ -151,7 +151,33 @@ const allOrders: OrderDetails[] = [
 
 const Bookings = () => {
   const navigate = useNavigation();
-  const [tab, setTab] = useState('All Orders');
+  const [tab, setTab] = useState<'All Orders' | 'Spare Parts' | 'Services'>('All Orders');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredOrders = allOrders.filter(order => {
+    // Filter by tab
+    const matchesTab = 
+      tab === 'All Orders' || 
+      (tab === 'Spare Parts' && order.type === 'spare') || 
+      (tab === 'Services' && order.type === 'service');
+    
+    // Filter by search query (case insensitive)
+    const matchesSearch = 
+      searchQuery === '' ||
+      order.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesTab && matchesSearch;
+  });
+
+  // Counts for the summary cards
+  const totalOrders = allOrders.length;
+  const completedOrders = allOrders.filter(order => {
+    const orderDate = order.date ? new Date(order.date) : null;
+    const today = new Date();
+    return orderDate && orderDate < today;
+  }).length;
+  const pendingOrders = totalOrders - completedOrders;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -176,15 +202,15 @@ const Bookings = () => {
               marginVertical: SIZES.radius,
             }}>
             <View style={styles.countCard}>
-              <Text style={{ ...FONTS.h4, color: COLORS.support1 }}>11</Text>
+              <Text style={{ ...FONTS.h4, color: COLORS.support1 }}>{totalOrders}</Text>
               <Text style={styles.text}>Total Orders</Text>
             </View>
             <View style={styles.countCard}>
-              <Text style={{ color: COLORS.success_green, ...FONTS.h4 }}>9</Text>
+              <Text style={{ color: COLORS.success_green, ...FONTS.h4 }}>{completedOrders}</Text>
               <Text style={styles.text}>Completed</Text>
             </View>
             <View style={styles.countCard}>
-              <Text style={{ ...FONTS.h4, color: COLORS.primary }}>2</Text>
+              <Text style={{ ...FONTS.h4, color: COLORS.primary }}>{pendingOrders}</Text>
               <Text style={styles.text}>Pending</Text>
             </View>
           </View>
@@ -192,7 +218,9 @@ const Bookings = () => {
           <View style={styles.tabContainer}>
             {/* search bar */}
             <View>
-              <TextInput style={styles.searchInput} placeholder="Search for your orders..." />
+              <TextInput style={styles.searchInput} placeholder="Search for your orders..."
+              value={searchQuery}
+                onChangeText={setSearchQuery} />
               <TouchableOpacity style={styles.searchButton}>
                 <Image
                   source={icons.search}
@@ -259,9 +287,15 @@ const Bookings = () => {
           </View>
           {/* orderlist */}
           <ScrollView style={{ marginVertical: SIZES.radius }} showsVerticalScrollIndicator={false}>
-            {allOrders.map((item, index) => (
-              <BookingCard key={index} data={item} onPress={() => {}} />
-            ))}
+           {filteredOrders.length > 0 ? (
+              filteredOrders.map((item, index) => (
+                <BookingCard key={index} data={item} onPress={() => {}} />
+              ))
+            ) : (
+              <View style={{ alignItems: 'center', padding: 20 }}>
+                <Text style={{ ...FONTS.body3, color: COLORS.grey }}>No orders found</Text>
+              </View>
+            )}
           </ScrollView>
         </View>
       </ImageBackground>
