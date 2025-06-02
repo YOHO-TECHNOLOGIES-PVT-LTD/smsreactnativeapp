@@ -1,6 +1,6 @@
 
 
-//OUTSTATION
+  //OUTSTATION WORK
 
 
 import React, { useEffect, useRef } from 'react';
@@ -14,21 +14,15 @@ import {
     ImageBackground,
 } from 'react-native';
 
-// 📦 Assets
 import Replacing_Tyre from '../../assets/Homepage/Roadside_assistant.jpg';
 import carbattery from '../../assets/Homepage/Car_battery.jpg';
-import carpainting from '../../assets/Homepage/Car_painting.jpg';
+import headlight from '../../assets/Homepage/HEAD_LIGHT_LED.jpg';
 import backgroundimage from '../../assets/Homepage/BACKGROUND_IMAGE/Green (1).png';
-import headlight from '../../assets/Homepage/HEAD_LIGHT_LED.jpg'
 
-// 🖥 Screen & layout constants
 const screenWidth = Dimensions.get('window').width;
 const CARD_WIDTH = 200;
 const CARD_SPACING = 20;
 const TOTAL_WIDTH = CARD_WIDTH + CARD_SPACING;
-const START_POS = -TOTAL_WIDTH;
-const END_POS = screenWidth + TOTAL_WIDTH;
-const DURATION = 9000;
 
 const cards = [
     { title: 'Tyre Replace', image: Replacing_Tyre },
@@ -36,81 +30,95 @@ const cards = [
     { title: 'Headlight Replace', image: headlight },
 ];
 
-// 🃏 Card Component with animation
-const AnimatedCard = ({ title, image, delay }) => {
-    const translateX = useRef(new Animated.Value(START_POS)).current;
+const loopCards = [...cards, ...cards];
+
+const Slideshow = () => {
+    const translateX1 = useRef(new Animated.Value(0)).current;
+    const translateX2 = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        const animate = () => {
-            translateX.setValue(START_POS);
-            Animated.timing(translateX, {
-                toValue: END_POS,
-                duration: DURATION,
+        const animateLeftToRight = () => {
+            translateX1.setValue(-loopCards.length * TOTAL_WIDTH / 2);
+            Animated.timing(translateX1, {
+                toValue: 0,
+                duration: 20000,
                 useNativeDriver: true,
-            }).start(() => animate()); // Loop the animation
+            }).start(() => animateLeftToRight());
         };
 
-        const timeout = setTimeout(animate, delay); // delay for staggered start
+        const animateRightToLeft = () => {
+            translateX2.setValue(0);
+            Animated.timing(translateX2, {
+                toValue: -loopCards.length * TOTAL_WIDTH / 2,
+                duration: 22000,
+                useNativeDriver: true,
+            }).start(() => animateRightToLeft());
+        };
 
-        return () => clearTimeout(timeout);
+        animateLeftToRight();
+        animateRightToLeft();
     }, []);
 
     return (
-        <Animated.View
-            style={[
-                styles.card,
-                {
-                    transform: [{ translateX }],
-                },
-            ]}
-        >
-            <Image source={image} style={styles.image} />
-            <Text style={styles.title}>{title}</Text>
-        </Animated.View>
-    );
-};
+        // <ImageBackground source={backgroundimage} style={styles.background} resizeMode="cover">
+        <ImageBackground  style={styles.background} resizeMode="cover">
+            <Text style={styles.headingtext}>Outstation Work</Text>
 
-// 🎞️ Main Slider
-const Slideshow = () => {
-    return (
-        <ImageBackground source={backgroundimage} style={styles.background} resizeMode="cover">
-            <View>
-                <Text style={styles.headingtext}> Outstation Work</Text>
-            </View>
+            {/* First Row: Left to Right */}
             <View style={styles.track}>
-                {cards.map((card, index) => (
-                    <AnimatedCard
-                        key={index}
-                        title={card.title}
-                        image={card.image}
-                        delay={index * 3000} // spacing between cards
-                    />
-                ))}
+                <Animated.View style={[styles.sliderRow, { transform: [{ translateX: translateX1 }] }]}>
+                    {loopCards.map((card, index) => (
+                        <View key={`row1-${index}`} style={styles.card}>
+                            <Image source={card.image} style={styles.image} />
+                            <Text style={styles.title}>{card.title}</Text>
+                        </View>
+                    ))}
+                </Animated.View>
+            </View>
+
+            {/* Second Row: Right to Left */}
+            <View style={styles.track}>
+                <Animated.View style={[styles.sliderRow, { transform: [{ translateX: translateX2 }] }]}>
+                    {loopCards.map((card, index) => (
+                        <View key={`row2-${index}`} style={styles.card}>
+                            <Image source={card.image} style={styles.image} />
+                            <Text style={styles.title}>{card.title}</Text>
+                        </View>
+                    ))}
+                </Animated.View>
             </View>
         </ImageBackground>
     );
 };
 
-// 💅 Styles
 const styles = StyleSheet.create({
     background: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
         width: '100%',
         height: '100%',
-      
+        paddingVertical: 5,
+    },
+    headingtext: {
+        fontWeight: 'bold',
+        fontSize: 26,
+        marginBottom: 10,
+        paddingTop: 1,
+        paddingLeft: 10,
     },
     track: {
         height: 170,
         width: '100%',
         overflow: 'hidden',
-        position: 'relative',
+        marginBottom: 20,
+    },
+    sliderRow: {
+        flexDirection: 'row',
     },
     card: {
-        position: 'absolute',
         width: CARD_WIDTH,
         height: 155,
+        marginRight: CARD_SPACING,
         borderRadius: 12,
         backgroundColor: '#fff',
         overflow: 'hidden',
@@ -129,14 +137,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 14,
         fontWeight: 'bold',
-        paddingTop: 8,
-        textAlign: 'center',
         color: '#333',
-    },
-    headingtext: {
-        fontWeight: 'bold',
-        fontSize: 26,
-        marginBottom: 10,
+        textAlign: 'center',
+        paddingTop: 5,
     },
 });
 

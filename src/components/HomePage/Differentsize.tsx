@@ -113,7 +113,8 @@ const DifferentSize = () => {
 
 const styles = StyleSheet.create({
     scrollContainer: {
-        padding: 16,
+        padding: 10,
+        
     },
     headingtext: {
         fontWeight: 'bold',
@@ -131,9 +132,10 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         alignItems: 'center',
         elevation: 3,
-        shadowColor: '#000',
+        shadowColor: 'black',
+        // shadowColor: '#000',
         shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 10, height: 10 },
         shadowRadius: 4,
         padding: 8,
     },
