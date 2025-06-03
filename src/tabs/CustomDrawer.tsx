@@ -184,7 +184,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             icon={icons.cart_outlined}
             onPress={() => navigation.navigate('BookingCartScreen')}
           />
-          <CustomDrawerItem
+          {/* <CustomDrawerItem
             label="Settings"
             icon={icons.settings}
             onPress={() => navigation.navigate('SettingsScreen')}
@@ -198,7 +198,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             label="FAQs"
             icon={icons.faq}
             onPress={() => navigation.navigate('FAQsScreen')}
-          />
+          /> */}
           <View
             style={{
               height: 1,

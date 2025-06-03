@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import toast from '../utils/toast';
-import CustomDrawer from '../tabs/CustomDrawer';
 import {
   BookingCartScreen,
   BookingsScreen,
@@ -21,6 +20,7 @@ import {
   SosScreen,
   SparePartsScreen,
 } from '~/screens';
+import ServiceDrawer from '../tabs/CustomDrawer';
 
 // Define the types for navigation stack
 export type RootStackParamList = {
@@ -77,7 +77,7 @@ const Routes: React.FC = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
-      <Stack.Screen name="ForgetPasswordScreen" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
       <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
       <Stack.Screen name="SetNewPasswordScreen" component={SetNewPasswordScreen} />
     </Stack.Navigator>
@@ -85,7 +85,7 @@ const Routes: React.FC = () => {
 
   const MainStack: React.FC = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="CustomDrawer" component={CustomDrawer} />
+      <Stack.Screen name="CustomDrawer" component={ServiceDrawer} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="SOSScreen" component={SosScreen} />
       <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
@@ -94,7 +94,7 @@ const Routes: React.FC = () => {
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
       <Stack.Screen name="BookingsScreen" component={BookingsScreen} />
-      <Stack.Screen name="BookingCartSceen" component={BookingCartScreen} />
+      <Stack.Screen name="BookingCartScreen" component={BookingCartScreen} />
       <Stack.Screen name="HelpCenterScreen" component={HelpCenterScreen} />
       <Stack.Screen name="FAQsScreen" component={FAQsScreen} />
     </Stack.Navigator>

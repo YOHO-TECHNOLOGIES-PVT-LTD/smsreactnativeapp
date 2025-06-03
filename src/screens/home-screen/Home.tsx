@@ -31,7 +31,7 @@ const HomeScreen = () => {
   const [error, setError] = useState(false);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.container}>
       <Header
         containerStyle={{
           height: 50,
@@ -62,7 +62,9 @@ const HomeScreen = () => {
                 borderRadius: 25,
                 borderColor: COLORS.primary,
               }}
-              onPress={() => {}}
+              onPress={() => {
+                navigation.navigate('NotificationScreen');
+              }}
             />
 
             <TouchableOpacity
@@ -110,7 +112,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    marginTop: 35,
   },
   btn: {
     backgroundColor: 'red',

@@ -194,7 +194,9 @@ export const COLORS = {
   secondary08: 'rgba(161, 219, 245, 0.08)',
 
   // Success
-  success_green: '#82dd55',
+  sucesss_darkgreen: '#218c75',
+  success_lightgreen: '#82dd55',
+  success_lightgreen_01: 'rgba(220, 252, 231, 0.8)',
   success: 'rgba(253, 212, 70, 1)',
   success80: 'rgba(253, 212, 70, 0.8)',
   success60: 'rgba(253, 212, 70, 0.6)',
@@ -223,6 +225,7 @@ export const COLORS = {
   lightGrey60: 'rgba(247, 247, 247, 0.6)',
   lightGrey20: 'rgba(247, 247, 247, 0.2)',
   lightGrey08: 'rgba(247, 247, 247, 0.08)',
+  lightGrey05:'#f2f2f2',
 
   // Light
   light: 'rgba(255, 255, 255, 1)',
@@ -263,6 +266,8 @@ export const COLORS = {
   white: '#FFFFFF',
   black: '#000000',
 
+  buttonbg1: '#4CAF50',
+
   transparent: 'transparent',
   transparentWhite1: 'rgba(255, 255, 255, 0.1)',
   transparentBlack1: 'rgba(0, 0, 0, 0.1)',
@@ -271,6 +276,7 @@ export const COLORS = {
 
 export const SIZES = {
   // global sizes
+  full: wp('100%'), // Responsive full width
   extraSmall: wp('1%'), // Responsive base size
   small: wp('2%'), // Responsive base size
   radius: wp('3%'), // Responsive radius
@@ -286,6 +292,7 @@ export const SIZES = {
   h2: 22,
   h2_01: 20,
   h2_02: 18,
+  h2_03: 24,
   h3: 16,
   h4: 14,
   h5: 12,
@@ -300,6 +307,8 @@ export const SIZES = {
   body6: 10,
   body7: 8,
   body8: 6,
+  body9: 4,
+  newbody: 35,
 
   // app dimensions
   width,

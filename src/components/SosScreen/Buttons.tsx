@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '~/constants';
 
 const issues = [
   { id: 'battery', label: 'Battery Discharged', icon: require('../../assets/icons/images/sosimages/battery.png') },
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   },
   issueButton: {
     width: '47%',
-    backgroundColor: '#f2f2f2',
+    backgroundColor:COLORS.lightGrey05,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,

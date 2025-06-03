@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
 import { COLORS, icons, screens, SIZES } from '~/constants';
 import Header from '~/components/Header';
+import SparePartsPage from '~/components/SpareParts/SparePartsPage';
 
 const SpareParts = () => {
   const navigation = useNavigation();
@@ -44,7 +45,9 @@ const SpareParts = () => {
                 borderRadius: 25,
                 borderColor: COLORS.primary,
               }}
-              onPress={() => {}}
+              onPress={() => {
+                navigation.navigate('NotificationScreen');
+              }}
             />
 
             <TouchableOpacity
@@ -69,8 +72,8 @@ const SpareParts = () => {
           </View>
         }
       />
-      <View>
-        <Text>Spare Parts</Text>
+      <View style={{ flex: 1 }}>
+        <SparePartsPage />
       </View>
     </SafeAreaView>
   );
