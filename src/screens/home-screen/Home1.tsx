@@ -1,42 +1,21 @@
-import React, { useState } from 'react';
-import {
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Image, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import Header from '~/components/Header';
+import { COLORS, FONTS, icons, screens, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
-import { COLORS, FONTS, icons, screens, SIZES } from '~/constants/index';
-import Header from '~/components/Header';
-import MarinaMap from '~/components/SosScreen/MarinaMap';
-import SosButtons from '~/components/SosScreen/Buttons';
+import TitleSearchBar from '../../components/HomePage/SearchBar';
+import App from '../../components/HomePage/App';
+import AutoSlidingCarousel from '../../components/HomePage/AutoSlidingCarousel';
+import Offercard from '../../components/HomePage/offercard';
+import BlinkingImage from '../../components/HomePage/BlinkingCardsContainer';
 
-const SOS = () => {
+const HomeScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [value, setValue] = useState('');
   const [error, setError] = useState(false);
-
-  const handleChange = (text) => {
-    if (/^\d*$/.test(text)) {
-      setValue(text);
-      const num = parseInt(text);
-      if (!isNaN(num) && num >= 10 && num <= 100) {
-        setError(false);
-      } else if (text !== '') {
-        setError(true);
-      } else {
-        setError(false);
-      }
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -71,7 +50,7 @@ const SOS = () => {
                 borderColor: COLORS.primary,
               }}
               onPress={() => {
-                navigation.navigate('NotificationScreen' as never);
+                navigation.navigate('NotificationScreen');
               }}
             />
 
@@ -97,55 +76,34 @@ const SOS = () => {
           </View>
         }
       />
-
-      {/* Display Google Map */}
-      <ScrollView style={{ position: 'relative' }}>
-        <View style={styles.mapContainer}>
-          <MarinaMap />
-        </View>
-
-        <View style={{ }}>
-          <Text style={{ ...FONTS.body4, paddingTop: 20, paddingLeft: 10 }}>Mobile Number:</Text>
-
-          <View style={styles.Textcontainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="+91-1234567890"
-              value={value}
-              onChangeText={handleChange}
-              keyboardType="numeric"
-              maxLength={10}
-            />
-          </View>
-          <SosButtons />
+      <View style={{ borderBottomWidth: 3, borderColor: COLORS.primary }}></View>
+      <ScrollView>
+        <View>
+          <TitleSearchBar />
+          <AutoSlidingCarousel />
+          <App />
+          <Offercard />
+          <BlinkingImage />
+          <View style={{ marginBottom: 45 }}></View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default SOS;
+export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: COLORS.white,
   },
-  mapContainer: {
-    borderTopColor: COLORS.primary,
-    borderWidth: 3,
-    height: 250,
-  },
-  Textcontainer: {
-    paddingHorizontal: 15,
-    marginBottom: 5,
-  },
-  input: {
-    height: 50,
-    borderWidth: 0.3,
-    borderColor: COLORS.grey,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    ...FONTS.body4,
-    marginTop: 10,
+  btn: {
+    backgroundColor: 'red',
+    padding: SIZES.padding,
+    marginVertical: SIZES.padding,
+    borderRadius: SIZES.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

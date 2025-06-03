@@ -1,6 +1,6 @@
 import React, { useState, ReactNode } from 'react';
-import { View, Text, Image, ImageStyle, ViewStyle, StyleProp } from 'react-native';
-import { FONTS, SIZES } from '../constants';
+import { View, Text, Image, ImageStyle, ViewStyle, StyleProp, StatusBar } from 'react-native';
+import { COLORS, FONTS, SIZES } from '../constants';
 
 interface HeaderProps {
   containerStyle?: StyleProp<ViewStyle>;
@@ -25,6 +25,7 @@ const Header: React.FC<HeaderProps> = ({
         flexDirection: 'row',
         ...(containerStyle as object),
       }}>
+      <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       {/* Left */}
       {leftComponent}
 

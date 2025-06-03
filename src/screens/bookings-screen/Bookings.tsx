@@ -316,7 +316,6 @@ const styles = StyleSheet.create({
   },
   bookingsContainer: {
     flex: 1,
-    marginBlockStart: SPACING.medium_02,
     paddingHorizontal: SPACING.small,
   },
   countCard: {

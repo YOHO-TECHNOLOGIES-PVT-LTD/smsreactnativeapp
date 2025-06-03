@@ -53,7 +53,7 @@ const Routes: React.FC = () => {
   useEffect(() => {
     const checkAuthState = async () => {
       try {
-        const isLoggedIn = true; // Replace this with your actual logic
+        const isLoggedIn = true;
         if (isLoggedIn) {
           navigation.reset({
             index: 0,

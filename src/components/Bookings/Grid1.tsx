@@ -225,7 +225,7 @@ const Card = ({ title, image, price, onQuantityChange, isService = false }) => {
         <TouchableOpacity
           style={[styles.addButton, { backgroundColor: count > 0 ? '#aaa' : COLORS.primary }]}
           onPress={handleToggleService}>
-          <Text style={styles.addButtonText}>{count > 0 ? 'Deselect' : 'Add'}</Text>
+          <Text style={styles.addButtonText}>{count > 0 ? 'Remove' : 'Add'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   container: { padding: 15, paddingBottom: 30 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.indigo[100],
     flex: 1,
     height: 260,
     marginHorizontal: 4,
@@ -281,11 +281,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 8,
-    elevation: 3,
   },
   cardImage: { width: '100%', height: '45%', borderRadius: 8 },
-  cardText: { ...FONTS.h4, textAlign: 'center', marginTop: 3 },
-  priceText: { color: '#333', ...FONTS.body5, marginTop: 4 },
+  cardText: { ...FONTS.h4, textAlign: 'center', marginTop: 5 },
+  priceText: { color: '#333', ...FONTS.body5, marginTop: 5 },
   counterRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -293,7 +292,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   counterButton: {
-    backgroundColor: '#ddd',
+    backgroundColor: COLORS.grey,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 4,
@@ -301,9 +300,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  counterButtonText: { ...FONTS.h4 },
+  counterButtonText: { ...FONTS.h4, color: COLORS.white },
   counterValue: { ...FONTS.h4 },
-  totalText: { ...FONTS.body5, marginTop: 6, color: '#333' },
+  totalText: { ...FONTS.h4, marginTop: 10, color: COLORS.primary_text },
   totalListContainer: {
     backgroundColor: '#f9f9f9',
     padding: 16,

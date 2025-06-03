@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
-import { COLORS, icons, screens, SIZES } from '~/constants';
+import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
 import Header from '~/components/Header';
 import {
   Clock,
@@ -44,9 +44,9 @@ const contentSections = {
     title: 'Scheduled Packages',
     packages: [
       {
-        id: `basic `,
-        title: `Basic Service `,
-        warranty: `1000 Kms or 1 Month Warranty `,
+        id: 'basic',
+        title: 'Basic Service',
+        warranty: '1000 Kms or 1 Month Warranty',
         frequency: 'Every 5000 Kms or 3 Months (Recommended)',
         duration: '4 Hrs ',
         image: require('../../assets/service-images/generalservice.png'),
@@ -413,7 +413,6 @@ const Services = () => {
   const [error, setError] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState<ContentSectionKey>('Periodic Services');
   const [expandedServices, setExpandedServices] = useState<{ [key: string]: boolean }>({});
-  // type PackageType = (typeof contentSections)[ContentSectionKey]['packages'][number];
   const [cart, setCart] = useState<PackageType[]>([]);
 
   const currentContent = contentSections[activeNavItem] || contentSections['Periodic Services'];
@@ -469,7 +468,6 @@ const Services = () => {
           paddingHorizontal: SIZES.padding,
           alignItems: 'center',
         }}
-        logo={icons.logo}
         leftComponent={
           <TouchableOpacity
             style={{
@@ -495,7 +493,7 @@ const Services = () => {
                 borderColor: COLORS.primary,
               }}
               onPress={() => {
-                navigation.navigate('NotificationScreen');
+                navigation.navigate('NotificationScreen' as never);
               }}
             />
 
@@ -503,7 +501,7 @@ const Services = () => {
               {cart.length > 0 && (
                 <TouchableOpacity
                   style={styles.cartButton}
-                  onPress={() => navigation.navigate('BookingCartScreen')}>
+                  onPress={() => navigation.navigate('BookingCartScreen' as never)}>
                   <ShoppingCart size={24} color="white" />
                   <View style={styles.cartBadge}>
                     <Text style={styles.cartBadgeText}>{cart.length}</Text>
@@ -516,31 +514,33 @@ const Services = () => {
       />
 
       {/* Main content start */}
-      <StatusBar backgroundColor="#9b111e" barStyle="light-content" />
-
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <Text style={styles.headerTitle}>Car Services</Text>
-      </View> */}
-
       <View style={styles.mainContainer}>
-        {/* Sidebar Navigation */}
-        <View style={styles.sidebar}>
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            data={navigationItems}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
+        {/* Horizontal Navigation Bar */}
+        <View style={styles.horizontalNavContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalNavContent}>
+            {navigationItems.map((item, index) => (
               <TouchableOpacity
-                style={[styles.navItem, activeNavItem === item.name && styles.activeNavItem]}
+                key={index}
+                style={[
+                  styles.horizontalNavItem,
+                  activeNavItem === item.name && styles.activeHorizontalNavItem,
+                ]}
                 onPress={() => setActiveNavItem(item.name as ContentSectionKey)}>
-                <View style={styles.navIcon}>{item.icon}</View>
-                <Text style={[styles.navText, activeNavItem === item.name && styles.activeNavText]}>
+                <View style={styles.horizontalNavIcon}>{item.icon}</View>
+                <Text
+                  style={[
+                    styles.horizontalNavText,
+                    activeNavItem === item.name && styles.activeHorizontalNavText,
+                  ]}
+                  numberOfLines={1}>
                   {item.name}
                 </Text>
               </TouchableOpacity>
-            )}
-          />
+            ))}
+          </ScrollView>
         </View>
 
         {/* Main Content */}
@@ -559,7 +559,7 @@ const Services = () => {
               )}
 
               <View style={styles.durationBadge}>
-                <Clock size={16} color="white" />
+                <Clock size={14} color="white" />
                 <Text style={styles.durationText}>{pkg.duration}</Text>
               </View>
 
@@ -616,10 +616,7 @@ const Services = () => {
                     </View>
 
                     <TouchableOpacity
-                      style={[
-                        styles.addToCartButton,
-                        addedItems[pkg.id] && styles.addedButton, // Optional: different style for "ADDED" state
-                      ]}
+                      style={[styles.addToCartButton, addedItems[pkg.id] && styles.addedButton]}
                       onPress={() => addToCart(pkg)}>
                       <Text style={styles.buttonText}>
                         {addedItems[pkg.id] ? 'ADDED' : 'ADD TO CART'}
@@ -643,46 +640,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    marginTop: 35,
-  },
-  header: {
-    backgroundColor: COLORS.primary,
-    padding: SIZES.h3,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: COLORS.light,
-    fontSize: SIZES.h2_01,
-    fontWeight: 'bold',
   },
   mainContainer: {
     flex: 1,
-    flexDirection: 'row',
+    marginBottom: 10,
   },
-  sidebar: {
-    width: 100,
-    backgroundColor: COLORS.light,
-    borderRightWidth: 1,
-    borderRightColor: '#e0e0e0',
+  horizontalNavContainer: {
+    height: 70,
+    backgroundColor: COLORS.lightGrey,
+    borderBottomWidth: 1,
+    borderTopWidth: 3,
+    borderBottomColor: '#e0e0e0',
+    borderTopColor: COLORS.primary,
+    elevation: 1,
   },
-  navItem: {
-    padding: SIZES.body3,
+  horizontalNavContent: {
+    paddingHorizontal: 5,
     alignItems: 'center',
   },
-  activeNavItem: {
+  horizontalNavItem: {
+    paddingHorizontal: 5,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0.2,
+    borderColor: COLORS.grey40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  activeHorizontalNavItem: {
     backgroundColor: '#fde8e8',
   },
-  navIcon: {
-    marginBottom: SIZES.h7,
+  horizontalNavIcon: {
+    marginBottom: 5,
   },
-  navText: {
-    fontSize: SIZES.h5,
+  horizontalNavText: {
+    ...FONTS.h7,
     textAlign: 'center',
     color: '#666',
+    width: 105,
   },
-  activeNavText: {
+  activeHorizontalNavText: {
     color: COLORS.primary,
-    fontWeight: 'bold',
+    ...FONTS.h7,
   },
   content: {
     flex: 1,
@@ -692,13 +694,13 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.h2_03,
   },
   contentTitle: {
-    fontSize: SIZES.h2_03,
-    fontWeight: 'bold',
+    ...FONTS.h2,
     color: COLORS.primary,
-    marginBottom: SIZES.h7,
+    marginBottom: 5,
   },
   contentSubtitle: {
     color: '#666',
+    ...FONTS.body5,
   },
   packageCard: {
     backgroundColor: '#FAF3EB',
@@ -724,8 +726,7 @@ const styles = StyleSheet.create({
   },
   recommendedText: {
     color: COLORS.white,
-    fontSize: SIZES.body5,
-    fontWeight: 'bold',
+    ...FONTS.body6,
   },
   packageContent: {
     flexDirection: 'column',
@@ -751,8 +752,7 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.body7,
   },
   packageTitle: {
-    fontSize: SIZES.h2_02,
-    fontWeight: 'bold',
+    ...FONTS.h3,
     color: COLORS.primary,
     flex: 1,
   },
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
   },
   durationText: {
     color: COLORS.white,
-    fontSize: SIZES.body5,
+    ...FONTS.body6,
     marginLeft: SIZES.body9,
   },
   warrantyRow: {
@@ -779,14 +779,14 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.body3,
   },
   warrantyText: {
-    fontSize: SIZES.body5,
-    color: COLORS.primary,
+    ...FONTS.body5,
+    color: COLORS.primary_text,
     marginRight: SIZES.body7,
     marginBottom: SIZES.body9,
   },
   servicesGrid: {
     justifyContent: 'space-between',
-    marginBottom: SIZES.body7,
+    marginBottom: SIZES.body8,
   },
   serviceItem: {
     flexDirection: 'row',
@@ -804,7 +804,7 @@ const styles = StyleSheet.create({
     marginRight: SIZES.body7,
   },
   serviceText: {
-    fontSize: SIZES.body5,
+    ...FONTS.body6,
     color: '#333',
     flexShrink: 1,
   },
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
   },
   showMoreText: {
     color: COLORS.primary,
-    fontSize: SIZES.body5,
+    ...FONTS.body5,
     marginLeft: SIZES.body9,
   },
   priceRow: {
@@ -825,14 +825,13 @@ const styles = StyleSheet.create({
     marginTop: SIZES.body7,
   },
   originalPrice: {
-    fontSize: SIZES.body4,
+    ...FONTS.body4,
     color: '#999',
     textDecorationLine: 'line-through',
   },
   discountPrice: {
-    fontSize: 20,
+    ...FONTS.h3,
     color: COLORS.primary,
-    fontWeight: 'bold',
   },
   addToCartButton: {
     backgroundColor: COLORS.primary,
@@ -842,7 +841,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: COLORS.white,
-    fontWeight: 'bold',
+    ...FONTS.h5,
   },
   cartButton: {
     width: 30,

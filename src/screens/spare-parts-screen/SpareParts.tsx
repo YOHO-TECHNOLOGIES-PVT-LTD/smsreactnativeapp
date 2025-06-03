@@ -20,7 +20,6 @@ const SpareParts = () => {
           paddingHorizontal: SIZES.padding,
           alignItems: 'center',
         }}
-        logo={icons.logo}
         leftComponent={
           <TouchableOpacity
             style={{
@@ -46,7 +45,7 @@ const SpareParts = () => {
                 borderColor: COLORS.primary,
               }}
               onPress={() => {
-                navigation.navigate('NotificationScreen');
+                navigation.navigate('NotificationScreen' as never);
               }}
             />
 
@@ -85,6 +84,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    marginTop: 35,
   },
 });

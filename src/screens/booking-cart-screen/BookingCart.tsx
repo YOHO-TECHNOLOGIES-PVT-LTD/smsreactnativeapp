@@ -3,9 +3,6 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
-//pages
-import TitleBar from '../../components/Bookings/TitleBar';
 import Grid1 from '../../components/Bookings/Grid1';
 import { COLORS, FONTS } from '~/constants';
 
@@ -16,7 +13,7 @@ const Settings = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color="#fff" />
+          <Icon name="arrow-back" size={24} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>Booking Cart</Text>
       </View>
@@ -31,15 +28,13 @@ const Settings = () => {
 export default Settings;
 
 const styles = StyleSheet.create({
-  container: {
-  },
+  container: {},
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: '12%',
     paddingHorizontal: 16,
     backgroundColor: COLORS.primary,
-    paddingBottom: 16,
+    paddingVertical: 10,
   },
   backButton: {
     padding: 8,
