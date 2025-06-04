@@ -21,6 +21,7 @@ import {
   SparePartsScreen,
 } from '~/screens';
 import ServiceDrawer from '../tabs/CustomDrawer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the types for navigation stack
 export type RootStackParamList = {
@@ -53,7 +54,8 @@ const Routes: React.FC = () => {
   useEffect(() => {
     const checkAuthState = async () => {
       try {
-        const isLoggedIn = true;
+        const token = await AsyncStorage.getItem('authToken');
+        const isLoggedIn = token;
         if (isLoggedIn) {
           navigation.reset({
             index: 0,

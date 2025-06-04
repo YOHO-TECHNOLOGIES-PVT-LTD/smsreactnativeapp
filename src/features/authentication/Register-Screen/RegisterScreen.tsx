@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS, FONTS } from '~/constants';
 import toast from '~/utils/toast';
+import { SignUpAuthentication } from '../service';
 
 type SignUpForm = {
   email: string;
@@ -34,14 +35,19 @@ const RegisterScreen = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
-  const onSubmit = (data: SignUpForm) => {
+  const onSubmit = async (data: SignUpForm) => {
     if (data.password !== data.confirmPassword) {
       toast.error('Error', 'Passwords do not match');
       return;
     }
-    console.log('Sign Up Data:', data);
-    toast.success('Registration Successful', 'You have successfully registered.');
-    navigation.goBack();
+    const { email, phone, password } = data;
+    const response = await SignUpAuthentication({ email, phone, password });
+    if (response?.success) {
+      toast.success('Registration Successful', 'You have successfully registered.');
+      navigation.navigate('OtpVerificationScreen', { data: response.data });
+    } else {
+      toast.error('Something went wrong', 'Please try again.');
+    }
   };
 
   return (
@@ -54,7 +60,7 @@ const RegisterScreen = () => {
         style={styles.background}
         blurRadius={2}>
         <View style={styles.formContainer}>
-          <Text style={styles.title}>YM User SignUp</Text>
+          <Text style={styles.title}>SignUp</Text>
 
           {/* Email */}
           <Controller

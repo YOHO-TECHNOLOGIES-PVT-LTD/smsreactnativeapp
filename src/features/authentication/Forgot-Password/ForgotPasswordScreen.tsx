@@ -12,6 +12,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONTS } from '~/constants';
 import toast from '~/utils/toast';
+import { ForgotPassword } from '../service';
 
 const ForgotPasswordScreen = () => {
   const navigation = useNavigation();
@@ -21,9 +22,16 @@ const ForgotPasswordScreen = () => {
     formState: { errors },
   } = useForm<{ emailOrPhone: string }>();
 
-  const onSubmit = (data: { emailOrPhone: string }) => {
+  const onSubmit = async (data: { emailOrPhone: string }) => {
     console.log('Verify Email/Phone:', data);
-    navigation.navigate('OtpVerificationScreen' as never);
+    const response = await ForgotPassword({ email: data.emailOrPhone });
+    console.log('Forgot Password Response:', response);
+    if (response) {
+      navigation.navigate('OtpVerificationScreen' as never, {
+        data: response,
+        method: 'forgotPassword-OtpVerify',
+      });
+    }
   };
 
   return (

@@ -13,8 +13,9 @@ import { Controller, useForm } from 'react-hook-form';
 import Icon from 'react-native-vector-icons/Ionicons';
 import toast from '~/utils/toast';
 import { COLORS, FONTS } from '~/constants';
+import { ResetPassword } from '../service';
 
-const SetNewPasswordScreen = () => {
+const SetNewPasswordScreen = ({ route }) => {
   const navigation = useNavigation();
   const {
     control,
@@ -25,14 +26,19 @@ const SetNewPasswordScreen = () => {
 
   const [showNewPassword, setShowNewPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const { data } = route?.params || {};
 
-  const onSubmit = (data: { newPassword: string; confirmPassword: string }) => {
+  const onSubmit = async (data: { newPassword: string; confirmPassword: string }) => {
     if (data.newPassword !== data.confirmPassword) {
       toast.error('Error', 'Passwords do not match');
       return;
     }
-    toast.success('Success', 'Password changed successfully');
-    navigation.navigate('LoginScreen' as never);
+    const response = await ResetPassword(data);
+    console.log('Reset Password Response:', response);
+    if (response) {
+      toast.success('Success', 'Password changed successfully');
+      navigation.navigate('LoginScreen' as never);
+    }
   };
 
   return (

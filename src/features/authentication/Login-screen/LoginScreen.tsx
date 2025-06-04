@@ -16,9 +16,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { COLORS, FONTS } from '~/constants';
 import toast from '~/utils/toast';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { LoginAuthentication } from '../service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type LoginFormData = {
-  identifier: string;
+  email: string;
   password: string;
 };
 
@@ -32,9 +34,21 @@ const LoginScreen = () => {
     formState: { errors },
   } = useForm<LoginFormData>();
 
-  const onSubmit = (data: LoginFormData) => {
-    console.log('Login Data:', data);
-    toast.success('Success', 'Logged in successfully');
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      const response = await LoginAuthentication(data);
+      if (response) {
+        await AsyncStorage.setItem('authToken', response);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainStack' }],
+        });
+        toast.success('Success', 'Logged in successfully');
+      }
+    } catch (error) {
+      console.log('Login Error:', error.message);
+      toast.error('Error', 'Failed to log in');
+    }
   };
 
   return (
@@ -47,12 +61,12 @@ const LoginScreen = () => {
         style={styles.background}
         blurRadius={2}>
         <Animated.View entering={FadeInUp.delay(200).duration(600)} style={styles.formContainer}>
-          <Text style={styles.title}>YM User Login</Text>
+          <Text style={styles.title}>User Login</Text>
           {/* Identifier Input */}
           <Controller
             control={control}
             rules={{ required: 'Username or phone is required' }}
-            name="identifier"
+            name="email"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
                 placeholder="Email or Phone Number"
@@ -64,7 +78,7 @@ const LoginScreen = () => {
               />
             )}
           />
-          {errors.identifier && <Text style={styles.errorText}>{errors.identifier.message}</Text>}
+          {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
           {/* Password Input */}
           <Controller
             control={control}
@@ -85,7 +99,7 @@ const LoginScreen = () => {
                   <Icon
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={22}
-                    color="#ccc"
+                    color={COLORS.white}
                   />
                 </TouchableOpacity>
               </View>

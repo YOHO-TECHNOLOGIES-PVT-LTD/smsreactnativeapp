@@ -57,5 +57,6 @@ export const API_END_POINTS = {
 
   notification: {
     getAll: '/api/notifications/',
+    getById: '/api/notifications/:id',
   },
 };

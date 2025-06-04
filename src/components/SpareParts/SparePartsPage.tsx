@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -12,21 +12,41 @@ import {
 import SparePartsCard from '../../components/SpareParts/SparePartsCard';
 import sparePartsData, { SparePartCategory } from '../../components/SpareParts/sparePartsData';
 import { COLORS, FONTS } from '../../constants/index';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 20) / 2;
 
 const SparePartsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(sparePartsData[0]);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollStep = 120;
+  const scrollX = useRef(0);
+
+  const scrollLeft = () => {
+    scrollX.current = Math.max(scrollX.current - scrollStep, 0);
+    scrollRef.current?.scrollTo({ x: scrollX.current, animated: true });
+  };
+
+  const scrollRight = () => {
+    scrollX.current += scrollStep;
+    scrollRef.current?.scrollTo({ x: scrollX.current, animated: true });
+  };
 
   return (
     <View style={styles.container}>
-      {/* Horizontal Navigation Bar */}
-      <View style={styles.horizontalNavContainer}>
+      <View style={styles.horizontalNavWrapper}>
+        {/* Left Arrow */}
+        <TouchableOpacity onPress={scrollLeft} style={styles.arrowButton}>
+          <Ionicons name="chevron-back" size={24} color="#333" />
+        </TouchableOpacity>
+
+        {/* Scrollable Spare Parts Category Bar */}
         <ScrollView
+          ref={scrollRef}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalNavContent}>
+          contentContainerStyle={styles.horizontalNavContent1}>
           {sparePartsData.map((item, index) => {
             const isSelected = selectedCategory?.category === item.category;
 
@@ -48,6 +68,11 @@ const SparePartsPage = () => {
             );
           })}
         </ScrollView>
+
+        {/* Right Arrow */}
+        <TouchableOpacity onPress={scrollRight} style={styles.arrowButton}>
+          <Ionicons name="chevron-forward" size={24} color="#333" />
+        </TouchableOpacity>
       </View>
 
       {/* Main Content - Grid Layout */}
@@ -84,6 +109,31 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.primary,
     elevation: 1,
   },
+  horizontalNavWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+
+  arrowButton: {
+    padding: 6,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+    marginHorizontal: 4,
+    elevation: 2,
+    zIndex: 10,
+  },
+
+  horizontalNavContent1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  image: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
   horizontalNavContent: {
     paddingHorizontal: 5,
     alignItems: 'center',
@@ -99,7 +149,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    width: 105,
+    width: 115,
   },
   activeHorizontalNavItem: {
     backgroundColor: '#fde8e8',

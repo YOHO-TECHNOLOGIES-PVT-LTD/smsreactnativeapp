@@ -98,24 +98,45 @@ const HomeScreen = () => {
   const spareParts = [
     {
       id: '1',
-      name: 'Oil Filter',
+      name: 'Battery',
       price: '₹450',
       oem: 'Bosch',
-      image: require('../../assets/service-images/generalservice.png'),
+      image: require('../../assets/sparepartsimage/parts/battery.jpg'),
     },
     {
       id: '2',
       name: 'Brake Pads',
       price: '₹1200',
       oem: 'Brembo',
-      image: require('../../assets/service-images/generalservice.png'),
+      image: require('../../assets/sparepartsimage/parts/brakepads.jpg'),
     },
     {
       id: '3',
-      name: 'Air Filter',
+      name: 'Exhaust System',
       price: '₹600',
       oem: 'Mahle',
-      image: require('../../assets/service-images/generalservice.png'),
+      image: require('../../assets/sparepartsimage/parts/exhaust.jpg'),
+    },
+    {
+      id: '4',
+      name: 'Engine',
+      price: '₹600',
+      oem: 'Mahle',
+      image: require('../../assets/sparepartsimage/parts/engine.jpg'),
+    },
+    {
+      id: '5',
+      name: 'Interior',
+      price: '₹600',
+      oem: 'Mahle',
+      image: require('../../assets/sparepartsimage/parts/interior.jpg'),
+    },
+    {
+      id: '6',
+      name: 'Suspension',
+      price: '₹600',
+      oem: 'Mahle',
+      image: require('../../assets/sparepartsimage/parts/suspension.jpg'),
     },
   ];
 
@@ -283,40 +304,19 @@ const HomeScreen = () => {
             </View>
           </View>
 
-          {/* Special Offers */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Special Offers</Text>
-            <View style={styles.offersContainer}>
-              {offers.map((offer) => (
-                <Animated.View key={offer.id} style={[styles.offerCard, { opacity: fadeAnim }]}>
-                  <View style={styles.offerBadge}>
-                    <FontAwesome name="tag" size={16} color="#FFF" />
-                  </View>
-                  <Text style={styles.offerTitle}>{offer.title}</Text>
-                  <Text style={styles.offerDiscount}>{offer.discount}</Text>
-                  <TouchableOpacity style={styles.offerButton}>
-                    <Text style={styles.offerButtonText}>Claim Offer</Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              ))}
-            </View>
-          </View>
-
-          {/* Genuine Spare Parts */}
-          <View style={styles.section}>
+          {/* Available Spare Parts */}
+          <View style={[styles.section, { marginTop: -10 }]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Genuine Spare Parts</Text>
-              <TouchableOpacity>
+              <Text style={styles.sectionTitle}>Available Spare Parts</Text>
+              <TouchableOpacity onPress={() => dispatch(setSelectedTab(screens.spare_parts))}>
                 <Text style={styles.seeAll}>View All</Text>
               </TouchableOpacity>
             </View>
             <Text style={styles.sectionSubtitle}>Original OEM parts with warranty</Text>
-            <FlatList
-              data={spareParts}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <View style={styles.partCard}>
+
+            <View style={styles.partsContainer1}>
+              {spareParts.map((item) => (
+                <View key={item.id} style={styles.partCard1}>
                   <Image source={item.image} style={styles.partImage} />
                   <View style={styles.partDetails}>
                     <Text style={styles.partName}>{item.name}</Text>
@@ -327,10 +327,8 @@ const HomeScreen = () => {
                     </TouchableOpacity>
                   </View>
                 </View>
-              )}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.partsContainer}
-            />
+              ))}
+            </View>
           </View>
 
           {/* Guarantee Terms */}
@@ -350,8 +348,8 @@ const HomeScreen = () => {
           </View>
 
           {/* Blog Posts */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
+          <View style={[styles.section]}>
+            <View style={[styles.sectionHeader, { marginBottom: 15 }]}>
               <Text style={styles.sectionTitle}>Blog & Articles</Text>
               <TouchableOpacity>
                 <Text style={styles.seeAll}>View All</Text>
@@ -374,6 +372,25 @@ const HomeScreen = () => {
             </View>
           </View>
 
+          {/* Special Offers */}
+          <View style={[styles.section, { marginTop: -10 }]}>
+            <Text style={[styles.sectionTitle, { marginBottom: 15 }]}>Special Offers</Text>
+            <View style={styles.offersContainer}>
+              {offers.map((offer) => (
+                <Animated.View key={offer.id} style={[styles.offerCard, { opacity: fadeAnim }]}>
+                  <View style={styles.offerBadge}>
+                    <FontAwesome name="tag" size={16} color={COLORS.white} />
+                  </View>
+                  <Text style={styles.offerTitle}>{offer.title}</Text>
+                  <Text style={styles.offerDiscount}>{offer.discount}</Text>
+                  <TouchableOpacity style={styles.offerButton}>
+                    <Text style={styles.offerButtonText}>Claim Offer</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              ))}
+            </View>
+          </View>
+
           {/* Refer & Earn */}
           <View style={styles.referContainer}>
             <Image
@@ -385,7 +402,7 @@ const HomeScreen = () => {
               <Text style={styles.referText}>Get ₹500 for every friend who books a service</Text>
               <TouchableOpacity style={styles.referButton}>
                 <Text style={styles.referButtonText}>Invite Friends</Text>
-                <Ionicons name="arrow-forward" size={18} color="#FFF" />
+                <Ionicons name="arrow-forward" size={18} color={COLORS.white} />
               </TouchableOpacity>
             </View>
           </View>
@@ -454,7 +471,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   sectionTitle: {
     ...FONTS.h2,
@@ -467,7 +484,7 @@ const styles = StyleSheet.create({
   },
   seeAll: {
     color: COLORS.primary,
-    ...FONTS.body5,
+    ...FONTS.h5,
     textDecorationLine: 'underline',
   },
   bannerContainer: {
@@ -542,7 +559,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -550,7 +567,7 @@ const styles = StyleSheet.create({
   serviceText: {
     marginTop: 8,
     ...FONTS.h5,
-    color: COLORS.primary_01,
+    color: COLORS.primary_borders,
     textAlign: 'center',
   },
   offersContainer: {
@@ -566,7 +583,7 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -604,7 +621,7 @@ const styles = StyleSheet.create({
   },
   referContainer: {
     height: 160,
-    marginBottom: 24,
+    marginBottom: 25,
     position: 'relative',
     borderRadius: 5,
   },
@@ -660,7 +677,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -703,16 +720,17 @@ const styles = StyleSheet.create({
   guaranteeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
-    marginBottom: 24,
+    padding: 15,
+    marginBottom: 5,
     backgroundColor: '#F9F9F9',
+    borderRadius: 8,
   },
   guaranteeItem: {
     alignItems: 'center',
     width: '30%',
   },
   guaranteeText: {
-    fontSize: 12,
+    ...FONTS.body6,
     color: '#333',
     textAlign: 'center',
     marginTop: 8,
@@ -723,11 +741,11 @@ const styles = StyleSheet.create({
   blogCard: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
-    borderRadius: 12,
+    borderRadius: 5,
     overflow: 'hidden',
     marginBottom: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -756,7 +774,7 @@ const styles = StyleSheet.create({
     ...FONTS.h6,
   },
   footerCta: {
-    padding: 16,
+    padding: 15,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     borderRadius: 5,
@@ -786,15 +804,35 @@ const styles = StyleSheet.create({
     width: '30%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 12,
     marginBottom: 15,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  partsContainer1: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between', 
+    gap: 12, 
+    paddingVertical: 5,
+  },
+
+  partCard1: {
+    width: '48%', 
+    backgroundColor: COLORS.white,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

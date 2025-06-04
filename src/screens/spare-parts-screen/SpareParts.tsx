@@ -1,5 +1,5 @@
 import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
@@ -7,11 +7,31 @@ import IconButton from '~/components/IconButton';
 import { COLORS, icons, screens, SIZES } from '~/constants';
 import Header from '~/components/Header';
 import SparePartsPage from '~/components/SpareParts/SparePartsPage';
+import { getAllSpareParts } from '~/features/spare-parts/service';
 
 const SpareParts = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [error, setError] = useState(false);
+  const [spareParts, setSpareParts] = useState([]);
+
+  const getAllSparePartsDetails = async () => {
+    try {
+      const data = '';
+      const response = await getAllSpareParts(data);
+      console.log('Spare Parts Details:', response);
+      if (response) {
+        setSpareParts(response);
+      }
+    } catch (error) {
+      console.error('Error fetching spare parts:', error);
+    }
+  };
+
+  useEffect(() => {
+    getAllSparePartsDetails();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Header

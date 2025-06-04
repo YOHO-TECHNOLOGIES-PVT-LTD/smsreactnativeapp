@@ -10,13 +10,14 @@ import {
   FlatList,
   ScrollView,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
 import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
 import Header from '~/components/Header';
+import { Ionicons } from '@expo/vector-icons';
 import {
   Clock,
   Wrench,
@@ -38,6 +39,7 @@ import {
   FileCheck,
 } from 'lucide-react-native';
 import { JSX } from 'react/jsx-runtime';
+import { getAllServiceCategories, getAllServices } from '~/features/services-page/service';
 
 const contentSections = {
   'Periodic Services': {
@@ -405,60 +407,117 @@ const navigationItems = [
   { name: 'Insurance Claims', icon: <Shield className="h-6 w-6" /> },
 ];
 
-type ContentSectionKey = keyof typeof contentSections;
+type ServiceCategory = {
+  uuid: string;
+  category_name: string;
+  services: Service[];
+  is_active: boolean;
+  is_deleted: boolean;
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type Service = {
+  uuid: string;
+  service_name: string;
+  description: string;
+  price: number;
+  category_id: string;
+  partner_id: string;
+  is_active: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+  slug: string;
+};
 
 const Services = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [error, setError] = useState(false);
-  const [activeNavItem, setActiveNavItem] = useState<ContentSectionKey>('Periodic Services');
+  const [activeNavItem, setActiveNavItem] = useState<string>('');
   const [expandedServices, setExpandedServices] = useState<{ [key: string]: boolean }>({});
-  const [cart, setCart] = useState<PackageType[]>([]);
+  const [cart, setCart] = useState<Service[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
+  const currentX = useRef(0);
+  const scrollStep = 120;
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  const currentContent = contentSections[activeNavItem] || contentSections['Periodic Services'];
+  const currentCategory =
+    serviceCategories.find((cat) => cat.category_name === activeNavItem) || serviceCategories[0];
 
-  const toggleExpandServices = (packageId: string) => {
-    setExpandedServices((prev) => ({
-      ...prev,
-      [packageId]: !prev[packageId],
-    }));
-  };
-
-  type PackageType = {
-    id: string;
-    title: string;
-    warranty: string;
-    frequency: string;
-    duration: string;
-    image: any;
-    services: { name: string; icon: JSX.Element }[];
-    price: string;
-    discountPrice: string;
-    additionalCount?: number;
-    isRecommended?: boolean;
-  };
-
-  const [addedItems, setAddedItems] = useState<{ [key: string]: boolean }>({});
-  const [product, setProduct] = useState(false);
-
-  const addToCart = (pkg: PackageType) => {
-    if (addedItems[pkg.id]) {
-      // Item is already in cart - remove it
-      setCart(cart.filter((item) => item.id !== pkg.id));
-      setAddedItems((prev) => ({ ...prev, [pkg.id]: false }));
-    } else {
-      // Item not in cart - add it
-      setCart([...cart, pkg]);
-      setAddedItems((prev) => ({ ...prev, [pkg.id]: true }));
+  const fetchAllServices = async () => {
+    try {
+      const categories = await getAllServiceCategories({});
+      if (categories) {
+        setServiceCategories(categories);
+        if (categories.length > 0) {
+          setActiveNavItem(categories[0].category_name);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      setError(true);
     }
   };
 
-  const renderServiceItem = ({ item }: { item: { name: string; icon: JSX.Element } }) => (
+  useEffect(() => {
+    fetchAllServices();
+  }, []);
+
+  const scrollLeft = () => {
+    currentX.current = Math.max(currentX.current - scrollStep, 0);
+    scrollViewRef.current?.scrollTo({ x: currentX.current, animated: true });
+  };
+
+  const scrollRight = () => {
+    currentX.current += scrollStep;
+    scrollViewRef.current?.scrollTo({ x: currentX.current, animated: true });
+  };
+
+  const toggleExpandServices = (serviceId: string) => {
+    setExpandedServices((prev) => ({
+      ...prev,
+      [serviceId]: !prev[serviceId],
+    }));
+  };
+
+  const [addedItems, setAddedItems] = useState<{ [key: string]: boolean }>({});
+
+  const addToCart = (service: Service) => {
+    if (addedItems[service.uuid]) {
+      setCart(cart.filter((item) => item.uuid !== service.uuid));
+      setAddedItems((prev) => ({ ...prev, [service.uuid]: false }));
+    } else {
+      setCart([...cart, service]);
+      setAddedItems((prev) => ({ ...prev, [service.uuid]: true }));
+    }
+  };
+
+  const renderServiceItem = ({ item }: { item: Service }) => (
     <View style={styles.serviceItem}>
-      <View style={styles.serviceIconContainer}>{item.icon}</View>
-      <Text style={styles.serviceText}>{item.name}</Text>
+      <Text style={styles.serviceText}>{item.service_name}</Text>
+      <Text style={styles.serviceDescription}>{item.description}</Text>
+      <Text style={styles.servicePrice}>₹{item.price}</Text>
     </View>
   );
+
+  // Transform services into a format similar to your original packages
+  const transformServicesToPackages = (services: Service[]) => {
+    return services.map((service) => ({
+      id: service.uuid,
+      title: service.service_name,
+      warranty: 'Standard Warranty', 
+      frequency: 'As needed', 
+      duration: '1-2 Hours', 
+      image: require('../../assets/service-images/generalservice.png'),
+      services: [{ name: service.description, icon: <Wrench className="h-4 w-4" /> }],
+      price: `₹${service.price + 500}`,
+      discountPrice: `₹${service.price || 0}`,
+      isRecommended: false, 
+    }));
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -513,120 +572,114 @@ const Services = () => {
         }
       />
 
-      {/* Main content start */}
       <View style={styles.mainContainer}>
-        {/* Horizontal Navigation Bar */}
-        <View style={styles.horizontalNavContainer}>
+        {/* Horizontal Navigation with Arrows */}
+        <View style={styles.horizontalNavWrapper}>
+          <TouchableOpacity onPress={scrollLeft} style={styles.arrowButton}>
+            <Ionicons name="chevron-back" size={24} color="#333" />
+          </TouchableOpacity>
+
           <ScrollView
+            ref={scrollViewRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalNavContent}>
-            {navigationItems.map((item, index) => (
+            {serviceCategories?.map((category) => (
               <TouchableOpacity
-                key={index}
+                key={category.uuid}
                 style={[
                   styles.horizontalNavItem,
-                  activeNavItem === item.name && styles.activeHorizontalNavItem,
+                  activeNavItem === category.category_name && styles.activeHorizontalNavItem,
                 ]}
-                onPress={() => setActiveNavItem(item.name as ContentSectionKey)}>
-                <View style={styles.horizontalNavIcon}>{item.icon}</View>
+                onPress={() => setActiveNavItem(category.category_name)}>
+                <View style={styles.horizontalNavIcon}>
+                  <Car className="h-6 w-6" />
+                </View>
                 <Text
                   style={[
                     styles.horizontalNavText,
-                    activeNavItem === item.name && styles.activeHorizontalNavText,
+                    activeNavItem === category.category_name && styles.activeHorizontalNavText,
                   ]}
                   numberOfLines={1}>
-                  {item.name}
+                  {category.category_name}
                 </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
+
+          <TouchableOpacity onPress={scrollRight} style={styles.arrowButton}>
+            <Ionicons name="chevron-forward" size={24} color="#333" />
+          </TouchableOpacity>
         </View>
 
         {/* Main Content */}
         <ScrollView style={styles.content}>
-          <View style={styles.contentHeader}>
-            <Text style={styles.contentTitle}>{currentContent.title}</Text>
-            <Text style={styles.contentSubtitle}>Choose the perfect package for your vehicle</Text>
-          </View>
-
-          {currentContent.packages.map((pkg) => (
-            <View key={pkg.id} style={styles.packageCard}>
-              {pkg.isRecommended && (
-                <View style={styles.recommendedBadge}>
-                  <Text style={styles.recommendedText}>RECOMMENDED</Text>
-                </View>
-              )}
-
-              <View style={styles.durationBadge}>
-                <Clock size={14} color="white" />
-                <Text style={styles.durationText}>{pkg.duration}</Text>
+          {currentCategory && (
+            <>
+              <View style={styles.contentHeader}>
+                <Text style={styles.contentTitle}>{currentCategory.category_name || 'N/A'}</Text>
+                <Text style={styles.contentSubtitle}>
+                  Choose the perfect service for your vehicle
+                </Text>
               </View>
 
-              <View style={styles.packageContent}>
-                {/* Service Image */}
-                <View style={styles.imageContainer}>
-                  <Image source={pkg.image} style={styles.serviceImage} resizeMode="cover" />
-                </View>
-
-                {/* Service Details */}
-                <View style={styles.detailsContainer}>
-                  <View style={styles.titleRow}>
-                    <Text style={styles.packageTitle}>{pkg.title}</Text>
-                  </View>
-
-                  <View style={styles.warrantyRow}>
-                    <Text style={styles.warrantyText}>{pkg.warranty}</Text>
-                    <Text style={styles.warrantyText}>{pkg.frequency}</Text>
-                  </View>
-
-                  {/* Services List */}
-                  <FlatList
-                    data={pkg.services.slice(0, expandedServices[pkg.id] ? pkg.services.length : 4)}
-                    renderItem={renderServiceItem}
-                    keyExtractor={(item, index) => index.toString()}
-                    numColumns={2}
-                    columnWrapperStyle={styles.servicesGrid}
-                  />
-
-                  {/* Show More/Less */}
-                  {pkg.additionalCount && (
-                    <TouchableOpacity
-                      onPress={() => toggleExpandServices(pkg.id)}
-                      style={styles.showMoreButton}>
-                      {expandedServices[pkg.id] ? (
-                        <>
-                          <ChevronUp size={16} color="#9b111e" />
-                          <Text style={styles.showMoreText}>Show Less</Text>
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown size={16} color="#9b111e" />
-                          <Text style={styles.showMoreText}>View more</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Price and Button */}
-                  <View style={styles.priceRow}>
-                    <View>
-                      <Text style={styles.originalPrice}>{pkg.price}</Text>
-                      <Text style={styles.discountPrice}>{pkg.discountPrice}</Text>
+              {currentCategory.services.length > 0 ? (
+                transformServicesToPackages(currentCategory.services).map((pkg) => (
+                  <View key={pkg.id} style={styles.packageCard}>
+                    <View style={styles.durationBadge}>
+                      <Clock size={14} color="white" />
+                      <Text style={styles.durationText}>{pkg.duration}</Text>
                     </View>
 
-                    <TouchableOpacity
-                      style={[styles.addToCartButton, addedItems[pkg.id] && styles.addedButton]}
-                      onPress={() => addToCart(pkg)}>
-                      <Text style={styles.buttonText}>
-                        {addedItems[pkg.id] ? 'ADDED' : 'ADD TO CART'}
-                      </Text>
-                    </TouchableOpacity>
+                    <View style={styles.packageContent}>
+                      <View style={styles.imageContainer}>
+                        <Image source={pkg.image} style={styles.serviceImage} resizeMode="cover" />
+                      </View>
+
+                      <View style={styles.detailsContainer}>
+                        <View style={styles.titleRow}>
+                          <Text style={styles.packageTitle}>{pkg.title || 'N/A'}</Text>
+                        </View>
+
+                        <View style={styles.warrantyRow}>
+                          <Text style={styles.warrantyText}>{pkg.warranty || 'N/A'}</Text>
+                          <Text style={styles.warrantyText}>{pkg.frequency || 'N/A'}</Text>
+                        </View>
+
+                        <FlatList
+                          data={pkg.services}
+                          renderItem={renderServiceItem}
+                          keyExtractor={(item, index) => index.toString()}
+                        />
+
+                        <View style={styles.priceRow}>
+                          <View>
+                            <Text style={styles.originalPrice}>{pkg.price || 'N/A'}</Text>
+                            <Text style={styles.discountPrice}>{pkg.discountPrice || 'N/A'}</Text>
+                          </View>
+
+                          <TouchableOpacity
+                            style={[
+                              styles.addToCartButton,
+                              addedItems[pkg.id] && styles.addedButton,
+                            ]}
+                            onPress={() =>
+                              addToCart(currentCategory.services.find((s) => s.uuid === pkg.id)!)
+                            }>
+                            <Text style={styles.buttonText}>
+                              {addedItems[pkg.id] ? 'ADDED' : 'ADD TO CART'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </View>
-            </View>
-          ))}
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No services available in this category</Text>
+              )}
+            </>
+          )}
         </ScrollView>
       </View>
       <View style={{ paddingBottom: 50 }}></View>
@@ -654,6 +707,21 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.primary,
     elevation: 1,
   },
+  horizontalNavWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+
+  arrowButton: {
+    padding: 6,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 25,
+    marginHorizontal: 4,
+    elevation: 2,
+    zIndex: 1,
+  },
+
   horizontalNavContent: {
     paddingHorizontal: 5,
     alignItems: 'center',
@@ -874,5 +942,21 @@ const styles = StyleSheet.create({
   },
   addedButton: {
     backgroundColor: COLORS.buttonbg1,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 210,
+    color: COLORS.grey,
+    ...FONTS.body4,
+  },
+  serviceDescription: {
+    ...FONTS.body5,
+    color: COLORS.grey,
+    marginTop: 4,
+  },
+  servicePrice: {
+    ...FONTS.h4,
+    color: COLORS.primary,
+    marginTop: 8,
   },
 });

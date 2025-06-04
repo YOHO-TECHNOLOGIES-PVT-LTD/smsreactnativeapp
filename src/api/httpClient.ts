@@ -1,77 +1,69 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const backEndUrl: string = 'https://sms-node-backend-17xb.onrender.com';
 
 const Axios = axios.create({
   baseURL: backEndUrl,
-
-  timeout: 50000000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-Axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+// Request interceptor for adding auth token
+Axios.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('authToken');
 
   if (token) {
-    config.headers['Authorization'] = `${token ? token : ''}`;
+    config.headers.Authorization = token;
   }
+
   return config;
 });
 
 class HttpClient {
-  async get(url: string, params?: string) {
-    const response: unknown = await Axios.get(url, {
-      params: params,
-      headers: {},
+  async get<T = any>(url: string, params?: Record<string, any>) {
+    const response = await Axios.get<T>(url, {
+      params,
     });
-    return response;
+    return response.data;
   }
 
-  async post(url: string, data: any) {
-    const response: unknown = await Axios.post(url, data, {
-      headers: {},
-    });
-    return response;
+  async post<T = any>(url: string, data: any) {
+    const response = await Axios.post<T>(url, data);
+    return response.data;
   }
 
-  async update(url: string, params: string, data: string) {
-    const response = await Axios.put(url, data, {
-      params: params,
-      headers: {},
-    });
-    return response?.data;
+  async update<T = any>(url: string, params: Record<string, any>, data: any) {
+    const response = await Axios.put<T>(url, data, { params });
+    return response.data;
   }
 
-  async patch(url: string, params: string, data: string) {
-    const response = await Axios.put(url, data, {
-      params: params,
-      headers: {},
-    });
-    return response?.data;
+  async patch<T = any>(url: string, params: Record<string, any>, data: any) {
+    const response = await Axios.patch<T>(url, data, { params });
+    return response.data;
   }
 
-  async delete(url: string, params: string) {
-    const response = await Axios.delete(url, { params: params });
-    return response?.data;
+  async delete<T = any>(url: string, params: Record<string, any>) {
+    const response = await Axios.delete<T>(url, { params });
+    return response.data;
   }
 
   async fileGet(url: string) {
     const response = await Axios.get(url, {
-      responseType: 'blob',
-      headers: {},
+      responseType: 'blob', // On RN, this may be a base64 string or binary
     });
-    return response;
+    return response.data;
   }
 
-  async uploadFile(url: string, data: string) {
-    const response = await Axios.post(url, data, {
+  async uploadFile<T = any>(url: string, data: FormData) {
+    const response = await Axios.post<T>(url, data, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response?.data;
+    return response.data;
   }
 }
 

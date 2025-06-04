@@ -11,11 +11,14 @@ import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import toast from '~/utils/toast';
 import { COLORS, FONTS } from '~/constants';
+import { VerifyOtp } from '../service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const OtpVerificationScreen = () => {
+const OtpVerificationScreen = ({ route }) => {
   const navigation = useNavigation();
   const [otp, setOtp] = React.useState(Array(6).fill(''));
   const inputsRef = React.useRef<Array<TextInput | null>>([]);
+  const { data, method } = route?.params || {};
 
   const handleChange = (index: number, value: string) => {
     if (/^\d$/.test(value)) {
@@ -43,14 +46,33 @@ const OtpVerificationScreen = () => {
     }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     const otpValue = otp.join('');
     if (otpValue.length === 6) {
-      console.log('OTP Verified:', otpValue);
-      navigation.navigate('SetNewPasswordScreen' as never);
+      const response = await VerifyOtp({ otp: otpValue, AuthToken: data?.token });
+      if (response) {
+        if (method === 'forgotPassword-OtpVerify') {
+          navigation.navigate('SetNewPasswordScreen' as never, {
+            data: response,
+          });
+        } else {
+          await AsyncStorage.setItem('authToken', response);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'MainStack' }],
+          });
+          toast.success('OTP Verified', 'You have successfully verified your OTP.');
+        }
+      }
     } else {
       toast.error('Error', 'Enter all 6 digits');
     }
+  };
+
+  const handleResendOtp = async () => {
+    // const response = await VerifyOtp({ otp: '', AuthToken: data?.token });
+    toast.success('Success', 'OTP has been resent.');
+    // Resend OTP API call
   };
 
   return (
@@ -59,6 +81,13 @@ const OtpVerificationScreen = () => {
       style={styles.container}>
       <View style={styles.formContainer}>
         <Text style={styles.title}>Enter OTP</Text>
+        {data?.otp && (
+          <View style={{ marginVertical: 10, width: '100%' }}>
+            <Text style={{ ...FONTS.body5, color: COLORS.white, textAlign: 'center' }}>
+              OTP: {data?.otp}
+            </Text>
+          </View>
+        )}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 20 }}>
           {otp.map((digit, index) => (
             <TextInput
@@ -77,6 +106,20 @@ const OtpVerificationScreen = () => {
         <TouchableOpacity style={styles.loginButton} onPress={handleVerifyOtp}>
           <Text style={styles.loginButtonText}>Verify OTP</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={{ marginTop: 20, flexDirection: 'column', alignItems: 'flex-end' }}
+          onPress={() => handleResendOtp()}>
+          <Text
+            style={{ ...FONTS.body5, color: COLORS.primary_01, textDecorationLine: 'underline' }}>
+            Resend OTP
+          </Text>
+        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'center', gap: 5 }}>
+          <Text style={styles.signupText}>Back to</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('LoginScreen' as never)}>
+            <Text style={{ color: COLORS.primary, ...FONTS.h4 }}>Login</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -114,6 +157,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
     ...FONTS.body4,
+  },
+  signupText: {
+    color: '#94a3b8',
+    ...FONTS.body4,
+    textAlign: 'center',
   },
   loginButton: {
     backgroundColor: COLORS.primary_01,

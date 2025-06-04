@@ -55,7 +55,7 @@ class Client {
     },
     offer: {},
     auth: {
-      login: (data: string) => httpClient.post(API_END_POINTS.auth.post_login, data),
+      login: (data: any) => httpClient.post(API_END_POINTS.auth.post_login, data),
       signUp: (data: string) => httpClient.post(API_END_POINTS.auth.post_signup, data),
       forgotPassword: (data: string) =>
         httpClient.post(API_END_POINTS.auth.post_forgot_password, data),
@@ -69,6 +69,7 @@ class Client {
     },
     notification: {
       getAll: (params: string) => httpClient.get(API_END_POINTS.notification.getAll, params),
+      getById: (params: string) => httpClient.get(API_END_POINTS.notification.getById, params),
     },
   };
 }
