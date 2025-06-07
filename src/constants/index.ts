@@ -10,7 +10,6 @@ export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export const icons = {
-  magnify: require('../assets/icons/magnifying-glass.png'),
   voice: require('../assets/icons/voice.png'),
   close_mark: require('../assets/icons/close.png'),
   menu_dots: require('../assets/icons/menu-dots-vertical.png'),
@@ -18,8 +17,6 @@ export const icons = {
   double_tick: require('../assets/icons/[CITYPNG.COM]HD Grey Double Tick Check Mark Icon WhatsApp PNG - 2000x2000.png'),
   home_filled: require('../assets/icons/home-filled.png'),
   home_outlined: require('../assets/icons/home-outlined.png'),
-  calendar_filled: require('../assets/icons/calendar-filled.png'),
-  calendar_outlined: require('../assets/icons/calendar-outlined.png'),
   stats_filled: require('../assets/icons/stats-filled.png'),
   stats_outlined: require('../assets/icons/stats-outlined.png'),
   add_filled: require('../assets/icons/add-filled.png'),
@@ -43,7 +40,6 @@ export const icons = {
   down: require('../assets/icons/down.png'),
   menu: require('../assets/icons/menu.png'),
   card_background: require('../assets/icons/card-background.png'),
-  // logo: require('../assets/icons/logo.png'),
   girl: require('../assets/icons/girl.png'),
   background: require('../assets/icons/background.png'),
   profile_background: require('../assets/icons/attendance_baground.png'),
@@ -65,7 +61,6 @@ export const icons = {
   tick: require('../assets/icons/check.png'),
   pending: require('../assets/icons/pending.png'),
   logout: require('../assets/icons/logout.png'),
-  calendar_color: require('../assets/icons/calendar.png'),
   course_fee: require('../assets/icons/course-fee.png'),
   amount_paid: require('../assets/icons/amount-paid.png'),
   status: require('../assets/icons/status.png'),
@@ -75,7 +70,6 @@ export const icons = {
   message: require('../assets/icons/message.png'),
   scholarship: require('../assets/icons/scholarship.png'),
   library: require('../assets/icons/library.png'),
-  teacher: require('../assets/icons/teacher.png'),
   sos: require('../assets/icons/sos.png'),
   services_filled: require('../assets/icons/services-filled.png'),
   services_outlined: require('../assets/icons/services-outlined.png'),
@@ -225,7 +219,7 @@ export const COLORS = {
   lightGrey60: 'rgba(247, 247, 247, 0.6)',
   lightGrey20: 'rgba(247, 247, 247, 0.2)',
   lightGrey08: 'rgba(247, 247, 247, 0.08)',
-  lightGrey05:'#f2f2f2',
+  lightGrey05: '#f2f2f2',
 
   // Light
   light: 'rgba(255, 255, 255, 1)',

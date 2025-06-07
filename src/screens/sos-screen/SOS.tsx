@@ -24,7 +24,7 @@ const SOS = () => {
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
 
-  const handleChange = (text) => {
+  const handleChange = (text: any) => {
     if (/^\d*$/.test(text)) {
       setValue(text);
       const num = parseInt(text);
