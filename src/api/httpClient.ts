@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 const backEndUrl: string = 'https://sms-node-backend-17xb.onrender.com';
 
@@ -14,13 +15,45 @@ const Axios = axios.create({
 // Request interceptor for adding auth token
 Axios.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('authToken');
-
   if (token) {
-    config.headers.Authorization = token;
+    config.headers['Authorization'] = token;
   }
-
   return config;
 });
+
+let logoutCallback: any = null;
+export const setLogoutCallback = (callback: any) => {
+  logoutCallback = callback;
+};
+
+Axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (
+      error?.response &&
+      error?.response?.status === 401 &&
+      error?.response?.data?.status === 'session_expired'
+    ) {
+      Alert.alert('Session expired. Logging out...');
+
+      // Call the logout callback to navigate
+      if (logoutCallback) {
+        logoutCallback();
+      }
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('HTTP Error:', error?.response || error?.message);
+    }
+    // if (
+    //   (error?.response?.data?.status && error?.response?.data?.message === 'Password not match') ||
+    //   error?.response?.data?.message === 'User not found with these credentials'
+    // ) {
+    //   Alert.alert('Failed', error?.response?.data?.message);
+    // }
+    return Promise.reject(error);
+  }
+);
 
 class HttpClient {
   async get<T = any>(url: string, params?: Record<string, any>) {

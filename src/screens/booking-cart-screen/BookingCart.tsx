@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Grid1 from '../../components/Bookings/Grid1';
 import { COLORS, FONTS } from '~/constants';
+import { getAllBookingCartItems } from '~/features/booking-cart/service.ts';
 
 const Settings = () => {
   const navigation = useNavigation();
+  const [bookingCarts, setBookingCarts] = useState([]);
+
+  const fetchAllBookungCarts = async () => {
+    const response = await getAllBookingCartItems({});
+    setBookingCarts(response || []);
+    try {
+    } catch (error) {
+      console.error('Error fetching booking carts:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllBookungCarts();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -19,7 +34,7 @@ const Settings = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <Grid1 />
+        <Grid1 bookingCarts={bookingCarts} />
       </ScrollView>
     </GestureHandlerRootView>
   );

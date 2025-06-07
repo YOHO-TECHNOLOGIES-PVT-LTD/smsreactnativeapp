@@ -49,7 +49,7 @@ const OtpVerificationScreen = ({ route }) => {
   const handleVerifyOtp = async () => {
     const otpValue = otp.join('');
     if (otpValue.length === 6) {
-      const response = await VerifyOtp({ otp: otpValue, AuthToken: data?.token });
+      const response: any = await VerifyOtp({ otp: otpValue, AuthToken: data?.token });
       if (response) {
         if (method === 'forgotPassword-OtpVerify') {
           navigation.navigate('SetNewPasswordScreen' as never, {

@@ -59,4 +59,10 @@ export const API_END_POINTS = {
     getAll: '/api/notifications/',
     getById: '/api/notifications/:id',
   },
+
+  bookings: {
+    getAll: '/api/customer/cartbooking/all',
+    postProduct: '/api/customer/cartbooking/product/confirm',
+    postService: '/api/customer/cartbooking/service/confirm',
+  },
 };

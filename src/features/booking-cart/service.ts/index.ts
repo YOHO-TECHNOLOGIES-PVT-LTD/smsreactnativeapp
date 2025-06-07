@@ -1,6 +1,6 @@
 import Client from '~/api';
 
-export const getAllBookingCartItems = async (data: string) => {
+export const getAllBookingCartItems = async (data: any) => {
   try {
     const response = await new Client().user.booking_cart.getAll(data);
     if (response) {
@@ -13,7 +13,7 @@ export const getAllBookingCartItems = async (data: string) => {
   }
 };
 
-export const addBookingCartItem = async (data: string) => {
+export const addBookingCartItem = async (data: any) => {
   try {
     const response = await new Client().user.booking_cart.post(data);
     if (response) {

@@ -8,6 +8,7 @@ import { COLORS, icons, screens, SIZES } from '~/constants';
 import Header from '~/components/Header';
 import SparePartsPage from '~/components/SpareParts/SparePartsPage';
 import { getAllSpareParts } from '~/features/spare-parts/service';
+import { SparePart } from '../../components/SpareParts/sparePartsData';
 
 const SpareParts = () => {
   const navigation = useNavigation();
@@ -19,7 +20,6 @@ const SpareParts = () => {
     try {
       const data = '';
       const response = await getAllSpareParts(data);
-      console.log('Spare Parts Details:', response);
       if (response) {
         setSpareParts(response);
       }
@@ -92,7 +92,7 @@ const SpareParts = () => {
         }
       />
       <View style={{ flex: 1 }}>
-        <SparePartsPage />
+        <SparePartsPage spareParts={spareParts} />
       </View>
     </SafeAreaView>
   );

@@ -67,7 +67,7 @@ const TabButton: React.FC<TabButtonProps> = ({
             flex: isScanButton ? 0 : 1,
             alignItems: 'center',
             justifyContent: 'center',
-            top: isScanButton ? -15 : 0,
+            top: isScanButton ? -8 : 0,
           },
           outerContainerStyle,
         ]}>
@@ -92,7 +92,7 @@ const TabButton: React.FC<TabButtonProps> = ({
               width: isScanButton ? 45 : '100%',
               height: isScanButton ? 45 : SPACING.small,
               borderRadius: isScanButton ? 32.5 : 25,
-              backgroundColor: isScanButton ? COLORS.primary : '',
+              backgroundColor: isScanButton ? COLORS.primary_04 : '',
               justifyContent: 'center',
               alignItems: 'center',
               elevation: isScanButton ? 5 : 0,

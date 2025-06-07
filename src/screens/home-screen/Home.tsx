@@ -11,6 +11,7 @@ import {
   Dimensions,
   Easing,
   SafeAreaView,
+  TextInput,
 } from 'react-native';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -253,10 +254,10 @@ const HomeScreen = () => {
         <ImageBackground source={icons.home_background} style={{ paddingHorizontal: 10 }}>
           {/* Search Bar */}
           <Animated.View style={[styles.searchContainer, { opacity: fadeAnim }]}>
-            <TouchableOpacity style={styles.searchBar}>
+            <View style={styles.searchBar}>
               <MaterialIcons name="search" size={20} color="#666" />
-              <Text style={styles.searchText}>Search for services or parts</Text>
-            </TouchableOpacity>
+              <TextInput style={styles.searchText} placeholder="Search..." />
+            </View>
           </Animated.View>
 
           <View>
@@ -455,7 +456,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 8,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 5,
     elevation: 2,
   },
   searchText: {
@@ -817,13 +818,13 @@ const styles = StyleSheet.create({
   partsContainer1: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between', 
-    gap: 12, 
+    justifyContent: 'space-between',
+    gap: 12,
     paddingVertical: 5,
   },
 
   partCard1: {
-    width: '48%', 
+    width: '48%',
     backgroundColor: COLORS.white,
     borderRadius: 10,
     padding: 10,

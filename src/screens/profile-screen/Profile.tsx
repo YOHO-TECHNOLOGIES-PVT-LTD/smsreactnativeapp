@@ -64,15 +64,17 @@ import {
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getUserProfileDetails } from '~/features/profile/service';
+import { FONTS } from '~/constants';
 
 const { width, height } = Dimensions.get('window');
 
 const COLORS = {
   // Primary colors - Refined Deep Crimson Theme
-  primary: '#9b111e', 
-  primaryLight:'#c22d3e', 
-  primaryDark: '#40060c', 
-  primaryUltraLight:'#f8d4d8', 
+  primary: '#9b111e',
+  primaryLight: '#c22d3e',
+  primaryDark: '#40060c',
+  primaryUltraLight: '#f8d4d8',
   primaryBorder: '#FFB3B3',
 
   // Background colors
@@ -96,10 +98,10 @@ const COLORS = {
   accentinfo: ['#2563EB', '#3B82F6'],
 
   // Status colors
-  success:  '#82dd55', // Deeper green
+  success: '#82dd55', // Deeper green
   successLight: '#10B981',
   successDark: '#047857',
-  warning:'rgba(255, 132, 13, 1)',// Matching accent
+  warning: 'rgba(255, 132, 13, 1)', // Matching accent
   warningLight: '#F59E0B',
   error: '#DC2626', // More professional red
   errorLight: '#EF4444',
@@ -113,7 +115,7 @@ const COLORS = {
   gray100: 'rgba(247, 247, 247, 0.9)',
   gray200: 'rgba(247, 247, 247, 0.8)',
   gray300: 'rgba(247, 247, 247, 0.7)',
-  gray400: 'rgba(247, 247, 247, 0.5)',                         
+  gray400: 'rgba(247, 247, 247, 0.5)',
   gray500: 'rgba(247, 247, 247, 0.4)',
   gray600: 'rgba(247, 247, 247, 0.3)',
   gray700: 'rgba(247, 247, 247, 0.2)',
@@ -208,6 +210,34 @@ interface CarStatusProps {
 }
 
 const Profile = () => {
+  const fetchUserProfile = async () => {
+    try {
+      const response = await getUserProfileDetails({});
+      if (response) {
+        setUserInfo((prev) => ({
+          ...prev,
+          name: response.firstName || prev.name,
+          email: response.email || prev.email,
+          phone: response.phone || prev.phone,
+          location: response.location || prev.location,
+          profileImage: response.profileImage || prev.profileImage,
+          memberSince: response.memberSince || prev.memberSince,
+          loyaltyPoints: response.loyaltyPoints || prev.loyaltyPoints,
+          preferredServiceCenter: response.preferredServiceCenter || prev.preferredServiceCenter,
+          notifications: response.notifications || prev.notifications,
+        }));
+      } else {
+        console.error('Failed to fetch user profile');
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
   // Enhanced State Management
   const [userInfo, setUserInfo] = useState({
     name: 'John Smith',
@@ -418,7 +448,7 @@ const Profile = () => {
   const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
 
   // Enhanced Pan Responder for 360° Car View
-  
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -737,8 +767,7 @@ const Profile = () => {
     rightElement,
     icon,
     badge,
-  }) => 
-  {
+  }) => {
     return (
       <TouchableOpacity
         style={styles.menuItem}
@@ -1337,10 +1366,16 @@ const Profile = () => {
             <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
               <View style={styles.profileImageContainer}>
                 {userInfo.profileImage ? (
-                   <Image source={require('../../assets/images/profile_picture.jpg')} style={{width: 100,height: 100,borderRadius: 50}}/>
+                  <Image
+                    source={require('../../assets/images/profile_picture.jpg')}
+                    style={{ width: 100, height: 100, borderRadius: 50 }}
+                  />
                 ) : (
                   <View style={styles.placeholderImage}>
-                     <Image source={require('../../assets/images/profile_picture.jpg')} style={{width: 100,height: 100,borderRadius: 50}}/>
+                    <Image
+                      source={require('../../assets/images/profile_picture.jpg')}
+                      style={{ width: 100, height: 100, borderRadius: 50 }}
+                    />
                   </View>
                 )}
                 <View style={styles.cameraIcon}>
@@ -1573,7 +1608,10 @@ const Profile = () => {
                     />
                   ) : (
                     <View style={styles.editPlaceholderImage}>
-                      <Image source={require('../../assets/images/profile_picture.jpg')} style={{width: 100,height: 100,borderRadius: 50}}/>
+                      <Image
+                        source={require('../../assets/images/profile_picture.jpg')}
+                        style={{ width: 100, height: 100, borderRadius: 50 }}
+                      />
                       {/* <User size={40} color={COLORS.gray400} /> */}
                     </View>
                   )}
@@ -2180,15 +2218,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   profileName: {
-    fontSize: 24,
-    fontWeight: '700',
+    ...FONTS.h3,
     color: COLORS.white,
     marginRight: 8,
   },
   profileEmail: {
-    fontSize: 1,
     color: COLORS.white,
     marginBottom: 12,
+    ...FONTS.body6,
     opacity: 0.9,
   },
   editProfileButton: {
@@ -2206,9 +2243,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   editProfileText: {
-    fontSize: 14,
     color: COLORS.white,
-    fontWeight: '600',
+    ...FONTS.h5,
     marginLeft: 6,
   },
   menuButton: {
@@ -2259,7 +2295,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     letterSpacing: 0.3,
   },
   card: {

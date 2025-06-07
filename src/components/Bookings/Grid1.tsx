@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,373 +10,392 @@ import {
   ImageBackground,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
-// Replace with your actual image paths
-import maintenance from '../../assets/Homepage/Annual_maintenance.jpg';
-import carbattery from '../../assets/Homepage/Car_battery.jpg';
-import carpainting from '../../assets/Homepage/Car_painting.jpg';
-import carbreak from '../../assets/Homepage/Car_brakes.jpg';
-import carwash from '../../assets/Homepage/Car_wash.jpg';
 import { COLORS, FONTS, icons } from '~/constants';
+import { addBookingCartItem } from '~/features/booking-cart/service.ts';
+import { addSparePartCartItems } from '~/features/bookings/service';
+import toast from '~/utils/toast';
 
-const Grid1 = () => {
-  const [cart, setCart] = useState({});
-  const [activeTab, setActiveTab] = useState('Overall');
+type CartItem = {
+  _id: string;
+  productId?: {
+    _id: string;
+    productName: string;
+    price: string;
+    image: string;
+    stock: string;
+    inStock: boolean;
+    category: string;
+    warrantyPeriod: string;
+  };
+  serviceId?: {
+    _id: string;
+    serviceName: string;
+    price: number;
+    description: string;
+  };
+  price: string;
+  quantity: number;
+  type: 'spare' | 'service';
+};
 
-  const handleQuantityChange = (title, count, price) => {
-    setCart((prev) => ({
-      ...prev,
-      [title]: { count, price },
-    }));
+type CartProps = {
+  bookingCarts: {
+    products: CartItem[];
+    services: CartItem[];
+    totalAmount: number;
+    _id: string;
+  }[];
+};
+
+const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
+  const [activeTab, setActiveTab] = useState<'All' | 'Products' | 'Services'>('All');
+  const [cartItems, setCartItems] = useState<{
+    products: CartItem[];
+    services: CartItem[];
+  }>({ products: [], services: [] });
+
+  useEffect(() => {
+    if (bookingCarts && bookingCarts.length > 0) {
+      const products = bookingCarts.flatMap((cart) => cart.products || []);
+      const services = bookingCarts.flatMap((cart) => cart.services || []);
+      setCartItems({ products, services });
+    }
+  }, [bookingCarts]);
+
+  const getFilteredItems = () => {
+    switch (activeTab) {
+      case 'Products':
+        return cartItems.products;
+      case 'Services':
+        return cartItems.services;
+      default:
+        return [...cartItems.products, ...cartItems.services];
+    }
   };
 
-  const grandTotal = Object.values(cart).reduce((sum, item) => sum + item.count * item.price, 0);
+  const calculateTotal = (items: CartItem[]) => {
+    return items.reduce((sum, item) => sum + parseInt(item.price) * item.quantity, 0);
+  };
 
-  const totalQuantity = Object.values(cart).reduce((sum, item) => sum + item.count, 0);
+  const totalAmount = calculateTotal(getFilteredItems());
+  const filteredItems = getFilteredItems();
 
-  const handleSummary = () => {
-    const now = new Date();
-    const date = now.toLocaleDateString();
-    const time = now.toLocaleTimeString();
-    const day = now.toLocaleDateString(undefined, { weekday: 'long' });
-
-    if (totalQuantity === 0) {
-      Alert.alert('No Product Selected', 'Please add at least one product.');
+  const handleConfirmOrder = async () => {
+    if (filteredItems.length === 0) {
+      Alert.alert('Empty Cart', 'Your cart is empty. Please add items to proceed.');
       return;
     }
 
-    const productDetails = Object.entries(cart)
-      .filter(([_, item]) => item.count > 0)
-      .map(([title, item]) => `${title}: ${item.count}`)
-      .join('\n');
+    // const now = new Date();
+    // const date = now.toLocaleDateString();
+    // const time = now.toLocaleTimeString();
+    // const day = now.toLocaleDateString(undefined, { weekday: 'long' });
 
-    Alert.alert(
-      'Order Summary',
-      `\nDate: ${date}\nDay: ${day}\nTime: ${time}\nProduct Quantity:\n${productDetails}\n\n\t\t\t\t\tGrand Total: ₹${grandTotal}`
-    );
+    // const productDetails = filteredItems
+    //   .map((item) => {
+    //     const name = item.productId?.productName || item.serviceId?.serviceName || 'Unknown';
+    //     return `${name}: ${item.quantity} x ₹${item.price}`;
+    //   })
+    //   .join('\n');
+
+    // Alert.alert(
+    //   'Order Summary',
+    //   `\nDate: ${date}\nDay: ${day}\nTime: ${time}\n\nItems:\n${productDetails}\n\nTotal Amount: ₹${totalAmount}`
+    // );
+
+    try {
+      const data = { cartId: bookingCarts[0]?._id };
+      const response = await addSparePartCartItems(data);
+      if (response) {
+        toast.success('Success', response.message || 'Successfully placed your order!');
+      } else {
+        toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error confirming order:', error);
+    }
   };
 
-  const renderCard = (title, image, price, isService = false) => (
-    <Card
-      key={title}
-      title={title}
-      image={image}
-      price={price}
-      isService={isService}
-      onQuantityChange={handleQuantityChange}
-    />
-  );
+  const renderItem = (item: CartItem) => {
+    const isProduct = item.type === 'spare';
+    const name = item.productId?.productName;
+    const price = parseInt(item.price);
+    const totalPrice = price * item.quantity;
+    const imageSource = isProduct
+      ? item.productId?.image
+        ? { uri: item.productId.image }
+        : require('../../assets/service-images/generalservice.png')
+      : require('../../assets/sparepartsimage/parts/battery.jpg');
 
-  const renderSelectedCards = () => {
-    const allCards = {
-      Battery: { image: carbattery, price: 500 },
-      'Brake Service': { image: carbreak, price: 750 },
-      'Battery Install': { image: carbattery, price: 1200 },
-      Painting: { image: carpainting, price: 2000 },
-      Maintenance: { image: maintenance, price: 1000 },
-      'Car Wash': { image: carwash, price: 300 },
-    };
+    return (
+      <View key={item._id} style={styles.itemContainer}>
+        <Image source={imageSource} style={styles.itemImage} resizeMode="cover" />
 
-    const selectedItems = Object.entries(cart).filter(([_, item]) => item.count > 0);
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemName}>{name}</Text>
+          <Text style={styles.itemPrice}>₹{price} each</Text>
 
-    return selectedItems.length === 0 ? (
-      <Text style={styles.itemText1}>No item selected</Text>
-    ) : (
-      selectedItems.map(([title, item]) => {
-        const { image, price } = allCards[title] || {};
-        return (
-          <View key={title} style={styles.selectedCard}>
-            <Image source={image} style={styles.selectedImage} resizeMode="cover" />
-            <Text style={styles.cardText}>{title}</Text>
-            <Text style={styles.priceText}>
-              ₹{price} x {item.count} = ₹{price * item.count}
+          {item.productId && (
+            <>
+              <Text style={styles.itemInfo}>{item.productId.warrantyPeriod} warranty</Text>
+              <Text
+                style={[
+                  styles.stockStatus,
+                  item.productId.inStock ? styles.inStock : styles.outOfStock,
+                ]}>
+                {item.productId.inStock ? 'In Stock' : 'Out of Stock'}
+              </Text>
+            </>
+          )}
+
+          {!isProduct && item.serviceId && (
+            <Text style={styles.itemInfo} numberOfLines={2}>
+              {item.serviceId.description}
             </Text>
-            <Text style={styles.selectedLabel}>Selected</Text>
-          </View>
-        );
-      })
-    );
-  };
-
-  const renderTabContent = () => {
-    const productCards = [
-      renderCard('Battery', carbattery, 500),
-      renderCard('Brake Service', carbreak, 750),
-      renderCard('Battery Install', carbattery, 1200),
-      renderCard('Painting', carpainting, 2000),
-    ];
-    const serviceCards = [
-      renderCard('Maintenance', maintenance, 1000, true),
-      renderCard('Car Wash', carwash, 300, true),
-    ];
-
-    if (activeTab === 'Product') {
-      return renderRows(productCards);
-    } else if (activeTab === 'Service') {
-      return renderRows(serviceCards);
-    } else if (activeTab === 'Overall') {
-      return renderRows([...productCards, ...serviceCards]);
-    }
-  };
-
-  const renderRows = (cards) => {
-    const rows = [];
-    for (let i = 0; i < cards.length; i += 2) {
-      rows.push(
-        <View key={i} style={styles.row}>
-          {cards[i]}
-          {cards[i + 1] || <View style={[styles.card, { opacity: 0 }]} />}
+          )}
         </View>
-      );
-    }
-    return rows;
+
+        <View style={styles.quantityContainer}>
+          <View style={styles.quantityBox}>
+            <Text style={styles.quantityText}>Qty: {item.quantity}</Text>
+          </View>
+          <Text style={styles.totalPrice}>₹{totalPrice}</Text>
+        </View>
+      </View>
+    );
   };
 
   return (
-    <GestureHandlerRootView style={styles.wrapper}>
-      <ImageBackground source={icons.booking_background}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.tabRow}>
-            {['Overall', 'Product', 'Service'].map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
-                onPress={() => setActiveTab(tab)}>
-                <Text style={[styles.tabButtonText, activeTab === tab && styles.activeTabText]}>
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {renderTabContent()}
-
-          <View style={styles.totalListContainer}>
-            {Object.values(cart).some((item) => item.count > 0) ? (
-              <>
-                <View style={styles.itemRow1}>
-                  <Text style={[styles.itemText1, { flex: 2, color: COLORS.primary }]}>
-                    Product
+    <GestureHandlerRootView style={styles.container}>
+      <View style={{ flex: 1 }}>
+        <ImageBackground
+          source={icons.booking_background}
+          style={styles.backgroundImage}
+          resizeMode="cover">
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}>
+            <View style={styles.tabContainer}>
+              {(['All', 'Products', 'Services'] as const).map((tab) => (
+                <TouchableOpacity
+                  key={tab}
+                  style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
+                  onPress={() => setActiveTab(tab)}>
+                  <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                    {tab}
                   </Text>
-                  <Text style={[styles.itemText1, { flex: 1, textAlign: 'center' }]}>-</Text>
-                  <Text style={[styles.itemText1, { flex: 1, textAlign: 'center' }]}>Qty</Text>
-                  <Text style={[styles.itemText1, { flex: 1, textAlign: 'right' }]}>Total</Text>
-                </View>
-                {Object.entries(cart).map(([title, item]) =>
-                  item.count > 0 ? (
-                    <View key={title} style={styles.itemRow2}>
-                      <Text style={[styles.itemText1, { flex: 2 }]}>{title}</Text>
-                      <Text style={[styles.itemText1, { flex: 1, textAlign: 'center' }]}>-</Text>
-                      <Text style={[styles.itemText1, { flex: 1, textAlign: 'center' }]}>
-                        {item.count}
-                      </Text>
-                      <Text style={[styles.itemText1, { flex: 1, textAlign: 'right' }]}>
-                        ₹{item.count * item.price}
-                      </Text>
-                    </View>
-                  ) : null
-                )}
-              </>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {filteredItems.length > 0 ? (
+              <View style={styles.itemsContainer}>
+                {filteredItems.map((item) => renderItem(item))}
+              </View>
             ) : (
-              <Text style={styles.itemText1}>No product selected</Text>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  {activeTab === 'All'
+                    ? 'Your cart is empty'
+                    : activeTab === 'Products'
+                      ? 'No products in your cart'
+                      : 'No services in your cart'}
+                </Text>
+              </View>
             )}
-          </View>
 
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Grand Total:</Text>
-            <Text style={styles.totalAmount}>₹{grandTotal}</Text>
-          </View>
+            <View style={styles.footer}>
+              <View style={styles.totalContainer}>
+                <Text style={styles.totalLabel}>Total:</Text>
+                <Text style={styles.totalAmount}>₹{totalAmount}</Text>
+              </View>
 
-          <TouchableOpacity style={styles.infoButton} onPress={handleSummary}>
-            <Text style={styles.infoButtonText}>Confirm Order</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </ImageBackground>
+              <TouchableOpacity
+                style={[styles.confirmButton, filteredItems.length === 0 && styles.disabledButton]}
+                onPress={handleConfirmOrder}
+                disabled={filteredItems.length === 0}>
+                <Text style={styles.confirmButtonText}>Confirm Order</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </ImageBackground>
+      </View>
     </GestureHandlerRootView>
   );
 };
 
-const Card = ({ title, image, price, onQuantityChange, isService = false }) => {
-  const [count, setCount] = useState(0);
-
-  const increase = () => {
-    const newCount = count + 1;
-    setCount(newCount);
-    onQuantityChange(title, newCount, price);
-  };
-
-  const decrease = () => {
-    const newCount = count > 0 ? count - 1 : 0;
-    setCount(newCount);
-    onQuantityChange(title, newCount, price);
-  };
-
-  const handleToggleService = () => {
-    const newCount = count > 0 ? 0 : 1;
-    setCount(newCount);
-    onQuantityChange(title, newCount, price);
-  };
-
-  if (isService) {
-    return (
-      <View style={styles.card}>
-        <Text style={styles.cardText}>{title}</Text>
-        <Text style={styles.priceText}>₹{price}</Text>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: count > 0 ? '#aaa' : COLORS.primary }]}
-          onPress={handleToggleService}>
-          <Text style={styles.addButtonText}>{count > 0 ? 'Remove' : 'Add'}</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.card}>
-      <Image source={image} style={styles.cardImage} resizeMode="cover" />
-      <Text style={styles.cardText}>{title}</Text>
-      <Text style={styles.priceText}>₹{price} each</Text>
-      <View style={styles.counterRow}>
-        <TouchableOpacity style={styles.counterButton} onPress={decrease}>
-          <Text style={styles.counterButtonText}>−</Text>
-        </TouchableOpacity>
-        <Text style={styles.counterValue}>{count}</Text>
-        <TouchableOpacity style={styles.counterButton} onPress={increase}>
-          <Text style={styles.counterButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.totalText}>Total: ₹{count * price}</Text>
-    </View>
-  );
-};
-const style1 = StyleSheet.create({
-  container: {
-    padding: 16,
-    paddingBottom: 100,
-    flex: 1,
-    height: '80%',
-  },
-  card: {
-    backgroundColor: 'white',
-    flex: 1,
-    height: 260,
-    marginHorizontal: 4,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 8,
-    elevation: 3,
-  },
-});
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: '#fff' },
-  container: { padding: 15, paddingBottom: 30 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  card: {
-    backgroundColor: COLORS.indigo[100],
+  container: {
     flex: 1,
-    height: 260,
-    marginHorizontal: 4,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 8,
-  },
-  cardImage: { width: '100%', height: '45%', borderRadius: 8 },
-  cardText: { ...FONTS.h4, textAlign: 'center', marginTop: 5 },
-  priceText: { color: '#333', ...FONTS.body5, marginTop: 5 },
-  counterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  counterButton: {
-    backgroundColor: COLORS.grey,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 4,
-    marginHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  counterButtonText: { ...FONTS.h4, color: COLORS.white },
-  counterValue: { ...FONTS.h4 },
-  totalText: { ...FONTS.h4, marginTop: 10, color: COLORS.primary_text },
-  totalListContainer: {
-    backgroundColor: '#f9f9f9',
-    padding: 16,
-    marginTop: 20,
-    borderRadius: 8,
-    borderColor: '#ccc',
-    borderWidth: 1,
-  },
-  itemRow1: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-  itemRow2: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-  itemText1: { ...FONTS.body4, color: '#333' },
-  totalContainer: {
-    backgroundColor: '#eee',
-    padding: 16,
-    marginTop: 10,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  totalLabel: { ...FONTS.h4 },
-  totalAmount: { ...FONTS.h4, color: COLORS.primary },
-  infoButton: {
-    backgroundColor: COLORS.primary,
-    padding: 12,
-    marginTop: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    width: '50%',
-    alignSelf: 'center',
-  },
-  infoButtonText: { color: COLORS.white, ...FONTS.h4 },
-  tabRow: { flexDirection: 'row', justifyContent: 'space-evenly', marginBottom: 16 },
-  tabButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
     backgroundColor: COLORS.white,
   },
-  activeTabButton: { backgroundColor: COLORS.primary },
-  tabButtonText: { color: COLORS.black, ...FONTS.h4 },
-  activeTabText: { color: COLORS.white },
-  addButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 6,
-    marginTop: 10,
-  },
-  addButtonText: { color: COLORS.white, ...FONTS.h4 },
-  selectedCard: {
-    backgroundColor: COLORS.white,
-    padding: 12,
-    marginBottom: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    elevation: 3,
-  },
-  selectedImage: {
+  backgroundImage: {
+    flex: 1,
     width: '100%',
-    height: 150,
-    borderRadius: 8,
-    marginBottom: 8,
+    height: '100%',
+    resizeMode: 'cover',
+    justifyContent: 'center',
   },
-  selectedLabel: {
-    marginTop: 6,
-    color: COLORS.success_lightgreen,
-    fontSize: 16,
+  contentContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 30,
+  },
+  header: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  headerTitle: {
+    ...FONTS.h2,
+    color: COLORS.primary,
     fontWeight: 'bold',
   },
-  selectedGrid: {
-    width: '50%',
-    paddingBottom: '9%',
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    backgroundColor: COLORS.lightGrey,
+    marginHorizontal: 15,
+    borderRadius: 10,
+  },
+  tabButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  activeTabButton: {
     backgroundColor: COLORS.primary,
+  },
+  tabText: {
+    ...FONTS.h4,
+    color: COLORS.dark60,
+  },
+  activeTabText: {
+    color: COLORS.white,
+  },
+  itemsContainer: {
+    paddingHorizontal: 15,
+    paddingTop: 10,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.white,
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  itemImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 15,
+  },
+  itemDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  itemName: {
+    ...FONTS.h4,
+    color: COLORS.primary_text,
+    marginBottom: 5,
+  },
+  itemPrice: {
+    ...FONTS.body4,
+    color: COLORS.primary,
+    marginBottom: 5,
+  },
+  itemInfo: {
+    ...FONTS.body5,
+    color: COLORS.grey,
+    marginBottom: 3,
+  },
+  stockStatus: {
+    ...FONTS.h5,
+  },
+  inStock: {
+    color: COLORS.success_lightgreen,
+  },
+  outOfStock: {
+    color: COLORS.error,
+  },
+  quantityContainer: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    minWidth: 80,
+  },
+  quantityBox: {
+    backgroundColor: COLORS.lightGrey,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  quantityText: {
+    ...FONTS.h5,
+    color: COLORS.dark60,
+  },
+  totalPrice: {
+    ...FONTS.h4,
+    color: COLORS.primary,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    ...FONTS.h3,
+    color: COLORS.grey,
+    textAlign: 'center',
+  },
+  footer: {
+    padding: 20,
+    backgroundColor: COLORS.white,
+    marginHorizontal: 15,
+    borderRadius: 10,
+    marginTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  totalLabel: {
+    ...FONTS.h3,
+    color: COLORS.primary_text,
+  },
+  totalAmount: {
+    ...FONTS.h3,
+    color: COLORS.primary,
+  },
+  confirmButton: {
+    backgroundColor: COLORS.primary,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: COLORS.grey,
+  },
+  confirmButtonText: {
+    ...FONTS.h4,
+    color: COLORS.white,
   },
 });
 
-export default Grid1;
+export default BookingCartScreen;

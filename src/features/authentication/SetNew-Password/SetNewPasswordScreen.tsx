@@ -33,8 +33,10 @@ const SetNewPasswordScreen = ({ route }) => {
       toast.error('Error', 'Passwords do not match');
       return;
     }
-    const response = await ResetPassword(data);
-    console.log('Reset Password Response:', response);
+    const response = await ResetPassword({
+      newPassword: data.confirmPassword,
+      oldPassword: data.newPassword,
+    });
     if (response) {
       toast.success('Success', 'Password changed successfully');
       navigation.navigate('LoginScreen' as never);

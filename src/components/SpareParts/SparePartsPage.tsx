@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -13,15 +13,20 @@ import SparePartsCard from '../../components/SpareParts/SparePartsCard';
 import sparePartsData, { SparePartCategory } from '../../components/SpareParts/sparePartsData';
 import { COLORS, FONTS } from '../../constants/index';
 import { Ionicons } from '@expo/vector-icons';
+import { ConstructionIcon } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 20) / 2;
 
-const SparePartsPage = () => {
-  const [selectedCategory, setSelectedCategory] = useState(sparePartsData[0]);
+type SparePartsPageProps = {
+  spareParts: SparePartCategory[];
+};
+
+const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
   const scrollRef = useRef<ScrollView>(null);
   const scrollStep = 120;
   const scrollX = useRef(0);
+  const [error, setError] = React.useState(false);
 
   const scrollLeft = () => {
     scrollX.current = Math.max(scrollX.current - scrollStep, 0);
@@ -32,6 +37,16 @@ const SparePartsPage = () => {
     scrollX.current += scrollStep;
     scrollRef.current?.scrollTo({ x: scrollX.current, animated: true });
   };
+
+  const categories = [...new Set(spareParts.map((item) => item.category))];
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const filteredParts = spareParts.filter((item) => item.category === selectedCategory);
+
+  useEffect(() => {
+    if (spareParts.length > 0 && categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0]);
+    }
+  }, [spareParts, categories]);
 
   return (
     <View style={styles.container}>
@@ -47,9 +62,8 @@ const SparePartsPage = () => {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalNavContent1}>
-          {sparePartsData.map((item, index) => {
-            const isSelected = selectedCategory?.category === item.category;
-
+          {categories.map((item, index) => {
+            const isSelected = selectedCategory === item;
             return (
               <TouchableOpacity
                 key={index}
@@ -57,12 +71,16 @@ const SparePartsPage = () => {
                 onPress={() => setSelectedCategory(item)}
                 activeOpacity={0.7}>
                 <View style={styles.horizontalNavIcon}>
-                  <Image source={item.image} style={styles.image} />
+                  <Image
+                    source={require('../../assets/sparepartsimage/parts/brakepads.jpg')}
+                    style={styles.image}
+                    onError={() => setError(true)}
+                  />
                 </View>
                 <Text
                   style={[styles.horizontalNavText, isSelected && styles.activeHorizontalNavText]}
                   numberOfLines={1}>
-                  {item.category}
+                  {item}
                 </Text>
               </TouchableOpacity>
             );
@@ -79,10 +97,10 @@ const SparePartsPage = () => {
       <View style={styles.cardContainer}>
         <FlatList
           showsVerticalScrollIndicator={false}
-          data={selectedCategory.parts}
+          data={filteredParts}
           keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.cardWrapper}>
+          renderItem={({ item, index }) => (
+            <View style={styles.cardWrapper} key={index}>
               <SparePartsCard part={item} />
             </View>
           )}
@@ -91,6 +109,7 @@ const SparePartsPage = () => {
           contentContainerStyle={styles.cardsList}
         />
       </View>
+      <View style={{ marginTop: 35 }}></View>
     </View>
   );
 };
