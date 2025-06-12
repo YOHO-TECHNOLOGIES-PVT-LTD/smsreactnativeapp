@@ -22,6 +22,8 @@ import IconButton from '~/components/IconButton';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import AutoSlidingCarousel from '~/components/HomePage/AutoSlidingCarousel';
 import { ImageBackground } from 'react-native';
+import { getAllSpareParts } from '~/features/spare-parts/service';
+import { getAllServices } from '~/features/services-page/service';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +37,37 @@ const HomeScreen = () => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const bannerRef = useRef(null);
   const scrollInterval = useRef<NodeJS.Timeout>(null);
+  const [spareParts, setSpareParts] = useState([]);
+  const [services, setServices] = useState([]);
+
+  const fetchSpareParts = async () => {
+    try {
+      const response = await getAllSpareParts('');
+      if (response) {
+        setSpareParts(response.data.data);
+        console.log('Spare parts fetched successfully:', response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching spare parts:', error);
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      const response = await getAllServices('');
+      if (response) {
+        setServices(response.data.data);
+        console.log('Services fetched successfully:', response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSpareParts();
+    fetchServices();
+  }, []);
 
   useEffect(() => {
     Animated.parallel([
@@ -81,14 +114,14 @@ const HomeScreen = () => {
     },
   ];
 
-  const services = [
-    { id: '1', name: 'Car Wash', icon: 'local-car-wash' },
-    { id: '2', name: 'AC Service', icon: 'ac-unit' },
-    { id: '3', name: 'Battery', icon: 'battery-charging-full' },
-    { id: '4', name: 'Tyre Care', icon: 'settings' },
-    { id: '5', name: 'Denting', icon: 'build' },
-    { id: '6', name: 'Insurance', icon: 'security' },
-  ];
+  // const services = [
+  //   { id: '1', name: 'Car Wash', icon: 'local-car-wash' },
+  //   { id: '2', name: 'AC Service', icon: 'ac-unit' },
+  //   { id: '3', name: 'Battery', icon: 'battery-charging-full' },
+  //   { id: '4', name: 'Tyre Care', icon: 'settings' },
+  //   { id: '5', name: 'Denting', icon: 'build' },
+  //   { id: '6', name: 'Insurance', icon: 'security' },
+  // ];
 
   const offers = [
     { id: '1', title: 'Free Pickup & Drop', discount: 'On all services above ₹2000' },
@@ -96,50 +129,50 @@ const HomeScreen = () => {
     { id: '3', title: 'Festive Special', discount: 'Extra 10% off this week' },
   ];
 
-  const spareParts = [
-    {
-      id: '1',
-      name: 'Battery',
-      price: '₹450',
-      oem: 'Bosch',
-      image: require('../../assets/sparepartsimage/parts/battery.jpg'),
-    },
-    {
-      id: '2',
-      name: 'Brake Pads',
-      price: '₹1200',
-      oem: 'Brembo',
-      image: require('../../assets/sparepartsimage/parts/brakepads.jpg'),
-    },
-    {
-      id: '3',
-      name: 'Exhaust System',
-      price: '₹600',
-      oem: 'Mahle',
-      image: require('../../assets/sparepartsimage/parts/exhaust.jpg'),
-    },
-    {
-      id: '4',
-      name: 'Engine',
-      price: '₹600',
-      oem: 'Mahle',
-      image: require('../../assets/sparepartsimage/parts/engine.jpg'),
-    },
-    {
-      id: '5',
-      name: 'Interior',
-      price: '₹600',
-      oem: 'Mahle',
-      image: require('../../assets/sparepartsimage/parts/interior.jpg'),
-    },
-    {
-      id: '6',
-      name: 'Suspension',
-      price: '₹600',
-      oem: 'Mahle',
-      image: require('../../assets/sparepartsimage/parts/suspension.jpg'),
-    },
-  ];
+  // const spareParts = [
+  //   {
+  //     id: '1',
+  //     name: 'Battery',
+  //     price: '₹450',
+  //     oem: 'Bosch',
+  //     image: require('../../assets/sparepartsimage/parts/battery.jpg'),
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Brake Pads',
+  //     price: '₹1200',
+  //     oem: 'Brembo',
+  //     image: require('../../assets/sparepartsimage/parts/brakepads.jpg'),
+  //   },
+  //   {
+  //     id: '3',
+  //     name: 'Exhaust System',
+  //     price: '₹600',
+  //     oem: 'Mahle',
+  //     image: require('../../assets/sparepartsimage/parts/exhaust.jpg'),
+  //   },
+  //   {
+  //     id: '4',
+  //     name: 'Engine',
+  //     price: '₹600',
+  //     oem: 'Mahle',
+  //     image: require('../../assets/sparepartsimage/parts/engine.jpg'),
+  //   },
+  //   {
+  //     id: '5',
+  //     name: 'Interior',
+  //     price: '₹600',
+  //     oem: 'Mahle',
+  //     image: require('../../assets/sparepartsimage/parts/interior.jpg'),
+  //   },
+  //   {
+  //     id: '6',
+  //     name: 'Suspension',
+  //     price: '₹600',
+  //     oem: 'Mahle',
+  //     image: require('../../assets/sparepartsimage/parts/suspension.jpg'),
+  //   },
+  // ];
 
   const blogs = [
     { id: '1', title: '5 Signs Your Car Needs Service', date: '15 May 2023' },
@@ -297,9 +330,9 @@ const HomeScreen = () => {
             <Text style={styles.sectionTitle}>Available Services</Text>
             <View style={styles.servicesGrid}>
               {services.map((item) => (
-                <TouchableOpacity key={item.id} style={styles.serviceItem1}>
+                <TouchableOpacity key={item._id} style={styles.serviceItem1}>
                   <MaterialIcons name={item.icon} size={28} color={COLORS.primary_text} />
-                  <Text style={styles.serviceText}>{item.name}</Text>
+                  <Text style={styles.serviceText}> {item.category_name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -317,12 +350,12 @@ const HomeScreen = () => {
 
             <View style={styles.partsContainer1}>
               {spareParts.map((item) => (
-                <View key={item.id} style={styles.partCard1}>
+                <View	key={item._id} style={styles.partCard1}>
                   <Image source={item.image} style={styles.partImage} />
                   <View style={styles.partDetails}>
-                    <Text style={styles.partName}>{item.name}</Text>
-                    <Text style={styles.partOem}>{item.oem}</Text>
-                    <Text style={styles.partPrice}>{item.price}</Text>
+                  <Text style={styles.partName}>{item.productName}</Text>
+                  <Text style={styles.partOem}>Brand: {item.brand}</Text>
+                  <Text style={styles.partPrice}>₹{item.price}</Text>
                     <TouchableOpacity style={styles.partButton}>
                       <Text style={styles.partButtonText}>Add to Cart</Text>
                     </TouchableOpacity>
@@ -838,3 +871,4 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+ 
