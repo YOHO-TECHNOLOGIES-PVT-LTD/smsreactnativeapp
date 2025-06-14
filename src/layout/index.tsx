@@ -92,7 +92,7 @@ const TabButton: React.FC<TabButtonProps> = ({
               width: isScanButton ? 45 : '100%',
               height: isScanButton ? 45 : SPACING.small,
               borderRadius: isScanButton ? 32.5 : 25,
-              backgroundColor: isScanButton ? COLORS.primary_04 : '',
+              backgroundColor: isScanButton ? 'white' : undefined,
               justifyContent: 'center',
               alignItems: 'center',
               elevation: isScanButton ? 5 : 0,
@@ -105,26 +105,28 @@ const TabButton: React.FC<TabButtonProps> = ({
           ]}>
           <View
             style={{
-              backgroundColor: isScanButton ? '' : isFocused ? COLORS.primary_04 : COLORS.white,
+              backgroundColor: isScanButton ? '' : isFocused ? undefined : undefined,
               paddingHorizontal: 10,
               paddingVertical: 5,
-              borderRadius: 50,
+              borderRadius: 5,
             }}>
             <Image
               source={icon}
               style={{
-                width: isScanButton ? 35 : 25,
-                height: isScanButton ? 35 : 25,
+                width: isScanButton ? 45 : 25,
+                height: isScanButton ? 45 : 25,
                 tintColor: isScanButton
                   ? undefined
                   : isFocused
                     ? COLORS.primary_borders
-                    : undefined,
+                    : COLORS.grey,
               }}
             />
           </View>
           {!isScanButton && (
-            <Text numberOfLines={1} style={{ color: COLORS.primary_text, ...FONTS.h7 }}>
+            <Text
+              numberOfLines={1}
+              style={{ color: isFocused ? COLORS.primary_text : COLORS.grey, ...FONTS.h7, fontWeight: 600 }}>
               {label}
             </Text>
           )}
@@ -142,7 +144,7 @@ const MainLayout: React.FC = () => {
   const selectedTab = useSelector((state: any) => state.tabReducer.selectedTab);
 
   const sosAnimation = useSharedValue(1);
-  // const radialPulse = useSharedValue(0);
+  const radialPulse = useSharedValue(0);
 
   const sosAnimatedStyle = useAnimatedStyle(() => {
     const scale = interpolate(sosAnimation.value, [0, 1], [1, 1.2]);
@@ -161,12 +163,12 @@ const MainLayout: React.FC = () => {
     };
   });
 
-  // const radialGlowStyle = useAnimatedStyle(() => ({
-  //   transform: [{ scale: radialPulse.value }],
-  //   opacity: interpolate(radialPulse.value, [0.9, 1], [0.5, 0]),
-  //   backgroundColor: 'rgba(255, 0, 0, 0.4)',
-  //   borderRadius: 100,
-  // }));
+  const radialGlowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: radialPulse.value }],
+    opacity: interpolate(radialPulse.value, [0.9, 1], [0.5, 0]),
+    backgroundColor: 'rgba(255, 0, 0, 0.4)',
+    borderRadius: 100,
+  }));
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -193,7 +195,7 @@ const MainLayout: React.FC = () => {
   useEffect(() => {
     sosAnimation.value = withRepeat(withTiming(1, { duration: 600 }), -1, true);
 
-    // radialPulse.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
+    radialPulse.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
   }, [sosAnimation]);
 
   useEffect(() => {
@@ -247,8 +249,8 @@ const MainLayout: React.FC = () => {
             right: 0,
             backgroundColor: COLORS.white,
             paddingHorizontal: SIZES.radius,
-            paddingTop: 5,
-            paddingBottom: Platform.OS === 'android' ? 10 : 20, // Adjust for nav bar height
+            paddingTop: 10,
+            paddingBottom: Platform.OS === 'android' ? 10 : 20,
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -267,7 +269,7 @@ const MainLayout: React.FC = () => {
                   flex: isScanButton ? 0 : 1,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  top: isScanButton ? -20 : 0,
+                  top: isScanButton ? 0 : 0,
                 }}>
                 <TabButton
                   label={tab.label}

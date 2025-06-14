@@ -3,6 +3,7 @@
     "name": "SMS React Native App",
     "slug": "smsreactnativeapp",
     "version": "1.0.0",
+    "icon": "./src/assets/logo.png",
     "web": {
       "favicon": "./src/assets/logo.png"
     },
@@ -24,19 +25,16 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./src/assets/logo.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ],
+      "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.suryas_1805.smsreactnativeapp"
     },
     "extra": {

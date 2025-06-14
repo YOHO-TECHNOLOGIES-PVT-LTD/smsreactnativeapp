@@ -93,7 +93,7 @@ export default function RoadsideAssistanceScreen() {
       <TouchableOpacity>
         <Text style={styles.callText}>CALL US?</Text>
       </TouchableOpacity>
-      <View style={{ marginTop: 135 }}></View>
+      <View style={{ marginTop: 90 }}></View>
     </ScrollView>
   );
 }
@@ -104,8 +104,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heading: {
-    ...FONTS.h4,
-    marginBottom: 16,
+    ...FONTS.h3,
+    marginBottom: 15,
+    fontWeight: 500,
     color: COLORS.primary,
     alignSelf: 'flex-start',
   },
@@ -158,7 +159,8 @@ const styles = StyleSheet.create({
   },
   confirmText: {
     color: COLORS.white,
-    ...FONTS.h5,
+    ...FONTS.h6,
+    fontWeight: 500,
   },
   orText: {
     marginTop: 10,
@@ -167,7 +169,8 @@ const styles = StyleSheet.create({
   },
   callText: {
     ...FONTS.h5,
-    color: COLORS.indigo[500],
+    color: COLORS.primary,
+    fontWeight: 500,
     textDecorationLine: 'underline',
   },
 });

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
   Image,
-  SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +17,9 @@ import { COLORS, FONTS, icons, screens, SIZES } from '~/constants/index';
 import Header from '~/components/Header';
 import MarinaMap from '~/components/SosScreen/MarinaMap';
 import SosButtons from '~/components/SosScreen/Buttons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 
 const SOS = () => {
   const navigation = useNavigation();
@@ -39,88 +42,57 @@ const SOS = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header
-        containerStyle={{
-          height: 50,
-          paddingHorizontal: SIZES.padding,
-          alignItems: 'center',
-        }}
-        leftComponent={
-          <TouchableOpacity
-            style={{
-              width: 35,
-              height: 35,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderColor: COLORS.grey60,
-            }}
-            onPress={() => {
-              navigation.openDrawer();
-            }}>
-            <Image source={icons.menu} style={{ width: 20, height: 20 }} resizeMode="contain" />
-          </TouchableOpacity>
-        }
-        rightComponent={
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <IconButton
-              icon={icons.notification}
-              containerStyle={{
-                borderWidth: 0.5,
-                borderRadius: 25,
-                borderColor: COLORS.primary,
-              }}
-              onPress={() => {
-                navigation.navigate('NotificationScreen' as never);
-              }}
-            />
-
-            <TouchableOpacity
-              style={{
-                borderRadius: SIZES.radius,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onPress={() => {
-                dispatch(setSelectedTab(screens.profile));
-              }}>
-              <Image
-                source={require('../../assets/images/profile_picture.jpg')}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: SIZES.body2,
-                }}
-                onError={() => setError(true)}
-              />
+    <>
+      <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
+      <SafeAreaView edges={['top']} style={[styles.container, { paddingVertical: 10 }]}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10,
+            paddingHorizontal: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+          }}>
+          <Image
+            source={require('../../assets/home/LOGO.png')}
+            style={{ width: 145, height: 25 }}
+          />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity>
+              <AntDesign name="search1" size={24} color={COLORS.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={{ marginRight: 8 }}>
+              <Feather name="phone-call" size={22} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
-        }
-      />
-
-      {/* Display Google Map */}
-      <ScrollView style={{ position: 'relative' }}>
-        <View style={styles.mapContainer}>
-          <MarinaMap />
         </View>
-
-        <View style={{ }}>
-          <Text style={{ ...FONTS.body4, paddingTop: 20, paddingLeft: 10 }}>Mobile Number:</Text>
-
-          <View style={styles.Textcontainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="+91-1234567890"
-              value={value}
-              onChangeText={handleChange}
-              keyboardType="numeric"
-              maxLength={10}
-            />
+        {/* Display Google Map */}
+        <ScrollView style={[styles.container, { position: 'relative' }]}>
+          <View style={styles.mapContainer}>
+            <MarinaMap />
           </View>
-          <SosButtons />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          <View style={{}}>
+            <Text style={{ ...FONTS.body4, paddingTop: 20, paddingLeft: 10 }}>Mobile Number:</Text>
+            <View style={styles.Textcontainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="+91-1234567890"
+                value={value}
+                onChangeText={handleChange}
+                keyboardType="numeric"
+                maxLength={10}
+              />
+            </View>
+            <SosButtons />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -131,8 +103,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   mapContainer: {
-    borderTopColor: COLORS.primary,
-    borderWidth: 3,
     height: 250,
   },
   Textcontainer: {

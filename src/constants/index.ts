@@ -81,6 +81,15 @@ export const icons = {
   cart_outlined: require('../assets/icons/cart-outlined.png'),
   faq: require('../assets/icons/conversation.png'),
   settings: require('../assets/icons/setting.png'),
+  cart_bg: require('../assets/images/cart-bg.jpg'),
+  black_friday: require('../assets/home/black-friday.jpg'),
+  promo1: require('../assets/home/promo-banner1.jpg'),
+  promo2: require('../assets/home/promo-banner2.jpg'),
+  promo3: require('../assets/home/promo-banner3.jpg'),
+  spare_card: require('../assets/home/spare-card.jpg'),
+  spare_card2: require('../assets/home/spare-card2.jpg'),
+  spare_card3: require('../assets/home/spare-cart-card.jpg'),
+  payment_card: require('../assets/home/payment-card.jpg'),
 };
 
 export const Styles = {
@@ -103,7 +112,7 @@ export const screens = {
   services: 'Services',
   sos: 'SOS',
   spare_parts: 'Spare Parts',
-  profile: 'Profile',
+  profile: 'Account',
 };
 
 export const bottom_tabs = [
@@ -312,51 +321,49 @@ export const SIZES = {
 export const FONTS = {
   largeTitle: { fontFamily: 'Poppins-Black', fontSize: SIZES.largeTitle },
   h1: {
-    fontFamily: 'Poppins-Bold',
+    // fontFamily: 'Poppins-Bold',
     fontSize: SIZES.h1,
     lineHeight: 36,
   },
   h2: {
-    fontFamily: 'Poppins-Bold',
+    // fontFamily: 'Poppins-Bold',
     fontSize: SIZES.h2,
     lineHeight: 30,
   },
   h2_01: {
-    fontFamily: 'Poppins-Bold',
+    // fontFamily: 'Poppins-Bold',
     fontSize: SIZES.h2_01,
-    lineHeight: 30,
   },
   h2_02: {
-    fontFamily: 'Poppins-Bold',
+    // fontFamily: 'Poppins-Bold',
     fontSize: SIZES.h2_02,
-    lineHeight: 30,
   },
   h3: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h3,
     lineHeight: 22,
   },
   h4: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h4,
     lineHeight: 22,
   },
   h5: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h5,
     lineHeight: 22,
   },
   h6: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h6,
     lineHeight: 22,
   },
   h7: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h7,
   },
   h8: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h8,
   },
   body1: {

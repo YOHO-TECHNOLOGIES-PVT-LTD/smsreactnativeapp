@@ -1,40 +1,137 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   Image,
   ScrollView,
-  FlatList,
   TouchableOpacity,
-  Animated,
   StyleSheet,
   Dimensions,
+  StatusBar,
+  Animated,
   Easing,
-  SafeAreaView,
-  TextInput,
 } from 'react-native';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
-import Header from '~/components/Header';
-import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
-import IconButton from '~/components/IconButton';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { COLORS, FONTS, icons, screens } from '~/constants';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { TextInput } from 'react-native-gesture-handler';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import ImageCarousel from '~/components/HomePage/ImageCarousel';
+import AnimatedSearch from '~/components/HomePage/AnimatedSearch';
 import { setSelectedTab } from '~/store/tab/tabSlice';
-import AutoSlidingCarousel from '~/components/HomePage/AutoSlidingCarousel';
-import { ImageBackground } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
-const HomeScreen = () => {
-  const navigation = useNavigation();
+const services = [
+  { id: '1', name: 'Car Services', icon: 'local-car-wash' },
+  { id: '2', name: 'AC Service & Repair', icon: 'ac-unit' },
+  { id: '3', name: 'Batteries', icon: 'battery-charging-full' },
+  { id: '4', name: 'Tyres & Wheel Care', icon: 'settings' },
+  { id: '5', name: 'Denting & Painting', icon: 'build' },
+  { id: '6', name: 'Insurance Claims', icon: 'security' },
+  { id: '7', name: 'Clutch & Body Parts', icon: 'ac-unit' },
+  { id: '8', name: 'Suspension & Fitments', icon: 'settings' },
+];
+
+const banners = [
+  {
+    id: '1',
+    title: 'Premium Car Wash',
+    subtitle: 'Get 30% off on your first booking',
+    image: require('../../assets/service-images/generalservice.png'),
+    cta: 'Book Now',
+  },
+  {
+    id: '2',
+    title: 'Annual Maintenance',
+    subtitle: 'Comprehensive checkup package',
+    image: require('../../assets/service-images/generalservice.png'),
+    cta: 'Learn More',
+  },
+  {
+    id: '3',
+    title: 'Genuine Spare Parts',
+    subtitle: 'Original OEM parts with warranty',
+    image: require('../../assets/service-images/generalservice.png'),
+    cta: 'Shop Now',
+  },
+];
+
+const offers = [
+  { id: '1', title: 'Free Pickup & Drop', discount: 'On all services above ₹2000' },
+  { id: '2', title: 'Refer & Earn', discount: 'Get ₹500 for every referral' },
+  { id: '3', title: 'Festive Special', discount: 'Extra 10% off this week' },
+  { id: '4', title: 'Membership Combo', discount: 'Get ₹800 for every referral' },
+];
+
+const spareParts = [
+  {
+    id: '1',
+    name: 'Battery',
+    price: '₹450',
+    oem: 'Bosch',
+    image: require('../../assets/sparepartsimage/parts/battery.jpg'),
+  },
+  {
+    id: '2',
+    name: 'Brake Pads',
+    price: '₹1200',
+    oem: 'Brembo',
+    image: require('../../assets/sparepartsimage/parts/brakepads.jpg'),
+  },
+  {
+    id: '3',
+    name: 'Exhaust System',
+    price: '₹600',
+    oem: 'Mahle',
+    image: require('../../assets/sparepartsimage/parts/exhaust.jpg'),
+  },
+  {
+    id: '4',
+    name: 'Engine',
+    price: '₹750',
+    oem: 'Mahle',
+    image: require('../../assets/sparepartsimage/parts/engine.jpg'),
+  },
+  {
+    id: '5',
+    name: 'Interior',
+    price: '₹470',
+    oem: 'Mahle',
+    image: require('../../assets/sparepartsimage/parts/interior.jpg'),
+  },
+  {
+    id: '6',
+    name: 'Suspension',
+    price: '₹300',
+    oem: 'Mahle',
+    image: require('../../assets/sparepartsimage/parts/suspension.jpg'),
+  },
+];
+
+const blogs = [
+  { id: '1', title: '5 Signs Your Car Needs Service', date: '15 May 2023' },
+  { id: '2', title: 'How to Maintain Your Car Battery', date: '22 May 2023' },
+  { id: '3', title: 'Choosing the Right Engine Oil', date: '30 May 2023' },
+];
+
+const HomePage = () => {
+  const searchContent = ['Warranty', 'Dent Paint', 'Periodic Services', 'Miles', 'Top Assist'];
+  const [searchIndex, setSearchIndex] = useState(0);
+  const [search, setSearch] = useState(searchContent[0]);
   const dispatch = useDispatch();
-  const [error, setError] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const translateYAnim = useRef(new Animated.Value(30)).current;
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const bannerRef = useRef(null);
   const scrollInterval = useRef<NodeJS.Timeout>(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     Animated.parallel([
@@ -57,248 +154,71 @@ const HomeScreen = () => {
     ]).start();
   }, []);
 
-  const banners = [
-    {
-      id: '1',
-      title: 'Premium Car Wash',
-      subtitle: 'Get 30% off on your first booking',
-      image: require('../../assets/service-images/generalservice.png'),
-      cta: 'Book Now',
-    },
-    {
-      id: '2',
-      title: 'Annual Maintenance',
-      subtitle: 'Comprehensive checkup package',
-      image: require('../../assets/service-images/generalservice.png'),
-      cta: 'Learn More',
-    },
-    {
-      id: '3',
-      title: 'Genuine Spare Parts',
-      subtitle: 'Original OEM parts with warranty',
-      image: require('../../assets/service-images/generalservice.png'),
-      cta: 'Shop Now',
-    },
-  ];
-
-  const services = [
-    { id: '1', name: 'Car Wash', icon: 'local-car-wash' },
-    { id: '2', name: 'AC Service', icon: 'ac-unit' },
-    { id: '3', name: 'Battery', icon: 'battery-charging-full' },
-    { id: '4', name: 'Tyre Care', icon: 'settings' },
-    { id: '5', name: 'Denting', icon: 'build' },
-    { id: '6', name: 'Insurance', icon: 'security' },
-  ];
-
-  const offers = [
-    { id: '1', title: 'Free Pickup & Drop', discount: 'On all services above ₹2000' },
-    { id: '2', title: 'Refer & Earn', discount: 'Get ₹500 for every referral' },
-    { id: '3', title: 'Festive Special', discount: 'Extra 10% off this week' },
-  ];
-
-  const spareParts = [
-    {
-      id: '1',
-      name: 'Battery',
-      price: '₹450',
-      oem: 'Bosch',
-      image: require('../../assets/sparepartsimage/parts/battery.jpg'),
-    },
-    {
-      id: '2',
-      name: 'Brake Pads',
-      price: '₹1200',
-      oem: 'Brembo',
-      image: require('../../assets/sparepartsimage/parts/brakepads.jpg'),
-    },
-    {
-      id: '3',
-      name: 'Exhaust System',
-      price: '₹600',
-      oem: 'Mahle',
-      image: require('../../assets/sparepartsimage/parts/exhaust.jpg'),
-    },
-    {
-      id: '4',
-      name: 'Engine',
-      price: '₹600',
-      oem: 'Mahle',
-      image: require('../../assets/sparepartsimage/parts/engine.jpg'),
-    },
-    {
-      id: '5',
-      name: 'Interior',
-      price: '₹600',
-      oem: 'Mahle',
-      image: require('../../assets/sparepartsimage/parts/interior.jpg'),
-    },
-    {
-      id: '6',
-      name: 'Suspension',
-      price: '₹600',
-      oem: 'Mahle',
-      image: require('../../assets/sparepartsimage/parts/suspension.jpg'),
-    },
-  ];
-
-  const blogs = [
-    { id: '1', title: '5 Signs Your Car Needs Service', date: '15 May 2023' },
-    { id: '2', title: 'How to Maintain Your Car Battery', date: '22 May 2023' },
-    { id: '3', title: 'Choosing the Right Engine Oil', date: '30 May 2023' },
-  ];
-
   useEffect(() => {
-    scrollInterval.current = setInterval(() => {
-      const nextIndex = (currentBannerIndex + 1) % banners.length;
-      setCurrentBannerIndex(nextIndex);
-      bannerRef.current?.scrollToIndex({
-        index: nextIndex,
-        animated: true,
+    // Set up interval to rotate through search terms
+    const interval = setInterval(() => {
+      setSearchIndex((prevIndex) => {
+        const newIndex = (prevIndex + 1) % searchContent.length;
+        setSearch(searchContent[newIndex]);
+        return newIndex;
       });
-    }, 3000); // Change slide every 3 seconds
+    }, 2000);
 
-    return () => clearInterval(scrollInterval.current);
-  }, [currentBannerIndex]);
+    // Clean up interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const contentOffset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffset / width);
-    setCurrentBannerIndex(index);
-  };
-
-  const renderBannerItem = ({ item }: { item: (typeof banners)[0] }) => (
-    <View style={{ width, paddingHorizontal: 16 }}>
-      <View style={styles.bannerContainer}>
-        <Image source={item.image} style={styles.bannerImage} />
-        <View style={styles.bannerTextContainer}>
-          <Text style={styles.bannerTitle}>{item.title}</Text>
-          <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
-          <TouchableOpacity style={styles.bannerButton}>
-            <Text style={styles.bannerButtonText}>{item.cta}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
+  const images = [icons.promo1, icons.promo2, icons.promo3];
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      {/* Header */}
-      <Header
-        containerStyle={{
-          height: 50,
-          paddingHorizontal: SIZES.padding,
-          alignItems: 'center',
-        }}
-        leftComponent={
-          <TouchableOpacity
+    <>
+      <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
+      <SafeAreaView edges={['top']} style={styles.container}>
+        {/* Header Section */}
+        <View style={styles.header}>
+          <View
             style={{
-              width: 35,
-              height: 35,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              justifyContent: 'center',
-              borderColor: COLORS.grey60,
-            }}
-            onPress={() => {
-              navigation.openDrawer();
+              marginBottom: 1,
             }}>
-            <Image source={icons.menu} style={{ width: 20, height: 20 }} resizeMode="contain" />
-          </TouchableOpacity>
-        }
-        rightComponent={
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <IconButton
-              icon={icons.notification}
-              containerStyle={{
-                borderWidth: 0.5,
-                borderRadius: 25,
-                borderColor: COLORS.primary,
-              }}
-              onPress={() => {
-                navigation.navigate('NotificationScreen' as never);
-              }}
+            <Image
+              source={require('../../assets/home/LOGO.png')}
+              style={{ width: 145, height: 25 }}
             />
-
             <TouchableOpacity
+              onPress={() => setShowAddress(!showAddress)}
               style={{
-                borderRadius: SIZES.radius,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onPress={() => {
-                dispatch(setSelectedTab(screens.profile));
+                flexDirection: 'row',
+                // alignItems: 'center',
+                gap: 5,
+                justifyContent: 'flex-end',
               }}>
-              <Image
-                source={require('../../assets/images/profile_picture.jpg')}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: SIZES.body2,
-                }}
-                onError={() => setError(true)}
-              />
+              <FontAwesome name="location-arrow" size={18} color="black" />
+              <Text style={styles.title}>Keelkattalai</Text>
             </TouchableOpacity>
           </View>
-        }
-      />
-      <View style={{ borderBottomWidth: 3, borderColor: COLORS.primary }}></View>
-      <Animated.ScrollView
-        style={[
-          styles.container,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }, { translateY: translateYAnim }],
-          },
-        ]}
-        showsVerticalScrollIndicator={false}>
-        <ImageBackground source={icons.home_background} style={{ paddingHorizontal: 10 }}>
+          { (
+            <Text style={[styles.subtitle, { textAlign: 'right' }]}>
+              Chennai, Tamil Nadu 600117, India
+            </Text>
+          )}
           {/* Search Bar */}
-          <Animated.View style={[styles.searchContainer, { opacity: fadeAnim }]}>
-            <View style={styles.searchBar}>
-              <MaterialIcons name="search" size={20} color="#666" />
-              <TextInput style={styles.searchText} placeholder="Search..." />
-            </View>
-          </Animated.View>
-
-          <View>
-            <AutoSlidingCarousel />
+          <AnimatedSearch />
+        </View>
+        <ScrollView>
+          {/* Image Carousel */}
+          <View style={{ backgroundColor: COLORS.grey08, paddingVertical: 10 }}>
+            <ImageCarousel images={images} />
           </View>
 
-          {/* Banner Carousel */}
-          {/* <View style={styles.section}>
-        <FlatList
-          ref={bannerRef}
-          data={banners}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          renderItem={renderBannerItem}
-          keyExtractor={(item) => item.id}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          getItemLayout={(_, index) => ({
-            length: width,
-            offset: width * index,
-            index,
-          })}
-        />
-        <View style={styles.indicatorContainer}>
-          {banners.map((_, index) => (
-            <View
-              key={index}
-              style={[styles.indicator, index === currentBannerIndex && styles.activeIndicator]}
-            />
-          ))}
-        </View>
-      </View> */}
-
-          {/* Quick Services */}
+          {/* Services */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Available Services</Text>
             <View style={styles.servicesGrid}>
               {services.map((item) => (
                 <TouchableOpacity key={item.id} style={styles.serviceItem1}>
-                  <MaterialIcons name={item.icon} size={28} color={COLORS.primary_text} />
+                  <MaterialIcons name={item.icon} size={28} color={COLORS.primary_borders} />
                   <Text style={styles.serviceText}>{item.name}</Text>
                 </TouchableOpacity>
               ))}
@@ -306,7 +226,7 @@ const HomeScreen = () => {
           </View>
 
           {/* Available Spare Parts */}
-          <View style={[styles.section, { marginTop: -10 }]}>
+          <View style={[styles.section, { padding: 15, backgroundColor: COLORS.grey20 }]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Available Spare Parts</Text>
               <TouchableOpacity onPress={() => dispatch(setSelectedTab(screens.spare_parts))}>
@@ -315,7 +235,12 @@ const HomeScreen = () => {
             </View>
             <Text style={styles.sectionSubtitle}>Original OEM parts with warranty</Text>
 
-            <View style={styles.partsContainer1}>
+            <ScrollView
+              style={styles.partsContainer1}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 195 }} // Extra padding at end
+            >
               {spareParts.map((item) => (
                 <View key={item.id} style={styles.partCard1}>
                   <Image source={item.image} style={styles.partImage} />
@@ -323,11 +248,27 @@ const HomeScreen = () => {
                     <Text style={styles.partName}>{item.name}</Text>
                     <Text style={styles.partOem}>{item.oem}</Text>
                     <Text style={styles.partPrice}>{item.price}</Text>
-                    <TouchableOpacity style={styles.partButton}>
-                      <Text style={styles.partButtonText}>Add to Cart</Text>
-                    </TouchableOpacity>
                   </View>
                 </View>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Special Offers */}
+          <View style={[styles.section, { padding: 15, backgroundColor: COLORS.grey08 }]}>
+            <Text style={[styles.sectionTitle, {}]}>Special Offers</Text>
+            <View style={styles.offersContainer}>
+              {offers.map((offer) => (
+                <Animated.View key={offer.id} style={[styles.offerCard, { opacity: fadeAnim }]}>
+                  <View style={styles.offerBadge}>
+                    <FontAwesome name="tag" size={14} color={COLORS.white} />
+                  </View>
+                  <Text style={styles.offerTitle}>{offer.title}</Text>
+                  <Text style={styles.offerDiscount}>{offer.discount}</Text>
+                  <TouchableOpacity style={styles.offerButton}>
+                    <Text style={styles.offerButtonText}>Claim Offer</Text>
+                  </TouchableOpacity>
+                </Animated.View>
               ))}
             </View>
           </View>
@@ -349,8 +290,8 @@ const HomeScreen = () => {
           </View>
 
           {/* Blog Posts */}
-          <View style={[styles.section]}>
-            <View style={[styles.sectionHeader, { marginBottom: 15 }]}>
+          <View style={[styles.section, { padding: 15 }]}>
+            <View style={[styles.sectionHeader, { marginBottom: 5 }]}>
               <Text style={styles.sectionTitle}>Blog & Articles</Text>
               <TouchableOpacity>
                 <Text style={styles.seeAll}>View All</Text>
@@ -369,25 +310,6 @@ const HomeScreen = () => {
                     <Text style={styles.blogReadMore}>Read More →</Text>
                   </View>
                 </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Special Offers */}
-          <View style={[styles.section, { marginTop: -10 }]}>
-            <Text style={[styles.sectionTitle, { marginBottom: 15 }]}>Special Offers</Text>
-            <View style={styles.offersContainer}>
-              {offers.map((offer) => (
-                <Animated.View key={offer.id} style={[styles.offerCard, { opacity: fadeAnim }]}>
-                  <View style={styles.offerBadge}>
-                    <FontAwesome name="tag" size={16} color={COLORS.white} />
-                  </View>
-                  <Text style={styles.offerTitle}>{offer.title}</Text>
-                  <Text style={styles.offerDiscount}>{offer.discount}</Text>
-                  <TouchableOpacity style={styles.offerButton}>
-                    <Text style={styles.offerButtonText}>Claim Offer</Text>
-                  </TouchableOpacity>
-                </Animated.View>
               ))}
             </View>
           </View>
@@ -415,141 +337,120 @@ const HomeScreen = () => {
               <Text style={styles.footerCtaButtonText}>Chat Now</Text>
             </TouchableOpacity>
           </View>
-          <View style={{ marginTop: 80 }}></View>
-        </ImageBackground>
-      </Animated.ScrollView>
-    </SafeAreaView>
+
+          <View style={{ marginTop: 65 }}></View>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    paddingTop: 40,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 40,
-    height: 40,
-    marginRight: 10,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  title: {
+    fontSize: 14,
+    fontWeight: 600,
     color: '#333',
   },
-  searchContainer: {
-    marginVertical: 15,
+  subtitle: {
+    fontSize: 10,
+    color: COLORS.grey,
+    marginBottom: 3,
   },
-  searchBar: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 5,
-    elevation: 2,
+    borderRadius: 25,
+    padding: 5,
+    paddingLeft: 10,
+    marginTop: 10,
+    elevation: 5,
   },
   searchText: {
-    marginLeft: 8,
+    marginLeft: 7,
     color: '#666',
-    ...FONTS.body4,
+    fontSize: 12,
   },
-  section: {
-    marginVertical: 25,
-    paddingHorizontal: 5,
+  promoBanner: {
+    margin: 20,
+    borderRadius: 10,
+    padding: 20,
   },
+  promoTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  promoContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  promoText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  promoDiscount: {
+    color: '#fff',
+    fontSize: 36,
+    fontWeight: 'bold',
+  },
+  bookNowButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  bookNowText: {
+    color: '#FF6B6B',
+    fontWeight: 'bold',
+  },
+  discountTag: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  discountText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF6B6B',
+  },
+  section: {},
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
   },
   sectionTitle: {
-    ...FONTS.h2,
-    color: COLORS.primary,
+    ...FONTS.h3,
+    color: COLORS.primary_text,
+    fontWeight: 500,
   },
   sectionSubtitle: {
-    ...FONTS.body4,
-    color: '#666',
-    marginBottom: 12,
-  },
-  seeAll: {
-    color: COLORS.primary,
-    ...FONTS.h5,
-    textDecorationLine: 'underline',
-  },
-  bannerContainer: {
-    width: width - 16,
-    height: 180,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginHorizontal: 16,
-  },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  bannerTextContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  bannerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.white,
-    marginBottom: 4,
-  },
-  bannerSubtitle: {
-    fontSize: 14,
-    color: COLORS.white,
-    marginBottom: 8,
-  },
-  bannerButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
-  },
-  bannerButtonText: {
-    color: COLORS.white,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  indicatorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#CCC',
-    marginHorizontal: 4,
-  },
-  activeIndicator: {
-    backgroundColor: COLORS.primary,
-    width: 12,
+    ...FONTS.body6,
+    color: COLORS.grey80,
+    marginVertical: 5,
   },
   servicesContainer: {
     paddingVertical: 8,
+  },
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginVertical: 15,
   },
   serviceItem: {
     alignItems: 'center',
@@ -565,11 +466,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  serviceItem1: {
+    width: '25%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+    padding: 12,
+    elevation: 2,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
   serviceText: {
     marginTop: 8,
-    ...FONTS.h5,
-    color: COLORS.primary_borders,
+    fontSize: 10,
+    fontWeight: 500,
     textAlign: 'center',
+  },
+  seeAll: {
+    color: COLORS.primary_text,
+    ...FONTS.h6,
+    fontWeight: 500,
+    textDecorationLine: 'underline',
   },
   offersContainer: {
     flexDirection: 'row',
@@ -579,6 +498,7 @@ const styles = StyleSheet.create({
   },
   offerCard: {
     width: '48%',
+    height: 125,
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 15,
@@ -593,9 +513,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     right: -8,
-    backgroundColor: COLORS.primary_01,
-    width: 32,
-    height: 32,
+    backgroundColor: COLORS.primary,
+    width: 25,
+    height: 25,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -603,34 +523,32 @@ const styles = StyleSheet.create({
   offerTitle: {
     ...FONTS.h5,
     color: COLORS.primary_text,
-    marginBottom: 4,
+    fontWeight: 500,
   },
   offerDiscount: {
     ...FONTS.body6,
-    color: '#666',
-    marginBottom: 12,
+    color: COLORS.grey,
+    marginBottom: 10,
   },
   offerButton: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 6,
-    borderRadius: 4,
+    paddingVertical: 5,
+    borderRadius: 5,
     alignItems: 'center',
   },
   offerButtonText: {
     color: COLORS.white,
     ...FONTS.h6,
+    fontWeight: 500,
   },
   referContainer: {
     height: 160,
-    marginBottom: 25,
     position: 'relative',
-    borderRadius: 5,
   },
   referBg: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    borderRadius: 5,
   },
   referContent: {
     position: 'absolute',
@@ -641,7 +559,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     padding: 24,
     justifyContent: 'center',
-    borderRadius: 5,
   },
   referTitle: {
     ...FONTS.h3,
@@ -673,7 +590,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   partCard: {
-    width: 150,
+    width: 180,
     backgroundColor: COLORS.white,
     borderRadius: 12,
     marginRight: 12,
@@ -686,27 +603,31 @@ const styles = StyleSheet.create({
   },
   partImage: {
     width: '100%',
-    height: 100,
+    height: 45,
+    borderRadius: 5,
     resizeMode: 'cover',
     backgroundColor: '#F5F5F5',
   },
   partDetails: {
-    padding: 12,
+    // padding: 10,
   },
   partName: {
-    ...FONTS.h4,
+    ...FONTS.h6,
     color: COLORS.primary_text,
-    marginBottom: 4,
+    fontWeight: 500,
+    lineHeight: 12,
+    marginTop: 5,
   },
   partOem: {
-    ...FONTS.body5,
+    ...FONTS.body7,
     color: '#666',
-    marginBottom: 4,
+    marginVertical: 4,
   },
   partPrice: {
-    ...FONTS.h4,
+    ...FONTS.h6,
     color: COLORS.primary,
-    marginBottom: 8,
+    fontWeight: 500,
+    // marginBottom: 8,
   },
   partButton: {
     backgroundColor: COLORS.primary,
@@ -723,7 +644,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     marginBottom: 5,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORS.grey20,
     borderRadius: 8,
   },
   guaranteeItem: {
@@ -737,14 +658,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   blogsContainer: {
-    marginTop: 12,
+    marginTop: 10,
   },
   blogCard: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
     borderRadius: 5,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: 6,
     elevation: 2,
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
@@ -776,59 +697,35 @@ const styles = StyleSheet.create({
   },
   footerCta: {
     padding: 15,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.warning08,
     alignItems: 'center',
     borderRadius: 5,
   },
   footerCtaText: {
     ...FONTS.h4,
-    color: COLORS.white,
+    color: COLORS.primary,
     marginBottom: 8,
   },
   footerCtaButton: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 6,
   },
   footerCtaButtonText: {
-    color: COLORS.primary,
+    color: COLORS.white,
     ...FONTS.h5,
-  },
-  servicesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginVertical: 15,
-  },
-  serviceItem1: {
-    width: '30%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 15,
-    elevation: 2,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    fontWeight: 500,
   },
   partsContainer1: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 5,
+    flexGrow: 0, // Prevent vertical expansion
+    paddingVertical: 10,
   },
 
   partCard1: {
-    width: '48%',
+    width: '25%',
     backgroundColor: COLORS.white,
-    borderRadius: 10,
     padding: 10,
-    marginBottom: 12,
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -837,4 +734,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
+export default HomePage;

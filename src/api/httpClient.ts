@@ -12,7 +12,6 @@ const Axios = axios.create({
   },
 });
 
-// Request interceptor for adding auth token
 Axios.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('authToken');
   if (token) {

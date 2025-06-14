@@ -8,10 +8,11 @@ import {
   Image,
   Text,
   Dimensions,
+  ImageBackground,
 } from 'react-native';
 import SparePartsCard from '../../components/SpareParts/SparePartsCard';
 import sparePartsData, { SparePartCategory } from '../../components/SpareParts/sparePartsData';
-import { COLORS, FONTS } from '../../constants/index';
+import { COLORS, FONTS, icons } from '../../constants/index';
 import { Ionicons } from '@expo/vector-icons';
 import { ConstructionIcon } from 'lucide-react-native';
 
@@ -50,11 +51,22 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
 
   return (
     <View style={styles.container}>
+      <View
+        style={{
+          marginHorizontal: 15,
+          marginBottom: 5,
+          borderLeftColor: COLORS.primary_01,
+          borderLeftWidth: 4,
+        }}>
+        <Text style={{ ...FONTS.h5, fontWeight: 500, color: COLORS.primary, marginLeft: 3 }}>
+          Spare Categories
+        </Text>
+      </View>
       <View style={styles.horizontalNavWrapper}>
         {/* Left Arrow */}
-        <TouchableOpacity onPress={scrollLeft} style={styles.arrowButton}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
-        </TouchableOpacity>
+        {/* <TouchableOpacity onPress={scrollLeft} style={styles.arrowButton}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+        </TouchableOpacity> */}
 
         {/* Scrollable Spare Parts Category Bar */}
         <ScrollView
@@ -88,28 +100,33 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
         </ScrollView>
 
         {/* Right Arrow */}
-        <TouchableOpacity onPress={scrollRight} style={styles.arrowButton}>
-          <Ionicons name="chevron-forward" size={24} color="#333" />
-        </TouchableOpacity>
+        {/* <TouchableOpacity onPress={scrollRight} style={styles.arrowButton}>
+          <Ionicons name="chevron-forward" size={24} color={COLORS.primary} />
+        </TouchableOpacity> */}
       </View>
 
-      {/* Main Content - Grid Layout */}
-      <View style={styles.cardContainer}>
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          data={filteredParts}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item, index }) => (
-            <View style={styles.cardWrapper} key={index}>
-              <SparePartsCard part={item} />
-            </View>
-          )}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
-          contentContainerStyle={styles.cardsList}
-        />
-      </View>
-      <View style={{ marginTop: 35 }}></View>
+      <ImageBackground
+        source={icons.home_background}
+        style={{ flex: 1, width: '100%', height: '100%' }}
+        resizeMode="cover">
+        {/* Main Content - Grid Layout */}
+        <View style={styles.cardContainer}>
+          <FlatList
+            showsVerticalScrollIndicator={false}
+            data={filteredParts}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item, index }) => (
+              <View style={styles.cardWrapper} key={index}>
+                <SparePartsCard part={item} />
+              </View>
+            )}
+            numColumns={2}
+            columnWrapperStyle={styles.columnWrapper}
+            contentContainerStyle={styles.cardsList}
+          />
+        </View>
+        <View style={{ marginTop: 35 }}></View>
+      </ImageBackground>
     </View>
   );
 };
@@ -117,11 +134,10 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
   },
   horizontalNavContainer: {
     height: 85,
-    backgroundColor: COLORS.lightGrey,
+    backgroundColor: COLORS.error60,
     borderBottomWidth: 1,
     borderTopWidth: 3,
     borderBottomColor: '#e0e0e0',
@@ -135,11 +151,11 @@ const styles = StyleSheet.create({
   },
 
   arrowButton: {
-    padding: 6,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
+    padding: 5,
+    backgroundColor: COLORS.primary_04,
+    borderRadius: 50,
     marginHorizontal: 4,
-    elevation: 2,
+    elevation: 1,
     zIndex: 10,
   },
 
@@ -147,48 +163,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-
-  image: {
-    width: 30,
-    height: 30,
-    resizeMode: 'contain',
-  },
   horizontalNavContent: {
     paddingHorizontal: 5,
     alignItems: 'center',
   },
   horizontalNavItem: {
     paddingHorizontal: 5,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 0.2,
-    borderColor: COLORS.grey40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    width: 115,
   },
   activeHorizontalNavItem: {
-    backgroundColor: '#fde8e8',
+    // backgroundColor: '#fde8e8',
   },
   horizontalNavIcon: {
-    marginBottom: 5,
+    // marginBottom: 5,
   },
   horizontalNavText: {
     ...FONTS.h6,
+    fontWeight: 500,
     textAlign: 'center',
     color: '#666',
+    width: '100%',
   },
   activeHorizontalNavText: {
     color: COLORS.primary,
     ...FONTS.h6,
+    textDecorationLine: 'underline',
   },
   image: {
-    width: 65,
-    height: 40,
+    width: 100,
+    height: 65,
     borderRadius: 4,
+    marginBottom: 5,
   },
   cardContainer: {
     flex: 1,
@@ -202,7 +209,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   cardWrapper: {
-    width: CARD_WIDTH,
+    width: '50%',
   },
 });
 

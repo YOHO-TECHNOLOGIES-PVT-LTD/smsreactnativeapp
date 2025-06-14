@@ -29,7 +29,7 @@ type CartItem = {
   };
   serviceId?: {
     _id: string;
-    serviceName: string;
+    service_name: string;
     price: number;
     description: string;
   };
@@ -74,7 +74,10 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
   };
 
   const calculateTotal = (items: CartItem[]) => {
-    return items.reduce((sum, item) => sum + parseInt(item.price) * item.quantity, 0);
+    return items.reduce(
+      (sum, item) => sum + parseInt(item?.price) * (item?.quantity ? item?.quantity : 1),
+      0
+    );
   };
 
   const totalAmount = calculateTotal(getFilteredItems());
@@ -86,26 +89,10 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
       return;
     }
 
-    // const now = new Date();
-    // const date = now.toLocaleDateString();
-    // const time = now.toLocaleTimeString();
-    // const day = now.toLocaleDateString(undefined, { weekday: 'long' });
-
-    // const productDetails = filteredItems
-    //   .map((item) => {
-    //     const name = item.productId?.productName || item.serviceId?.serviceName || 'Unknown';
-    //     return `${name}: ${item.quantity} x ₹${item.price}`;
-    //   })
-    //   .join('\n');
-
-    // Alert.alert(
-    //   'Order Summary',
-    //   `\nDate: ${date}\nDay: ${day}\nTime: ${time}\n\nItems:\n${productDetails}\n\nTotal Amount: ₹${totalAmount}`
-    // );
-
     try {
       const data = { cartId: bookingCarts[0]?._id };
       const response = await addSparePartCartItems(data);
+      console.log('Order confirmation response:', response);
       if (response) {
         toast.success('Success', response.message || 'Successfully placed your order!');
       } else {
@@ -116,26 +103,25 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
     }
   };
 
-  const renderItem = (item: CartItem) => {
-    const isProduct = item.type === 'spare';
-    const name = item.productId?.productName;
-    const price = parseInt(item.price);
-    const totalPrice = price * item.quantity;
-    const imageSource = isProduct
-      ? item.productId?.image
-        ? { uri: item.productId.image }
-        : require('../../assets/service-images/generalservice.png')
-      : require('../../assets/sparepartsimage/parts/battery.jpg');
+  const renderItem = (item: CartItem, index?: any) => {
+    const name = item?.productId?.productName || item?.service_name || 'Unknown Item';
+    const price = parseInt(item?.price);
+    const totalPrice = item?.productId ? item?.productId?.price * item?.quantity : price;
+    const imageSource = item?.productId
+      ? item?.productId?.image
+        ? { uri: item?.productId?.image }
+        : require('../../assets/sparepartsimage/parts/battery.jpg')
+      : require('../../assets/service-images/generalservice.png');
 
     return (
-      <View key={item._id} style={styles.itemContainer}>
+      <View key={index} style={styles.itemContainer}>
         <Image source={imageSource} style={styles.itemImage} resizeMode="cover" />
 
         <View style={styles.itemDetails}>
           <Text style={styles.itemName}>{name}</Text>
           <Text style={styles.itemPrice}>₹{price} each</Text>
 
-          {item.productId && (
+          {item?.productId && (
             <>
               <Text style={styles.itemInfo}>{item.productId.warrantyPeriod} warranty</Text>
               <Text
@@ -148,16 +134,16 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
             </>
           )}
 
-          {!isProduct && item.serviceId && (
+          {item?.description && (
             <Text style={styles.itemInfo} numberOfLines={2}>
-              {item.serviceId.description}
+              {item?.description}
             </Text>
           )}
         </View>
 
         <View style={styles.quantityContainer}>
           <View style={styles.quantityBox}>
-            <Text style={styles.quantityText}>Qty: {item.quantity}</Text>
+            <Text style={styles.quantityText}>Qty: {item?.quantity || 1}</Text>
           </View>
           <Text style={styles.totalPrice}>₹{totalPrice}</Text>
         </View>
@@ -190,7 +176,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
 
             {filteredItems.length > 0 ? (
               <View style={styles.itemsContainer}>
-                {filteredItems.map((item) => renderItem(item))}
+                {filteredItems.map((item, index) => renderItem(item, index))}
               </View>
             ) : (
               <View style={styles.emptyContainer}>
@@ -285,13 +271,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: COLORS.white,
     borderRadius: 10,
-    padding: 15,
+    padding: 10,
     marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   itemImage: {
     width: 80,
@@ -309,14 +298,13 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   itemPrice: {
-    ...FONTS.body4,
+    ...FONTS.body5,
     color: COLORS.primary,
     marginBottom: 5,
   },
   itemInfo: {
     ...FONTS.body5,
     color: COLORS.grey,
-    marginBottom: 3,
   },
   stockStatus: {
     ...FONTS.h5,

@@ -1,11 +1,12 @@
 import {
   Image,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   FlatList,
+  ImageBackground,
+  StatusBar,
   ScrollView,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -19,6 +20,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Clock, Wrench, Car, ShoppingCart } from 'lucide-react-native';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { addBookingCartItem } from '~/features/booking-cart/service.ts';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Foundation from '@expo/vector-icons/Foundation';
 
 type ServiceCategory = {
   uuid: string;
@@ -105,7 +109,6 @@ const Services = () => {
         type: 'service',
       };
       const response = await addBookingCartItem(data);
-      console.log('Add to cart response:', response);
       if (response) {
         setCart((prev) => {
           const exists = prev.some((item) => item.uuid === service.uuid);
@@ -154,179 +157,187 @@ const Services = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header
-        containerStyle={{
-          height: 50,
-          paddingHorizontal: SIZES.padding,
-          alignItems: 'center',
-        }}
-        leftComponent={
-          <TouchableOpacity
-            style={{
-              width: 35,
-              height: 35,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderColor: COLORS.grey60,
-            }}
-            onPress={() => {
-              navigation.openDrawer();
-            }}>
-            <Image source={icons.menu} style={{ width: 20, height: 20 }} resizeMode="contain" />
-          </TouchableOpacity>
-        }
-        rightComponent={
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <IconButton
-              icon={icons.notification}
-              containerStyle={{
-                borderWidth: 0.5,
-                borderRadius: 25,
-                borderColor: COLORS.primary,
-              }}
-              onPress={() => {
-                navigation.navigate('NotificationScreen' as never);
-              }}
-            />
-
-            <TouchableOpacity
-              style={{
-                borderRadius: SIZES.radius,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onPress={() => {
-                dispatch(setSelectedTab(screens.profile));
-              }}>
-              <Image
-                source={require('../../assets/images/profile_picture.jpg')}
+    <>
+      <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
+      <SafeAreaView edges={['top']} style={[styles.container, { paddingVertical: 10 }]}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10,
+            paddingHorizontal: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+          }}>
+          <Image
+            source={require('../../assets/home/LOGO.png')}
+            style={{ width: 145, height: 25 }}
+          />
+          <View style={{ flexDirection: 'row', gap: 20 }}>
+            <TouchableOpacity>
+              <AntDesign name="search1" size={24} color={COLORS.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('BookingsScreen' as never)}>
+              <Foundation name="book" size={26} color={COLORS.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
+              <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
+              <View
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: SIZES.body2,
-                }}
-                onError={() => setError(true)}
-              />
+                  width: 15,
+                  height: 15,
+                  backgroundColor: COLORS.primary,
+                  borderRadius: 25,
+                  position: 'absolute',
+                  right: -2,
+                  top: -6,
+                }}>
+                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>1</Text>
+              </View>
             </TouchableOpacity>
           </View>
-        }
-      />
-
-      <View style={styles.mainContainer}>
-        {/* Horizontal Navigation with Arrows */}
-        <View style={styles.horizontalNavWrapper}>
-          <TouchableOpacity onPress={scrollLeft} style={styles.arrowButton}>
-            <Ionicons name="chevron-back" size={24} color="#333" />
-          </TouchableOpacity>
-
-          <ScrollView
-            ref={scrollViewRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalNavContent}>
-            {serviceCategories?.map((category) => (
-              <TouchableOpacity
-                key={category.uuid}
-                style={[
-                  styles.horizontalNavItem,
-                  activeNavItem === category.category_name && styles.activeHorizontalNavItem,
-                ]}
-                onPress={() => setActiveNavItem(category.category_name)}>
-                <View style={styles.horizontalNavIcon}>
-                  <Car className="h-6 w-6" />
-                </View>
-                <Text
-                  style={[
-                    styles.horizontalNavText,
-                    activeNavItem === category.category_name && styles.activeHorizontalNavText,
-                  ]}
-                  numberOfLines={1}>
-                  {category.category_name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          <TouchableOpacity onPress={scrollRight} style={styles.arrowButton}>
-            <Ionicons name="chevron-forward" size={24} color="#333" />
-          </TouchableOpacity>
         </View>
+        <View style={{ flex: 1 }}>
+          <View style={styles.mainContainer}>
+            {/* Horizontal Navigation with Arrows */}
+            <View
+              style={{
+                marginHorizontal: 15,
+                marginBottom: 5,
+                borderLeftColor: COLORS.primary_01,
+                borderLeftWidth: 4,
+              }}>
+              <Text style={{ ...FONTS.h5, fontWeight: 500, color: COLORS.primary, marginLeft: 3 }}>
+                Service Categories
+              </Text>
+            </View>
+            <View style={styles.horizontalNavWrapper}>
+              {/* <TouchableOpacity onPress={scrollLeft} style={styles.arrowButton}>
+                <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+              </TouchableOpacity> */}
 
-        {/* Main Content */}
-        <ScrollView style={styles.content}>
-          {currentCategory && (
-            <>
-              <View style={styles.contentHeader}>
-                <Text style={styles.contentTitle}>{currentCategory.category_name || 'N/A'}</Text>
-                <Text style={styles.contentSubtitle}>
-                  Choose the perfect service for your vehicle
-                </Text>
-              </View>
+              <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalNavContent}>
+                {serviceCategories?.map((category) => (
+                  <TouchableOpacity
+                    key={category.uuid}
+                    style={[
+                      styles.horizontalNavItem,
+                      activeNavItem === category.category_name && styles.activeHorizontalNavItem,
+                    ]}
+                    onPress={() => setActiveNavItem(category.category_name)}>
+                    <Image
+                      source={require('../../assets/service-images/generalservice.png')}
+                      style={styles.image}
+                      onError={() => setError(true)}
+                    />
+                    <Text
+                      style={[
+                        styles.horizontalNavText,
+                        activeNavItem === category.category_name && styles.activeHorizontalNavText,
+                      ]}
+                      numberOfLines={1}>
+                      {category.category_name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
-              {currentCategory.services.length > 0 ? (
-                transformServicesToPackages(currentCategory.services).map((pkg) => (
-                  <View key={pkg.id} style={styles.packageCard}>
-                    <View style={styles.durationBadge}>
-                      <Clock size={14} color="white" />
-                      <Text style={styles.durationText}>{pkg.duration}</Text>
-                    </View>
+              {/* <TouchableOpacity onPress={scrollRight} style={styles.arrowButton}>
+                <Ionicons name="chevron-forward" size={24} color={COLORS.primary} />
+              </TouchableOpacity> */}
+            </View>
+            {/* Main Content */}
+            <ScrollView style={styles.content}>
+              {currentCategory && (
+                <>
+                  <View style={styles.contentHeader}>
+                    <Text style={styles.contentTitle}>
+                      {currentCategory.category_name || 'N/A'}
+                    </Text>
+                    <Text style={styles.contentSubtitle}>
+                      Choose the perfect service for your vehicle
+                    </Text>
+                  </View>
 
-                    <View style={styles.packageContent}>
-                      <View style={styles.imageContainer}>
-                        <Image source={pkg.image} style={styles.serviceImage} resizeMode="cover" />
-                      </View>
-
-                      <View style={styles.detailsContainer}>
-                        <View style={styles.titleRow}>
-                          <Text style={styles.packageTitle}>{pkg.title || 'N/A'}</Text>
+                  {currentCategory.services.length > 0 ? (
+                    transformServicesToPackages(currentCategory.services).map((pkg) => (
+                      <View key={pkg.id} style={styles.packageCard}>
+                        <View style={styles.durationBadge}>
+                          <Clock size={14} color="white" />
+                          <Text style={styles.durationText}>{pkg.duration}</Text>
                         </View>
 
-                        <View style={styles.warrantyRow}>
-                          <Text style={styles.warrantyText}>{pkg.warranty || 'N/A'}</Text>
-                          <Text style={styles.warrantyText}>{pkg.frequency || 'N/A'}</Text>
-                        </View>
-
-                        <FlatList
-                          data={pkg.services}
-                          renderItem={renderServiceItem}
-                          keyExtractor={(item, index) => index.toString()}
-                        />
-
-                        <View style={styles.priceRow}>
-                          <View>
-                            <Text style={styles.originalPrice}>{pkg.price || 'N/A'}</Text>
-                            <Text style={styles.discountPrice}>{pkg.discountPrice || 'N/A'}</Text>
+                        <View style={styles.packageContent}>
+                          <View style={styles.imageContainer}>
+                            <Image
+                              source={pkg.image}
+                              style={styles.serviceImage}
+                              resizeMode="cover"
+                            />
                           </View>
 
-                          <TouchableOpacity
-                            accessible={true}
-                            accessibilityLabel={`Add ${pkg.title} to cart`}
-                            accessibilityHint={`Adds ${pkg.title} service to your booking cart`}
-                            accessibilityRole="button"
-                            style={[
-                              styles.addToCartButton,
-                              addedItems[pkg.id] && styles.addedButton,
-                            ]}
-                            onPress={() => addToCart(pkg.originalData)}>
-                            <Text style={styles.buttonText}>
-                              {addedItems[pkg.id] ? 'ADDED' : 'ADD TO CART'}
-                            </Text>
-                          </TouchableOpacity>
+                          <View style={styles.detailsContainer}>
+                            <View style={styles.titleRow}>
+                              <Text style={styles.packageTitle}>{pkg.title || 'N/A'}</Text>
+                            </View>
+
+                            <View style={styles.warrantyRow}>
+                              <Text style={styles.warrantyText}>{pkg.warranty || 'N/A'}</Text>
+                              <Text style={styles.warrantyText}>{pkg.frequency || 'N/A'}</Text>
+                            </View>
+
+                            <FlatList
+                              data={pkg.services}
+                              renderItem={renderServiceItem}
+                              keyExtractor={(item, index) => index.toString()}
+                            />
+
+                            <View style={styles.priceRow}>
+                              <View>
+                                <Text style={styles.originalPrice}>{pkg.price || 'N/A'}</Text>
+                                <Text style={styles.discountPrice}>
+                                  {pkg.discountPrice || 'N/A'}
+                                </Text>
+                              </View>
+
+                              <TouchableOpacity
+                                accessible={true}
+                                accessibilityLabel={`Add ${pkg.title} to cart`}
+                                accessibilityHint={`Adds ${pkg.title} service to your booking cart`}
+                                accessibilityRole="button"
+                                style={[
+                                  styles.addToCartButton,
+                                  addedItems[pkg.id] && styles.addedButton,
+                                ]}
+                                onPress={() => addToCart(pkg.originalData)}>
+                                <Text style={styles.buttonText}>
+                                  {addedItems[pkg.id] ? 'ADDED' : 'ADD TO CART'}
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
                         </View>
                       </View>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No services available in this category</Text>
+                    ))
+                  ) : (
+                    <Text style={styles.emptyText}>No services available in this category</Text>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </ScrollView>
-      </View>
-      <View style={{ paddingBottom: 50 }}></View>
-    </SafeAreaView>
+            </ScrollView>
+          </View>
+          <View style={{ paddingBottom: 30 }}></View>
+        </View>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -342,7 +353,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   horizontalNavContainer: {
-    height: 70,
+    height: 85,
     backgroundColor: COLORS.lightGrey,
     borderBottomWidth: 1,
     borderTopWidth: 3,
@@ -355,11 +366,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
   },
-
+  image: {
+    width: 100,
+    height: 65,
+    borderRadius: 4,
+    marginBottom: 5,
+  },
   arrowButton: {
-    padding: 6,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 25,
+    padding: 5,
+    backgroundColor: COLORS.primary_04,
+    borderRadius: 50,
     marginHorizontal: 4,
     elevation: 2,
     zIndex: 1,
@@ -374,40 +390,35 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 0.2,
-    borderColor: COLORS.grey40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
   },
-  activeHorizontalNavItem: {
-    backgroundColor: '#fde8e8',
-  },
+  activeHorizontalNavItem: {},
   horizontalNavIcon: {
-    marginBottom: 5,
+    // marginBottom: 5,
   },
   horizontalNavText: {
-    ...FONTS.h7,
+    ...FONTS.h6,
+    fontWeight: 500,
     textAlign: 'center',
     color: '#666',
-    width: 105,
+    width: '100%',
   },
   activeHorizontalNavText: {
     color: COLORS.primary,
-    ...FONTS.h7,
+    ...FONTS.h6,
+    textDecorationLine: 'underline',
   },
   content: {
     flex: 1,
-    padding: SIZES.body3,
+    paddingHorizontal: 15,
   },
   contentHeader: {
-    marginBottom: SIZES.h2_03,
+    marginBottom: 12,
   },
   contentTitle: {
     ...FONTS.h2,
+    fontWeight: 600,
     color: COLORS.primary,
-    marginBottom: 5,
+    marginBottom: 2,
   },
   contentSubtitle: {
     color: '#666',
@@ -450,7 +461,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   serviceImage: {
-    width: SIZES.full,
+    width: '100%',
     height: '100%',
   },
   detailsContainer: {
@@ -463,9 +474,9 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.body7,
   },
   packageTitle: {
-    ...FONTS.h3,
+    ...FONTS.h2_02,
     color: COLORS.primary,
-    flex: 1,
+    fontWeight: 500,
   },
   durationBadge: {
     position: 'absolute',
@@ -552,7 +563,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: COLORS.white,
-    ...FONTS.h5,
+    ...FONTS.h6,
   },
   cartButton: {
     width: 30,

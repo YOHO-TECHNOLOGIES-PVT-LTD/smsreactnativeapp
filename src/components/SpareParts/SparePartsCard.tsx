@@ -1,7 +1,16 @@
-import { StyleSheet, Text, View, Image, Pressable, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  Pressable,
+  TouchableOpacity,
+  ImageBackground,
+} from 'react-native';
 import React from 'react';
-import { COLORS, SIZES, FONTS } from '~/constants';
+import { COLORS, SIZES, FONTS, icons } from '~/constants';
 import { addBookingCartItem } from '~/features/booking-cart/service.ts';
+import toast from '~/utils/toast';
 
 type Props = {
   part: SparePart;
@@ -17,11 +26,12 @@ type SparePart = {
   stock: number;
   warrantyPeriod?: string;
   image?: string;
-}
+};
 
 const SparePartsCard = ({ part }: Props) => {
   const [error, setError] = React.useState(false);
   const [quantity, setQuantity] = React.useState(1);
+  const [added, setAdded] = React.useState(false);
 
   const handleAddtoCart = async (part: SparePart) => {
     if (!part?.uuid || !part?.price) {
@@ -40,7 +50,8 @@ const SparePartsCard = ({ part }: Props) => {
       };
       const response = await addBookingCartItem(data);
       if (response) {
-        setQuantity(1);
+        toast.success('Added', `${part?.productName} is added to cart`);
+        setAdded(true);
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -52,11 +63,7 @@ const SparePartsCard = ({ part }: Props) => {
       {/* Product Image */}
       <View style={styles.imageContainer}>
         <Image
-          source={
-            part?.image
-              ? { uri: part.image }
-              : require('../../assets/sparepartsimage/parts/brakepads.jpg')
-          }
+          source={require('../../assets/sparepartsimage/parts/suspension.jpg')}
           alt={part?.productName || 'Spare Part Image'}
           style={styles.image}
           resizeMode="contain"
@@ -73,7 +80,7 @@ const SparePartsCard = ({ part }: Props) => {
           {part?.brand || 'N/A'} • {part?.warrantyPeriod || 'No warranty'}
         </Text>
         <View style={styles.priceContainer}>
-          <Text style={styles.price}>₹{parseInt(part?.price || '0').toLocaleString('en-IN')}</Text>
+          <Text style={styles.price}>₹ {parseInt(part?.price || '0').toLocaleString('en-IN')}</Text>
           <View style={[styles.stockContainer, part?.inStock ? styles.inStock : styles.outOfStock]}>
             <Text style={styles.stockText}>
               {part?.inStock ? `In Stock (${part.stock})` : 'Out of Stock'}
@@ -85,21 +92,26 @@ const SparePartsCard = ({ part }: Props) => {
         <View style={styles.quantityContainer}>
           <TouchableOpacity
             onPress={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
-            style={styles.quantityButton}>
+            style={styles.quantityButton}
+            disabled={added}>
             <Text style={styles.quantityButtonText}>−</Text>
           </TouchableOpacity>
           <Text style={styles.quantityValue}>{quantity}</Text>
-          <TouchableOpacity onPress={() => setQuantity((q) => q + 1)} style={styles.quantityButton}>
+          <TouchableOpacity
+            onPress={() => setQuantity((q) => q + 1)}
+            style={styles.quantityButton}
+            disabled={added}>
             <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, added && styles.addedButton]}
           onPress={() => {
-            handleAddtoCart(part);
-          }}>
-          <Text style={styles.addButtonText}>ADD TO CART</Text>
+            if (!added) handleAddtoCart(part);
+          }}
+          disabled={added}>
+          <Text style={styles.addButtonText}>{added ? 'ADDED' : 'ADD TO CART'}</Text>
         </TouchableOpacity>
       </View>
     </Pressable>
@@ -108,21 +120,17 @@ const SparePartsCard = ({ part }: Props) => {
 
 const styles = StyleSheet.create({
   card: {
-    width: 160,
-    backgroundColor: COLORS.success20,
-    borderRadius: 8,
-    padding: 12,
-    margin: 8,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray2,
+    flex: 1,
+    height: 340,
+    marginVertical: 10,
+    marginHorizontal: 5,
   },
   imageContainer: {
     width: '100%',
-    height: 100,
-    backgroundColor: COLORS.light,
-    borderRadius: 6,
+    height: 120,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     overflow: 'hidden',
-    marginBottom: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -132,34 +140,35 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     flex: 1,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   name: {
-    ...FONTS.h4,
+    ...FONTS.h2_02,
     color: COLORS.primary_text,
     fontWeight: '600',
-    textAlign: 'left',
-    height: 25,
+    marginBottom: 3,
   },
   type: {
     ...FONTS.body5,
-    color: COLORS.grey,
-    textAlign: 'left',
-    marginBlock: 5,
+    color: COLORS.primary,
   },
   priceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    marginVertical: 10,
   },
   price: {
     ...FONTS.h3,
-    color: COLORS.primary,
+    color: COLORS.primary_text,
+    fontWeight: 500,
   },
   stockContainer: {
     paddingVertical: 3,
-    paddingHorizontal: 4,
-    borderRadius: 4,
+    paddingHorizontal: 3,
+    borderRadius: 5,
+    width: '65%',
+    alignSelf: 'flex-end',
+    marginVertical: 5,
   },
   inStock: {
     backgroundColor: COLORS.success_lightgreen || '#4CAF50',
@@ -172,6 +181,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 10,
     fontWeight: '500',
+    textAlign: 'center',
   },
   quantityContainer: {
     flexDirection: 'row',
@@ -199,17 +209,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   addButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary_borders,
     paddingVertical: 8,
     borderRadius: 4,
-    width: '100%',
+    width: '70%',
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center'
   },
   addButtonText: {
-    ...FONTS.h5,
+    ...FONTS.h6,
     color: COLORS.white,
+    fontWeight: 500,
     textTransform: 'uppercase',
+  },
+  addedButton: {
+    backgroundColor: COLORS.sucesss_darkgreen,
   },
 });
 

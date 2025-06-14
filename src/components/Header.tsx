@@ -1,5 +1,6 @@
 import React, { useState, ReactNode } from 'react';
 import { View, Text, Image, ImageStyle, ViewStyle, StyleProp, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, SIZES } from '../constants';
 
 interface HeaderProps {
@@ -20,43 +21,47 @@ const Header: React.FC<HeaderProps> = ({
   const [error, setError] = useState<boolean>(false);
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        ...(containerStyle as object),
-      }}>
+    <>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
-      {/* Left */}
-      {leftComponent}
+      <SafeAreaView edges={['top']} style={{ backgroundColor: COLORS.black }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            height: 60,
+            alignItems: 'center',
+            paddingHorizontal: SIZES.padding,
+            backgroundColor: COLORS.white,
+            ...(containerStyle as object),
+          }}>
+          {/* Left */}
+          {leftComponent}
 
-      {/* Title */}
-      <View
-        style={{
-          flex: 1,
-          marginHorizontal: SIZES.padding,
-          opacity: 0.9,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-        {!error && (
-          <Image
-            style={
-              {
-                width: '100%',
-                height: 45,
-                borderRadius: 3,
-                resizeMode: 'cover',
-              } as ImageStyle
-            }
-            source={require('../assets/logo.png')}
-            onError={() => setError(true)}
-          />
-        )}
-      </View>
+          {/* Title */}
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            {!error && (
+              <Image
+                style={{
+                  width: '65%',
+                  height: 45,
+                  resizeMode: 'contain', // Changed to 'contain' for better logo display
+                }}
+                source={require('../assets/logo.png')}
+                onError={() => setError(true)}
+              />
+            )}
+          </View>
 
-      {/* Right */}
-      {rightComponent}
-    </View>
+          {/* Right */}
+          {rightComponent}
+        </View>
+      </SafeAreaView>
+      <View style={{ borderBottomWidth: 2, borderColor: COLORS.primary }}></View>
+    </>
   );
 };
 
