@@ -145,9 +145,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   name: {
-    ...FONTS.h2_02,
+    ...FONTS.h3,
     color: COLORS.primary_text,
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: 3,
   },
   type: {
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   quantityValue: {
     ...FONTS.body4,
     paddingHorizontal: 8,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   addButton: {
     backgroundColor: COLORS.primary_borders,

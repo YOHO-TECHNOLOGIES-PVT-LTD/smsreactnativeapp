@@ -11,12 +11,9 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, icons, screens } from '~/constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { TextInput } from 'react-native-gesture-handler';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import ImageCarousel from '~/components/HomePage/ImageCarousel';
 import AnimatedSearch from '~/components/HomePage/AnimatedSearch';
@@ -27,14 +24,18 @@ import { useNavigation } from '@react-navigation/native';
 const { width } = Dimensions.get('window');
 
 const services = [
-  { id: '1', name: 'Car Services', icon: 'local-car-wash' },
+  { id: '1', name: 'Car Services', icon: 'directions-car' },
   { id: '2', name: 'AC Service & Repair', icon: 'ac-unit' },
   { id: '3', name: 'Batteries', icon: 'battery-charging-full' },
   { id: '4', name: 'Tyres & Wheel Care', icon: 'settings' },
   { id: '5', name: 'Denting & Painting', icon: 'build' },
   { id: '6', name: 'Insurance Claims', icon: 'security' },
-  { id: '7', name: 'Clutch & Body Parts', icon: 'ac-unit' },
-  { id: '8', name: 'Suspension & Fitments', icon: 'settings' },
+  { id: '7', name: 'Clutch & Body Parts', icon: 'view-in-ar' },
+  { id: '8', name: 'Suspension & Fitments', icon: 'plumbing' },
+  { id: '9', name: 'Car Inspections', icon: 'car-repair' },
+  { id: '10', name: 'Windshield & Lights', icon: 'highlight' },
+  { id: '11', name: 'Car Spa & Cleaning', icon: 'local-car-wash' },
+  { id: '12', name: 'Detailing Services', icon: 'policy' },
 ];
 
 const banners = [
@@ -132,6 +133,11 @@ const HomePage = () => {
   const bannerRef = useRef(null);
   const scrollInterval = useRef<NodeJS.Timeout>(null);
   const navigation = useNavigation();
+  const blogsImage = [
+    require('../../assets/sparepartsimage/category/lighting.jpg'),
+    require('../../assets/sparepartsimage/category/battery.jpg'),
+    require('../../assets/sparepartsimage/category/engine.jpg'),
+  ];
 
   useEffect(() => {
     Animated.parallel([
@@ -199,11 +205,11 @@ const HomePage = () => {
               <Text style={styles.title}>Keelkattalai</Text>
             </TouchableOpacity>
           </View>
-          { (
+          {
             <Text style={[styles.subtitle, { textAlign: 'right' }]}>
               Chennai, Tamil Nadu 600117, India
             </Text>
-          )}
+          }
           {/* Search Bar */}
           <AnimatedSearch />
         </View>
@@ -217,8 +223,11 @@ const HomePage = () => {
           <View style={styles.section}>
             <View style={styles.servicesGrid}>
               {services.map((item) => (
-                <TouchableOpacity key={item.id} style={styles.serviceItem1}>
-                  <MaterialIcons name={item.icon} size={28} color={COLORS.primary_borders} />
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.serviceItem1}
+                  onPress={() => dispatch(setSelectedTab(screens.services))}>
+                  <MaterialIcons name={item.icon} size={28} color={COLORS.primary_02} />
                   <Text style={styles.serviceText}>{item.name}</Text>
                 </TouchableOpacity>
               ))}
@@ -298,12 +307,9 @@ const HomePage = () => {
               </TouchableOpacity>
             </View>
             <View style={styles.blogsContainer}>
-              {blogs.map((blog) => (
+              {blogs.map((blog, index) => (
                 <TouchableOpacity key={blog.id} style={styles.blogCard}>
-                  <Image
-                    source={require('../../assets/service-images/generalservice.png')}
-                    style={styles.blogImage}
-                  />
+                  <Image source={blogsImage[index]} style={styles.blogImage} />
                   <View style={styles.blogContent}>
                     <Text style={styles.blogTitle}>{blog.title}</Text>
                     <Text style={styles.blogDate}>{blog.date}</Text>

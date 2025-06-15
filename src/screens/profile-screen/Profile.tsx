@@ -66,6 +66,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserProfileDetails } from '~/features/profile/service';
 import { FONTS } from '~/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import toast from '~/utils/toast';
+import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -85,23 +88,23 @@ const COLORS = {
   cardPrimary: '#FFFFFF',
   cardSecondary: '#F8FAFC',
   cardTertiary: '#F1F5F9',
-  cardAccent: '#FEF7FF',
+  cardprimary: '#FEF7FF',
   cardSuccess: '#F0FDF4',
   cardWarning: '#FFFBEB',
   cardError: '#FEF2F2',
   cardInfo: '#EFF6FF',
 
-  // Accent colors - More professional amber/gold
-  // accent: ['#D97706', '#F59E0B'],
-  accentLight: ['#F8FAFC', '#F1F5F9'], // Refined lighter amber
-  accentDark: 'rgba(255, 132, 13, 0.08)', // Deeper amber
-  accentinfo: ['#2563EB', '#3B82F6'],
+  // primary colors - More professional amber/gold
+  // primary: ['#D97706', '#F59E0B'],
+  primaryLight: ['#F8FAFC', '#F1F5F9'], // Refined lighter amber
+  primaryDark: 'rgba(255, 132, 13, 0.08)', // Deeper amber
+  primaryinfo: ['#2563EB', '#3B82F6'],
 
   // Status colors
   success: '#82dd55', // Deeper green
   successLight: '#10B981',
   successDark: '#047857',
-  warning: 'rgba(255, 132, 13, 1)', // Matching accent
+  warning: 'rgba(255, 132, 13, 1)', // Matching primary
   warningLight: '#F59E0B',
   error: '#DC2626', // More professional red
   errorLight: '#EF4444',
@@ -129,7 +132,7 @@ const COLORS = {
 
   // Special gradient combinations
   gradientPrimary: ['#8B0000', '#B22222'],
-  gradientAccent: ['#D97706', '#F59E0B'],
+  gradientprimary: ['#D97706', '#F59E0B'],
   gradientSuccess: ['#059669', '#10B981'],
   gradientInfo: ['#2563EB', '#3B82F6'],
   gradientNeutral: ['#F8FAFC', '#F1F5F9'],
@@ -248,7 +251,7 @@ const Profile = () => {
     memberSince: 'January 2022',
     loyaltyPoints: 450,
     preferredServiceCenter: 'Downtown Auto Service',
-    notifications: 3,
+    notifications: 1,
   });
 
   const [notifications, setNotifications] = useState({
@@ -405,6 +408,7 @@ const Profile = () => {
   const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false);
   const [helpCentreModal, setHelpCentreModal] = useState(false);
   const [termsModal, setTermsModal] = useState(false);
+  const navigation = useNavigation();
 
   // Side Menu State - Modified for individual dropdowns
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
@@ -749,14 +753,29 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: () => Alert.alert('Success', 'You have been logged out successfully'),
-      },
-    ]);
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure, you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('authToken');
+              toast.success('', 'Logout Successfully.');
+              navigation.reset({ index: 0, routes: [{ name: 'AuthStack' }] });
+            } catch (error) {
+              toast.error('Error', 'An error occurred during logout. Please try again later.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   // Enhanced Component Definitions
@@ -794,7 +813,7 @@ const Profile = () => {
   const VehicleItem: React.FC<VehicleItemProps> = ({ vehicle, onPress }) => {
     const getHealthColor = (score: number) => {
       if (score >= 90) return COLORS.success;
-      if (score >= 70) return COLORS.accent;
+      if (score >= 70) return COLORS.primary;
       return COLORS.error;
     };
 
@@ -805,7 +824,7 @@ const Profile = () => {
           onPress={() => animateCardPress(onPress)}
           activeOpacity={0.8}>
           <View style={[styles.menuItemIcon, styles.vehicleIconContainer]}>
-            <Car size={22} color={COLORS.accent} />
+            <Car size={22} color={COLORS.primary} />
           </View>
           <View style={styles.menuItemText}>
             <View style={styles.vehicleItemHeader}>
@@ -827,7 +846,7 @@ const Profile = () => {
             </Text>
             {vehicle.nextService && (
               <View style={styles.nextServiceContainer}>
-                <Calendar size={12} color={COLORS.accent} />
+                <Calendar size={12} color={COLORS.primary} />
                 <Text style={styles.nextServiceText}>Next service: {vehicle.nextService}</Text>
               </View>
             )}
@@ -906,19 +925,19 @@ const Profile = () => {
         <View style={styles.serviceDetailsContainer}>
           {service.technician && (
             <View style={styles.serviceDetailItem}>
-              <User size={12} color={COLORS.textSecondary} />
+              <User size={12} color={'gray'} />
               <Text style={styles.serviceDetailText}>{service.technician}</Text>
             </View>
           )}
           {service.location && (
             <View style={styles.serviceDetailItem}>
-              <MapPin size={12} color={COLORS.textSecondary} />
+              <MapPin size={12} color={'gray'} />
               <Text style={styles.serviceDetailText}>{service.location}</Text>
             </View>
           )}
           {service.duration && (
             <View style={styles.serviceDetailItem}>
-              <Clock size={12} color={COLORS.textSecondary} />
+              <Clock size={12} color={'gray'} />
               <Text style={styles.serviceDetailText}>{service.duration}</Text>
             </View>
           )}
@@ -940,7 +959,7 @@ const Profile = () => {
     onChange: (checked: boolean) => void;
   }) => (
     <TouchableOpacity
-      style={[styles.switch, { backgroundColor: checked ? COLORS.accent : COLORS.gray300 }]}
+      style={[styles.switch, { backgroundColor: checked ? COLORS.primary : COLORS.gray300 }]}
       onPress={() => onChange(!checked)}
       activeOpacity={0.8}>
       <View style={[styles.switchThumb, { transform: [{ translateX: checked ? 20 : 2 }] }]} />
@@ -1013,9 +1032,9 @@ const Profile = () => {
         </View>
         <View style={styles.dropdownChevronContainer}>
           {isExpanded ? (
-            <ChevronUp size={20} color={COLORS.textSecondary} />
+            <ChevronUp size={20} color={'gray'} />
           ) : (
-            <ChevronDown size={20} color={COLORS.textSecondary} />
+            <ChevronDown size={20} color={'gray'} />
           )}
         </View>
       </TouchableOpacity>
@@ -1030,7 +1049,7 @@ const Profile = () => {
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleContainer}>
           <View style={styles.sectionIconContainer}>
-            <Car size={20} color={COLORS.textPrimary} />
+            <Car size={20} color={COLORS.primary} />
           </View>
           <Text style={styles.sectionTitle}>My Vehicles</Text>
         </View>
@@ -1039,7 +1058,6 @@ const Profile = () => {
           onPress={() => setAddVehicleModal(true)}
           activeOpacity={0.8}>
           <Plus size={16} color={COLORS.white} />
-          <Text style={styles.addButtonText}></Text>
         </TouchableOpacity>
       </View>
       <View style={styles.card}>
@@ -1075,7 +1093,7 @@ const Profile = () => {
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <View style={styles.sectionIconContainer}>
-              <Info size={20} color={COLORS.textPrimary} />
+              <Info size={20} color={COLORS.primary} />
             </View>
             <Text style={styles.sectionTitle}>Maintenance Tips</Text>
           </View>
@@ -1085,7 +1103,7 @@ const Profile = () => {
             contentContainerStyle={styles.tipsContainer}>
             <View style={styles.tipCard}>
               <View style={styles.tipIconContainer}>
-                <Gauge size={24} color={COLORS.accent} />
+                <Gauge size={24} color={COLORS.primary} />
               </View>
               <Text style={styles.tipTitle}>Check Tire Pressure</Text>
               <Text style={styles.tipDescription}>
@@ -1122,7 +1140,7 @@ const Profile = () => {
     <View style={styles.section}>
       <View style={styles.sectionTitleContainer}>
         <View style={styles.sectionIconContainer}>
-          <ShoppingCart size={20} color={COLORS.textPrimary} />
+          <ShoppingCart size={20} color={COLORS.primary} />
         </View>
         <Text style={styles.sectionTitle}>My Orders</Text>
       </View>
@@ -1152,7 +1170,7 @@ const Profile = () => {
       <View style={styles.section}>
         <View style={styles.sectionTitleContainer}>
           <View style={styles.sectionIconContainer}>
-            <Bell size={20} color={COLORS.textPrimary} />
+            <Bell size={20} color={COLORS.primary} />
           </View>
           <Text style={styles.sectionTitle}>Notifications</Text>
         </View>
@@ -1160,7 +1178,7 @@ const Profile = () => {
           <MenuItem
             title="Service Reminders"
             subtitle="Get notified about upcoming maintenance"
-            icon={<Clock size={20} color={COLORS.accent} />}
+            icon={<Clock size={20} color={COLORS.primary} />}
             rightElement={
               <Switch
                 checked={notifications.serviceReminders}
@@ -1175,7 +1193,7 @@ const Profile = () => {
           <MenuItem
             title="Order Updates"
             subtitle="Track your spare parts orders"
-            icon={<Truck size={20} color={COLORS.accent} />}
+            icon={<Truck size={20} color={COLORS.primary} />}
             rightElement={
               <Switch
                 checked={notifications.orderUpdates}
@@ -1188,7 +1206,7 @@ const Profile = () => {
           <MenuItem
             title="Promotions & Offers"
             subtitle="Receive special deals and discounts"
-            icon={<Tag size={20} color={COLORS.accent} />}
+            icon={<Tag size={20} color={COLORS.primary} />}
             rightElement={
               <Switch
                 checked={notifications.promotions}
@@ -1201,7 +1219,7 @@ const Profile = () => {
           <MenuItem
             title="App Updates"
             subtitle="Get notified about new features"
-            icon={<Settings size={20} color={COLORS.accent} />}
+            icon={<Settings size={20} color={COLORS.primary} />}
             rightElement={
               <Switch
                 checked={notifications.appUpdates}
@@ -1214,7 +1232,7 @@ const Profile = () => {
           <MenuItem
             title="Special Offers"
             subtitle="Exclusive member discounts"
-            icon={<Star size={20} color={COLORS.accent} />}
+            icon={<Star size={20} color={COLORS.primary} />}
             rightElement={
               <Switch
                 checked={notifications.specialOffers}
@@ -1231,7 +1249,7 @@ const Profile = () => {
       <View style={styles.section}>
         <View style={styles.sectionTitleContainer}>
           <View style={styles.sectionIconContainer}>
-            <Settings size={20} color={COLORS.textPrimary} />
+            <Settings size={20} color={COLORS.primary} />
           </View>
           <Text style={styles.sectionTitle}>App Settings</Text>
         </View>
@@ -1239,20 +1257,20 @@ const Profile = () => {
           <MenuItem
             title="Payment Methods"
             subtitle="Manage your payment options"
-            icon={<CreditCard size={20} color={COLORS.accent} />}
+            icon={<CreditCard size={20} color={COLORS.primary} />}
           />
           <View style={styles.separator} />
           <MenuItem
             title="Privacy & Security"
             subtitle="Control your data and security settings"
-            icon={<Shield size={20} color={COLORS.accent} />}
+            icon={<Shield size={20} color={COLORS.primary} />}
             onPress={() => setPrivacyPolicyModal(true)}
           />
           <View style={styles.separator} />
           <MenuItem
             title="App Preferences"
             subtitle="Customize your app experience"
-            icon={<Settings size={20} color={COLORS.accent} />}
+            icon={<Settings size={20} color={COLORS.primary} />}
           />
         </View>
       </View>
@@ -1260,7 +1278,7 @@ const Profile = () => {
       <View style={styles.section}>
         <View style={styles.sectionTitleContainer}>
           <View style={styles.sectionIconContainer}>
-            <HelpCircle size={20} color={COLORS.textPrimary} />
+            <HelpCircle size={20} color={COLORS.primary} />
           </View>
           <Text style={styles.sectionTitle}>Support & Legal</Text>
         </View>
@@ -1268,28 +1286,28 @@ const Profile = () => {
           <MenuItem
             title="Help Centre"
             subtitle="Get support and find answers"
-            icon={<MessageCircle size={20} color={COLORS.accent} />}
+            icon={<MessageCircle size={20} color={COLORS.primary} />}
             onPress={() => setHelpCentreModal(true)}
           />
           <View style={styles.separator} />
           <MenuItem
             title="Terms & Conditions"
             subtitle="Read our terms of service"
-            icon={<FileText size={20} color={COLORS.accent} />}
+            icon={<FileText size={20} color={COLORS.primary} />}
             onPress={() => setTermsModal(true)}
           />
           <View style={styles.separator} />
           <MenuItem
             title="Privacy Policy"
             subtitle="Learn how we protect your data"
-            icon={<Lock size={20} color={COLORS.accent} />}
+            icon={<Lock size={20} color={COLORS.primary} />}
             onPress={() => setPrivacyPolicyModal(true)}
           />
           <View style={styles.separator} />
           <MenuItem
             title="Rate Our App"
             subtitle="Share your feedback"
-            icon={<Star size={20} color={COLORS.accent} />}
+            icon={<Star size={20} color={COLORS.primary} />}
           />
         </View>
       </View>
@@ -1297,7 +1315,7 @@ const Profile = () => {
       <View style={styles.section}>
         <View style={styles.sectionTitleContainer}>
           <View style={styles.sectionIconContainer}>
-            <User size={20} color={COLORS.textPrimary} />
+            <User size={20} color={COLORS.primary} />
           </View>
           <Text style={styles.sectionTitle}>Account</Text>
         </View>
@@ -1305,26 +1323,26 @@ const Profile = () => {
           <MenuItem
             title="Account Information"
             subtitle="View and edit your account details"
-            icon={<User size={20} color={COLORS.accent} />}
+            icon={<User size={20} color={COLORS.primary} />}
             onPress={handleEditProfile}
           />
           <View style={styles.separator} />
           <MenuItem
             title="Subscription"
             subtitle="Manage your premium membership"
-            icon={<Award size={20} color={COLORS.accent} />}
+            icon={<Award size={20} color={COLORS.primary} />}
           />
           <View style={styles.separator} />
           <MenuItem
             title="Data Export"
             subtitle="Download your data"
-            icon={<ExternalLink size={20} color={COLORS.accent} />}
+            icon={<ExternalLink size={20} color={COLORS.primary} />}
           />
           <View style={styles.separator} />
           <MenuItem
             title="Delete Account"
             subtitle="Permanently delete your account"
-            icon={<Trash2 size={20} color={COLORS.error} />}
+            icon={<Trash2 size={20} color={COLORS.primary} />}
             onPress={() => {
               Alert.alert(
                 'Delete Account',
@@ -1344,11 +1362,12 @@ const Profile = () => {
           <MenuItem
             title="Logout"
             subtitle="Sign out of your account"
-            icon={<LogOut size={20} color={COLORS.accent} />}
+            icon={<LogOut size={20} color={COLORS.primary} />}
             onPress={handleLogout}
           />
         </View>
       </View>
+      <View style={{ marginTop: 30 }}></View>
     </>
   );
 
@@ -1390,7 +1409,7 @@ const Profile = () => {
               </View>
               <Text style={styles.profileEmail}>{userInfo.email}</Text>
               <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
-                <Edit size={14} color={COLORS.white} />
+                <Edit size={14} color={COLORS.primary} />
                 <Text style={styles.editProfileText}>Edit Profile</Text>
               </TouchableOpacity>
             </View>
@@ -1407,7 +1426,7 @@ const Profile = () => {
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <View style={styles.sectionIconContainer}>
-              <User size={20} color={COLORS.textPrimary} />
+              <User size={20} color={COLORS.primary} />
             </View>
             <Text style={styles.sectionTitle}>Personal Information</Text>
           </View>
@@ -1442,14 +1461,16 @@ const Profile = () => {
               subtitle={userInfo.preferredServiceCenter}
               icon={<Wrench size={20} color={COLORS.primary} />}
             />
-            {/* <View style={styles.separator} />
+            <View style={styles.separator} />
             <MenuItem
               title="Notifications"
               subtitle="View all notifications"
-              onPress={() => {}}
-              icon={<Bell size={20} color={COLORS.accent} />}
+              onPress={() => {
+                navigation.navigate('NotificationScreen' as never);
+              }}
+              icon={<Bell size={20} color={COLORS.primary} />}
               badge={userInfo.notifications}
-            /> */}
+            />
           </View>
         </View>
 
@@ -1470,7 +1491,7 @@ const Profile = () => {
           </View>
           <View style={[styles.statCard, styles.statCardTertiary]}>
             <View style={styles.statIconContainer}>
-              <Car size={24} color={COLORS.accent} />
+              <Car size={24} color={COLORS.primary} />
             </View>
             <Text style={styles.statNumber}>{vehicles.length}</Text>
             <Text style={styles.statLabel}>Vehicles</Text>
@@ -1481,7 +1502,7 @@ const Profile = () => {
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <View style={styles.sectionIconContainer}>
-              <Activity size={20} color={COLORS.textPrimary} />
+              <Activity size={20} color={COLORS.primary} />
             </View>
             <Text style={styles.sectionTitle}>Recent Activity</Text>
           </View>
@@ -1517,6 +1538,7 @@ const Profile = () => {
             </View>
           </View>
         </View>
+        <View style={{ marginTop: 40 }}></View>
       </ScrollView>
 
       {/* Enhanced Side Menu with Individual Dropdowns - Left to Right */}
@@ -1551,7 +1573,7 @@ const Profile = () => {
               {/* Vehicles Dropdown */}
               <DropdownSection
                 title="Vehicles"
-                icon={<Car size={22} color={COLORS.accent} />}
+                icon={<Car size={22} color={COLORS.primary} />}
                 isExpanded={expandedSections.vehicles}
                 onToggle={() => toggleSection('vehicles')}>
                 {renderVehiclesContent()}
@@ -1569,7 +1591,7 @@ const Profile = () => {
               {/* Settings Dropdown */}
               <DropdownSection
                 title="Settings"
-                icon={<Settings size={22} color={COLORS.textSecondary} />}
+                icon={<Settings size={22} color={'gray'} />}
                 isExpanded={expandedSections.settings}
                 onToggle={() => toggleSection('settings')}>
                 {renderSettingsContent()}
@@ -1759,6 +1781,28 @@ const Profile = () => {
                 keyboardType="numeric"
               />
             </View>
+
+            <View>
+              <TouchableOpacity
+                onPress={() => {}}
+                style={{
+                  backgroundColor: COLORS.primary,
+                  padding: 12,
+                  width: '25%',
+                  borderRadius: 10,
+                  alignSelf: 'center',
+                }}>
+                <Text
+                  style={{
+                    ...FONTS.body5,
+                    color: COLORS.white,
+                    fontWeight: 500,
+                    textAlign: 'center',
+                  }}>
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
       </Modal>
@@ -1821,8 +1865,8 @@ const Profile = () => {
                   <CarStatusBar
                     label="Battery Health"
                     value={selectedVehicle.batteryHealth || 0}
-                    color={COLORS.accent}
-                    icon={<Zap size={16} color={COLORS.accent} />}
+                    color={COLORS.primary}
+                    icon={<Zap size={16} color={COLORS.primary} />}
                   />
                   <CarStatusBar
                     label="Tire Health"
@@ -1860,7 +1904,7 @@ const Profile = () => {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Next Service</Text>
-                  <Text style={[styles.infoValue, { color: COLORS.accent }]}>
+                  <Text style={[styles.infoValue, { color: COLORS.primary }]}>
                     {selectedVehicle.nextService}
                   </Text>
                 </View>
@@ -1936,7 +1980,7 @@ const Profile = () => {
                     <Text style={styles.orderSummaryLabel}>Tracking</Text>
                     <TouchableOpacity style={styles.trackingButton}>
                       <Text style={styles.trackingText}>{selectedOrder.trackingNumber}</Text>
-                      <ExternalLink size={16} color={COLORS.accent} />
+                      <ExternalLink size={16} color={COLORS.primary} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -1947,7 +1991,7 @@ const Profile = () => {
                 {selectedOrder.estimatedDelivery && (
                   <View style={styles.orderSummaryRow}>
                     <Text style={styles.orderSummaryLabel}>Delivery</Text>
-                    <Text style={[styles.orderSummaryValue, { color: COLORS.accent }]}>
+                    <Text style={[styles.orderSummaryValue, { color: COLORS.primary }]}>
                       {selectedOrder.estimatedDelivery}
                     </Text>
                   </View>
@@ -1983,7 +2027,7 @@ const Profile = () => {
       <Modal visible={photoUploadModal} transparent={true} animationType="fade">
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.accent} />
+            <ActivityIndicator size="large" color={COLORS.primary} />
             <Text style={styles.loadingText}>Processing photo...</Text>
           </View>
         </View>
@@ -2086,15 +2130,15 @@ const Profile = () => {
             <View style={styles.helpSection}>
               <Text style={styles.helpSectionTitle}>Contact Support</Text>
               <TouchableOpacity style={styles.contactButton}>
-                <MessageCircle size={20} color={COLORS.accent} />
+                <MessageCircle size={20} color={COLORS.primary} />
                 <Text style={styles.contactButtonText}>Live Chat</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.contactButton}>
-                <Phone size={20} color={COLORS.accent} />
+                <Phone size={20} color={COLORS.primary} />
                 <Text style={styles.contactButtonText}>Call Support</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.contactButton}>
-                <Mail size={20} color={COLORS.accent} />
+                <Mail size={20} color={COLORS.primary} />
                 <Text style={styles.contactButtonText}>Email Us</Text>
               </TouchableOpacity>
             </View>
@@ -2200,7 +2244,7 @@ const styles = StyleSheet.create({
     height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 0.5,
     borderColor: COLORS.white,
     shadowColor: COLORS.shadowStrong,
     shadowOffset: { width: 0, height: 2 },
@@ -2231,7 +2275,7 @@ const styles = StyleSheet.create({
   editProfileButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryUltraLight,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -2243,7 +2287,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   editProfileText: {
-    color: COLORS.white,
+    color: COLORS.primary,
     ...FONTS.h5,
     marginLeft: 6,
   },
@@ -2275,8 +2319,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 20,
-    marginTop: 12,
+    marginBottom: 6,
+    marginTop: 3,
   },
   sectionIconContainer: {
     width: 40,
@@ -2293,8 +2337,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '500',
     color: COLORS.primary,
     letterSpacing: 0.3,
   },
@@ -2318,7 +2362,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 18,
-    minHeight: 76,
+    minHeight: 70,
   },
   menuItemIcon: {
     width: 48,
@@ -2350,14 +2394,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   menuItemTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.black,
     flex: 1,
     letterSpacing: 0.2,
   },
   menuItemBadge: {
-    backgroundColor: COLORS.error,
+    backgroundColor: COLORS.primary,
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -2366,11 +2410,11 @@ const styles = StyleSheet.create({
   menuItemBadgeText: {
     color: COLORS.white,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   menuItemSubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+    fontSize: 12,
+    color: 'gray',
     lineHeight: 20,
   },
   vehicleItemHeader: {
@@ -2397,7 +2441,7 @@ const styles = StyleSheet.create({
   },
   nextServiceText: {
     fontSize: 13,
-    color: COLORS.accent,
+    color: COLORS.primary,
     marginLeft: 4,
     fontWeight: '500',
   },
@@ -2415,7 +2459,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    marginBottom: 32,
+    marginBottom: 14,
     gap: 12,
   },
   statCard: {
@@ -2442,7 +2486,7 @@ const styles = StyleSheet.create({
   statCardTertiary: {
     backgroundColor: COLORS.cardWarning,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.accent,
+    borderLeftColor: COLORS.primary,
   },
   statIconContainer: {
     width: 56,
@@ -2461,23 +2505,23 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 32,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
+    ...FONTS.h6,
+    color: COLORS.primary,
+    fontWeight: '500',
     textAlign: 'center',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 26,
-    shadowColor: COLORS.accent,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -2510,12 +2554,12 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 15,
-    color: COLORS.textSecondary,
+    color: 'gray',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
@@ -2547,7 +2591,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.accent,
+    borderLeftColor: COLORS.primary,
   },
   serviceHeader: {
     flexDirection: 'row',
@@ -2558,11 +2602,11 @@ const styles = StyleSheet.create({
   serviceType: {
     fontSize: 17,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
   },
   serviceDescription: {
     fontSize: 15,
-    color: COLORS.textSecondary,
+    color: 'gray',
     marginBottom: 12,
     lineHeight: 22,
   },
@@ -2578,7 +2622,7 @@ const styles = StyleSheet.create({
   },
   serviceDetailText: {
     fontSize: 13,
-    color: COLORS.textSecondary,
+    color: 'gray',
     marginLeft: 4,
   },
   serviceFooter: {
@@ -2594,7 +2638,7 @@ const styles = StyleSheet.create({
   serviceCost: {
     fontSize: 17,
     fontWeight: '700',
-    color: COLORS.accent,
+    color: COLORS.primary,
   },
   switch: {
     width: 48,
@@ -2665,8 +2709,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   sideMenuTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '500',
     color: COLORS.white,
     marginLeft: 16,
   },
@@ -2706,9 +2750,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   dropdownSectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.primary,
     letterSpacing: 0.3,
   },
   dropdownChevronContainer: {
@@ -2750,14 +2794,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.white,
   },
   saveButton: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.accent,
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.primary,
   },
   modalContent: {
     flex: 1,
@@ -2776,7 +2820,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.primary,
   },
   editPlaceholderImage: {
     width: 120,
@@ -2808,26 +2852,26 @@ const styles = StyleSheet.create({
   },
   photoHint: {
     fontSize: 15,
-    color: COLORS.textSecondary,
+    color: 'gray',
     fontWeight: '500',
   },
   formSection: {
     marginBottom: 24,
   },
   fieldLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 12,
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.primary,
+    marginBottom: 6,
   },
   textInput: {
     borderWidth: 2,
     borderColor: COLORS.gray200,
     borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    fontSize: 17,
-    color: COLORS.textPrimary,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: COLORS.primary,
     backgroundColor: COLORS.white,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -2865,11 +2909,11 @@ const styles = StyleSheet.create({
   rotateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 20,
-    shadowColor: COLORS.accent,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -2883,7 +2927,7 @@ const styles = StyleSheet.create({
   },
   car360Hint: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: 'gray',
     textAlign: 'center',
     marginTop: 8,
   },
@@ -2915,14 +2959,14 @@ const styles = StyleSheet.create({
   },
   carStatusLabel: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: 'gray',
     fontWeight: '500',
     marginLeft: 6,
   },
   carStatusValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
   },
   carStatusBarBackground: {
     height: 8,
@@ -2953,13 +2997,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 15,
-    color: COLORS.textSecondary,
+    color: 'gray',
     fontWeight: '500',
   },
   infoValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
   },
   serviceHistorySection: {
     marginBottom: 64,
@@ -2983,18 +3027,18 @@ const styles = StyleSheet.create({
   },
   orderSummaryLabel: {
     fontSize: 15,
-    color: COLORS.textSecondary,
+    color: 'gray',
     fontWeight: '500',
   },
   orderSummaryValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
   },
   orderTotal: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.accent,
+    color: COLORS.primary,
   },
   trackingButton: {
     flexDirection: 'row',
@@ -3002,7 +3046,7 @@ const styles = StyleSheet.create({
   },
   trackingText: {
     fontSize: 14,
-    color: COLORS.accent,
+    color: COLORS.primary,
     marginRight: 4,
     fontWeight: '500',
   },
@@ -3021,7 +3065,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.accent,
+    borderLeftColor: COLORS.primary,
   },
   orderItemImage: {
     width: 60,
@@ -3035,18 +3079,18 @@ const styles = StyleSheet.create({
   orderItemName: {
     fontSize: 16,
     fontWeight: '500',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     marginBottom: 4,
   },
   orderItemPrice: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.accent,
+    color: COLORS.primary,
     marginBottom: 2,
   },
   orderItemQuantity: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: 'gray',
     marginBottom: 2,
   },
   orderItemPartNumber: {
@@ -3079,18 +3123,18 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 17,
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     marginTop: 16,
     fontWeight: '600',
   },
   privacyText: {
     fontSize: 15,
     lineHeight: 24,
-    color: COLORS.textSecondary,
+    color: 'gray',
   },
   privacySectionTitle: {
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     fontSize: 17,
   },
   helpSection: {
@@ -3099,7 +3143,7 @@ const styles = StyleSheet.create({
   helpSectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     marginBottom: 16,
   },
   faqItem: {
@@ -3121,14 +3165,14 @@ const styles = StyleSheet.create({
   faqQuestion: {
     fontSize: 17,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     flex: 1,
     marginRight: 16,
   },
   faqAnswer: {
     fontSize: 15,
     lineHeight: 24,
-    color: COLORS.textSecondary,
+    color: 'gray',
     marginTop: 12,
   },
   contactButton: {
@@ -3144,18 +3188,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.accent,
+    borderLeftColor: COLORS.primary,
   },
   contactButtonText: {
     fontSize: 17,
     fontWeight: '600',
-    color: COLORS.accent,
+    color: COLORS.primary,
     marginLeft: 16,
   },
   termsHeader: {
     fontSize: 15,
     lineHeight: 22,
-    color: COLORS.textSecondary,
+    color: 'gray',
     marginBottom: 24,
   },
   activityItem: {
@@ -3175,14 +3219,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activityTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.primary,
     marginBottom: 2,
   },
   activitySubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+    fontSize: 11,
+    color: 'gray',
   },
   tipsContainer: {
     paddingHorizontal: 20,
@@ -3199,26 +3243,26 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.accent,
+    borderLeftColor: COLORS.primary,
   },
   tipIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 50,
     backgroundColor: COLORS.cardSecondary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
   tipTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.primary,
+    marginBottom: 6,
   },
   tipDescription: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+    fontSize: 12,
+    color: 'gray',
     lineHeight: 20,
   },
   fullWidthButton: {

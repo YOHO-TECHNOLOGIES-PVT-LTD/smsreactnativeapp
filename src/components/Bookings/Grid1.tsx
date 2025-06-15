@@ -119,7 +119,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
 
         <View style={styles.itemDetails}>
           <Text style={styles.itemName}>{name}</Text>
-          <Text style={styles.itemPrice}>₹{price} each</Text>
+          <Text style={styles.itemPrice}>₹ {price} each</Text>
 
           {item?.productId && (
             <>
@@ -145,7 +145,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
           <View style={styles.quantityBox}>
             <Text style={styles.quantityText}>Qty: {item?.quantity || 1}</Text>
           </View>
-          <Text style={styles.totalPrice}>₹{totalPrice}</Text>
+          <Text style={styles.totalPrice}>₹ {totalPrice}</Text>
         </View>
       </View>
     );
@@ -259,6 +259,7 @@ const styles = StyleSheet.create({
   tabText: {
     ...FONTS.h4,
     color: COLORS.dark60,
+    fontWeight: 500,
   },
   activeTabText: {
     color: COLORS.white,
@@ -294,6 +295,7 @@ const styles = StyleSheet.create({
   },
   itemName: {
     ...FONTS.h4,
+    fontWeight: 500,
     color: COLORS.primary_text,
     marginBottom: 5,
   },
@@ -334,6 +336,7 @@ const styles = StyleSheet.create({
   totalPrice: {
     ...FONTS.h4,
     color: COLORS.primary,
+    fontWeight: 500,
   },
   emptyContainer: {
     flex: 1,

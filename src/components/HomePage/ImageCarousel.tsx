@@ -17,18 +17,28 @@ interface ImageCarouselProps {
   autoScrollInterval?: number;
 }
 
-const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, autoScrollInterval = 2000 }) => {
+const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, autoScrollInterval = 3000 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoScrollPaused, setIsAutoScrollPaused] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
+  const isManualScroll = useRef(false);
+
+  // Reset to first image when images array changes
+  useEffect(() => {
+    setCurrentIndex(0);
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ x: screenWidth, animated: false });
+    }
+  }, [images]);
 
   // Auto-scroll logic
   useEffect(() => {
-    if (images.length <= 1 || isAutoScrollPaused) return;
+    if (images.length <= 1) return;
 
     const scrollToNext = () => {
+      if (isManualScroll.current) return;
+
       const nextIndex = (currentIndex + 1) % images.length;
       scrollToIndex(nextIndex, true);
     };
@@ -38,112 +48,118 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, autoScrollInterva
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [currentIndex, isAutoScrollPaused, images.length]);
+  }, [currentIndex, images.length]);
 
   const scrollToIndex = (index: number, animated = true) => {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({
-        x: screenWidth * index,
-        animated,
-      });
-    }
+    if (!scrollViewRef.current) return;
+
+    // For infinite scroll, adjust index for extended images array
+    const adjustedIndex = index + 1;
+    scrollViewRef.current.scrollTo({
+      x: screenWidth * adjustedIndex,
+      animated,
+    });
     setCurrentIndex(index);
   };
 
-  const handleTouchStart = () => {
-    setIsAutoScrollPaused(true);
+  const handleScrollBegin = () => {
+    isManualScroll.current = true;
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
   };
 
-  const handleTouchEnd = () => {
-    setIsAutoScrollPaused(false);
+  const handleScrollEnd = () => {
+    isManualScroll.current = false;
   };
 
-  // Handle infinite scroll
-  const handleScrollEnd = (event: any) => {
+  const handleMomentumScrollEnd = (event: any) => {
     const contentOffset = event.nativeEvent.contentOffset;
-    const index = Math.round(contentOffset.x / screenWidth);
+    const viewSize = event.nativeEvent.layoutMeasurement;
+    const pageNum = Math.floor(contentOffset.x / viewSize.width);
 
-    if (index === images.length) {
-      // Immediately jump to first item without animation
-      scrollToIndex(0, false);
-    } else if (index === -1) {
-      // Immediately jump to last item without animation
-      scrollToIndex(images.length - 1, false);
+    // Handle infinite scroll edges
+    if (pageNum === 0) {
+      // Jump to last real image
+      scrollViewRef.current?.scrollTo({
+        x: screenWidth * images.length,
+        animated: false,
+      });
+      setCurrentIndex(images.length - 1);
+    } else if (pageNum === images.length + 1) {
+      // Jump to first real image
+      scrollViewRef.current?.scrollTo({
+        x: screenWidth,
+        animated: false,
+      });
+      setCurrentIndex(0);
     } else {
-      setCurrentIndex(index);
+      setCurrentIndex(pageNum - 1);
     }
+
+    handleScrollEnd();
   };
 
-  // For infinite scroll, we add an extra item at start and end
-  const extendedImages = [images[images.length - 1], ...images, images[0]];
+  // For infinite scroll, add clones of first and last images
+  const extendedImages =
+    images.length > 1 ? [images[images.length - 1], ...images, images[0]] : images;
 
   return (
     <View style={styles.container}>
       <View style={styles.carousel}>
-        <TouchableWithoutFeedback onPressIn={handleTouchStart} onPressOut={handleTouchEnd}>
-          <View style={styles.scrollViewContainer}>
-            <Animated.ScrollView
-              ref={scrollViewRef}
-              style={styles.scrollView}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-                useNativeDriver: true,
-              })}
-              scrollEventThrottle={16}
-              onMomentumScrollEnd={handleScrollEnd}
-              onScrollBeginDrag={handleTouchStart}
-              onScrollEndDrag={handleTouchEnd}>
-              {extendedImages.map((image, index) => (
-                <View key={index} style={styles.slide}>
-                  <Image
-                    source={typeof image === 'string' ? { uri: image } : image}
-                    style={styles.image}
-                    resizeMode="cover"
-                  />
-                </View>
-              ))}
-            </Animated.ScrollView>
-          </View>
-        </TouchableWithoutFeedback>
+        <ScrollView
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+            useNativeDriver: false,
+          })}
+          scrollEventThrottle={16}
+          onMomentumScrollBegin={handleScrollBegin}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
+          onScrollBeginDrag={handleScrollBegin}
+          onScrollEndDrag={handleScrollEnd}
+          contentOffset={{ x: images.length > 1 ? screenWidth : 0, y: 0 }}>
+          {extendedImages.map((image, index) => (
+            <View key={`image-${index}`} style={styles.slide}>
+              <TouchableWithoutFeedback onPressIn={handleScrollBegin} onPressOut={handleScrollEnd}>
+                <Image
+                  source={typeof image === 'string' ? { uri: image } : image}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              </TouchableWithoutFeedback>
+            </View>
+          ))}
+        </ScrollView>
       </View>
 
-      {/* Indicator dots */}
-      <View style={styles.indicatorContainer}>
-        {images.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.indicatorDot,
-              index === currentIndex ? styles.activeDot : styles.inactiveDot,
-            ]}
-          />
-        ))}
-      </View>
+      {images.length > 1 && (
+        <View style={styles.indicatorContainer}>
+          {images.map((_, index) => (
+            <View
+              key={`indicator-${index}`}
+              style={[
+                styles.indicatorDot,
+                index === currentIndex ? styles.activeDot : styles.inactiveDot,
+              ]}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
+    width: '100%',
     alignItems: 'center',
   },
   carousel: {
     width: screenWidth,
     height: 250,
-    position: 'relative',
-  },
-  scrollViewContainer: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
   },
   slide: {
     width: screenWidth,
@@ -160,14 +176,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   indicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 5,
+    width: 5,
+    height: 5,
+    borderRadius: 4,
     marginHorizontal: 4,
   },
   activeDot: {
     backgroundColor: COLORS.primary,
-    width: 10,
+    width: 6,
   },
   inactiveDot: {
     backgroundColor: '#CCCCCC',

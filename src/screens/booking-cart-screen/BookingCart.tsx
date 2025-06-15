@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
   title: {
     ...FONTS.h3,
     marginLeft: 12,
+    fontWeight: 500,
     color: COLORS.white,
   },
 });

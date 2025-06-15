@@ -66,12 +66,14 @@ const NotificationScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{ paddingHorizontal: 10 }}>
+      <View style={{ paddingHorizontal: 10, flexDirection: 'row', gap: 15, marginVertical: 10 }}>
         <TouchableOpacity style={{}} onPress={() => navigate.goBack()}>
           <Image source={icons.back} style={{ width: 25, height: 25 }} />
         </TouchableOpacity>
         <View style={{}}>
-          <Text style={{ ...FONTS.h2, color: COLORS.primary_text }}>Notifications</Text>
+          <Text style={{ ...FONTS.h2, color: COLORS.primary_text, fontWeight: 500 }}>
+            Notifications
+          </Text>
         </View>
       </View>
       {/* Tabs */}
@@ -125,6 +127,7 @@ const styles = StyleSheet.create({
   filterText: {
     color: COLORS.dark,
     ...FONTS.body4,
+    fontWeight: 500,
   },
   filterTextActive: {
     color: COLORS.white,
@@ -142,11 +145,12 @@ const styles = StyleSheet.create({
   },
   title: {
     ...FONTS.h3,
+    fontWeight: 500,
   },
   message: {
     marginTop: 4,
     color: COLORS.grey,
-    ...FONTS.body4,
+    ...FONTS.body5,
   },
   emptyText: {
     textAlign: 'center',

@@ -356,7 +356,7 @@ export const FONTS = {
   h6: {
     // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h6,
-    lineHeight: 22,
+    // lineHeight: 22,
   },
   h7: {
     // fontFamily: 'Poppins-SemiBold',
@@ -367,40 +367,40 @@ export const FONTS = {
     fontSize: SIZES.h8,
   },
   body1: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body1,
     lineHeight: 36,
   },
   body2: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body2,
     lineHeight: 30,
   },
   body3: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body3,
     lineHeight: 22,
   },
   body4: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body4,
     lineHeight: 22,
   },
   body5: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body5,
     // lineHeight: RFValue(12),
   },
   body6: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body6,
   },
   body7: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body7,
   },
   body8: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body8,
   },
 };
