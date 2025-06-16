@@ -10,6 +10,7 @@ import {
   StatusBar,
   Animated,
   Easing,
+  Alert,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, icons, screens } from '~/constants';
@@ -21,6 +22,7 @@ import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import HandShakeAnimation from '~/components/HomePage/HandShakeAnimation';
+import toast from '~/utils/toast';
 
 const services = [
   { id: '1', name: 'Car Services', icon: 'directions-car' },
@@ -248,7 +250,11 @@ const HomePage = () => {
                   </View>
                   <Text style={styles.offerTitle}>{offer.title}</Text>
                   <Text style={styles.offerDiscount}>{offer.discount}</Text>
-                  <TouchableOpacity style={styles.offerButton}>
+                  <TouchableOpacity
+                    style={styles.offerButton}
+                    onPress={() => {
+                      // toast.error('Not Available', 'Offers expired, please try again later.');
+                    }}>
                     <Text style={styles.offerButtonText}>Claim Offer</Text>
                   </TouchableOpacity>
                 </Animated.View>
@@ -478,7 +484,7 @@ const styles = StyleSheet.create({
   },
   offerCard: {
     width: '48%',
-    height: 125,
+    height: 100,
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 15,
@@ -515,6 +521,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 5,
     alignItems: 'center',
+    width: '50%',
+    alignSelf: 'center',
+    marginTop: 5,
   },
   offerButtonText: {
     color: COLORS.white,
