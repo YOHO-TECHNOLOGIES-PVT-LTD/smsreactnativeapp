@@ -20,8 +20,7 @@ import AnimatedSearch from '~/components/HomePage/AnimatedSearch';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-
-const { width } = Dimensions.get('window');
+import HandShakeAnimation from '~/components/HomePage/HandShakeAnimation';
 
 const services = [
   { id: '1', name: 'Car Services', icon: 'directions-car' },
@@ -36,30 +35,6 @@ const services = [
   { id: '10', name: 'Windshield & Lights', icon: 'highlight' },
   { id: '11', name: 'Car Spa & Cleaning', icon: 'local-car-wash' },
   { id: '12', name: 'Detailing Services', icon: 'policy' },
-];
-
-const banners = [
-  {
-    id: '1',
-    title: 'Premium Car Wash',
-    subtitle: 'Get 30% off on your first booking',
-    image: require('../../assets/service-images/generalservice.png'),
-    cta: 'Book Now',
-  },
-  {
-    id: '2',
-    title: 'Annual Maintenance',
-    subtitle: 'Comprehensive checkup package',
-    image: require('../../assets/service-images/generalservice.png'),
-    cta: 'Learn More',
-  },
-  {
-    id: '3',
-    title: 'Genuine Spare Parts',
-    subtitle: 'Original OEM parts with warranty',
-    image: require('../../assets/service-images/generalservice.png'),
-    cta: 'Shop Now',
-  },
 ];
 
 const offers = [
@@ -191,25 +166,24 @@ const HomePage = () => {
             }}>
             <Image
               source={require('../../assets/home/LOGO.png')}
-              style={{ width: 145, height: 25 }}
+              style={{ width: 145, height: 25, position: 'relative', top: 10 }}
             />
-            <TouchableOpacity
-              onPress={() => setShowAddress(!showAddress)}
-              style={{
-                flexDirection: 'row',
-                // alignItems: 'center',
-                gap: 5,
-                justifyContent: 'flex-end',
-              }}>
-              <FontAwesome name="location-arrow" size={18} color="black" />
-              <Text style={styles.title}>Keelkattalai</Text>
+            <TouchableOpacity onPress={() => {}} style={{}}>
+              <HandShakeAnimation />
             </TouchableOpacity>
+            <Text style={styles.title}>Hi, Customer</Text>
           </View>
-          {
-            <Text style={[styles.subtitle, { textAlign: 'right' }]}>
-              Chennai, Tamil Nadu 600117, India
-            </Text>
-          }
+          <TouchableOpacity
+            onPress={() => {}}
+            style={{
+              flexDirection: 'row',
+              // alignItems: 'center',
+              gap: 5,
+              justifyContent: 'flex-end',
+            }}>
+            <FontAwesome name="location-arrow" size={16} color={COLORS.grey} />
+            <Text style={[styles.subtitle, { textAlign: 'right' }]}>Keelkattalai</Text>
+          </TouchableOpacity>
           {/* Search Bar */}
           <AnimatedSearch />
         </View>
@@ -368,7 +342,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   subtitle: {
-    fontSize: 10,
+    fontSize: 12,
     color: COLORS.grey,
     marginBottom: 3,
   },

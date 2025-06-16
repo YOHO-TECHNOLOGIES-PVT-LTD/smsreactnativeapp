@@ -90,6 +90,7 @@ export const icons = {
   spare_card2: require('../assets/home/spare-card2.jpg'),
   spare_card3: require('../assets/home/spare-cart-card.jpg'),
   payment_card: require('../assets/home/payment-card.jpg'),
+  booking_icon: require('../assets/icons/booking_icon.png'),
 };
 
 export const Styles = {

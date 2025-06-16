@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "SMS React Native App",
+    "name": "YES MECHANIC",
     "slug": "smsreactnativeapp",
     "version": "1.0.0",
-    "icon": "./src/assets/logo.png",
+    "icon": "./src/assets/app_icon.png",
     "web": {
-      "favicon": "./src/assets/logo.png"
+      "favicon": "./src/assets/app_icon.png"
     },
     "experiments": {
       "tsconfigPaths": true
@@ -31,7 +31,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/logo.png",
+        "foregroundImage": "./src/assets/app_icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": ["android.permission.RECORD_AUDIO"],

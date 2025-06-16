@@ -63,12 +63,16 @@ const SpareParts = () => {
             source={require('../../assets/home/LOGO.png')}
             style={{ width: 145, height: 25 }}
           />
-          <View style={{ flexDirection: 'row', gap: 20 }}>
-            <TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 20, marginRight: 5 }}>
+            {/* <TouchableOpacity>
               <AntDesign name="search1" size={24} color={COLORS.primary} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity onPress={() => navigation.navigate('BookingsScreen' as never)}>
-              <Foundation name="book" size={26} color={COLORS.primary} />
+              <Image
+                source={icons.booking_icon}
+                style={{ width: 23, height: 23 }}
+                tintColor={COLORS.primary}
+              />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />

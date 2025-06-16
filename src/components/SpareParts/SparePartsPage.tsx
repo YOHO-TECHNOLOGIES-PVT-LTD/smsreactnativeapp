@@ -8,13 +8,12 @@ import {
   Image,
   Text,
   Dimensions,
-  ImageBackground,
+  TextInput,
 } from 'react-native';
 import SparePartsCard from '../../components/SpareParts/SparePartsCard';
 import sparePartsData, { SparePartCategory } from '../../components/SpareParts/sparePartsData';
 import { COLORS, FONTS, icons } from '../../constants/index';
 import { Ionicons } from '@expo/vector-icons';
-import { ConstructionIcon } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 20) / 2;
@@ -28,6 +27,45 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
   const scrollStep = 120;
   const scrollX = useRef(0);
   const [error, setError] = React.useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredParts, setFilteredParts] = useState<SparePartCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  const categories = [...new Set(spareParts.map((item) => item.category))];
+
+  useEffect(() => {
+    if (spareParts.length > 0 && categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0]);
+    }
+  }, [spareParts, categories]);
+
+  useEffect(() => {
+    filterParts();
+  }, [searchQuery, selectedCategory, spareParts]);
+
+  const filterParts = () => {
+    let result = spareParts;
+
+    // Filter by category first
+    if (selectedCategory) {
+      result = result.filter((item) => item.category === selectedCategory);
+    }
+
+    // Then filter by search query if it exists
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.productName.toLowerCase().includes(query) || item.brand.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredParts(result);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
 
   const scrollLeft = () => {
     scrollX.current = Math.max(scrollX.current - scrollStep, 0);
@@ -38,16 +76,6 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
     scrollX.current += scrollStep;
     scrollRef.current?.scrollTo({ x: scrollX.current, animated: true });
   };
-
-  const categories = [...new Set(spareParts.map((item) => item.category))];
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const filteredParts = spareParts.filter((item) => item.category === selectedCategory);
-
-  useEffect(() => {
-    if (spareParts.length > 0 && categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0]);
-    }
-  }, [spareParts, categories]);
 
   return (
     <View style={styles.container}>
@@ -63,12 +91,6 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
         </Text>
       </View>
       <View style={styles.horizontalNavWrapper}>
-        {/* Left Arrow */}
-        {/* <TouchableOpacity onPress={scrollLeft} style={styles.arrowButton}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
-        </TouchableOpacity> */}
-
-        {/* Scrollable Spare Parts Category Bar */}
         <ScrollView
           ref={scrollRef}
           horizontal
@@ -98,19 +120,35 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
             );
           })}
         </ScrollView>
-
-        {/* Right Arrow */}
-        {/* <TouchableOpacity onPress={scrollRight} style={styles.arrowButton}>
-          <Ionicons name="chevron-forward" size={24} color={COLORS.primary} />
-        </TouchableOpacity> */}
       </View>
 
-      <ImageBackground
-        source={icons.home_background}
-        style={{ flex: 1, width: '100%', height: '100%' }}
-        resizeMode="cover">
-        {/* Main Content - Grid Layout */}
-        <View style={styles.cardContainer}>
+      {/* Search Input with Clear Button */}
+      <View style={{ marginVertical: 5, marginHorizontal: 15 }}>
+        <View style={styles.searchContainer}>
+          <View style={styles.searchIcon}>
+            <Ionicons name="search" size={22} color={COLORS.grey} />
+          </View>
+          <TextInput
+            placeholder="Search for Products"
+            placeholderTextColor={COLORS.grey}
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={(text) => setSearchQuery(text)}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearIcon}
+              onPress={clearSearch}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="close-circle" size={20} color={COLORS.grey} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Main Content - Grid Layout */}
+      <View style={styles.cardContainer}>
+        {filteredParts.length > 0 ? (
           <FlatList
             showsVerticalScrollIndicator={false}
             data={filteredParts}
@@ -124,9 +162,17 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
             columnWrapperStyle={styles.columnWrapper}
             contentContainerStyle={styles.cardsList}
           />
-        </View>
-        <View style={{ marginTop: 35 }}></View>
-      </ImageBackground>
+        ) : (
+          <View style={styles.noResultsContainer}>
+            <Text style={styles.noResultsText}>
+              {searchQuery.trim() !== ''
+                ? 'No products found matching your search'
+                : 'No products available in this category'}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View style={{ marginTop: 35 }}></View>
     </View>
   );
 };
@@ -135,36 +181,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  horizontalNavContainer: {
-    height: 85,
-    backgroundColor: COLORS.error60,
-    borderBottomWidth: 1,
-    borderTopWidth: 3,
-    borderBottomColor: '#e0e0e0',
-    borderTopColor: COLORS.primary,
-    elevation: 1,
-  },
   horizontalNavWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
   },
-
-  arrowButton: {
-    padding: 5,
-    backgroundColor: COLORS.primary_04,
-    borderRadius: 50,
-    marginHorizontal: 4,
-    elevation: 1,
-    zIndex: 10,
-  },
-
   horizontalNavContent1: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  horizontalNavContent: {
-    paddingHorizontal: 5,
     alignItems: 'center',
   },
   horizontalNavItem: {
@@ -192,9 +215,9 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   image: {
-    width: 100,
+    width: 65,
     height: 65,
-    borderRadius: 4,
+    borderRadius: 50,
     marginBottom: 5,
   },
   cardContainer: {
@@ -210,6 +233,41 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     width: '50%',
+  },
+  searchContainer: {
+    position: 'relative',
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: COLORS.grey08,
+    borderRadius: 25,
+    height: 55,
+    paddingHorizontal: 15,
+    paddingLeft: 40,
+    paddingRight: 40, // Add padding for the clear icon
+  },
+  searchIcon: {
+    position: 'absolute',
+    top: 15,
+    left: 12,
+    zIndex: 1,
+  },
+  clearIcon: {
+    position: 'absolute',
+    top: 15,
+    right: 12,
+    zIndex: 1,
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noResultsText: {
+    ...FONTS.body3,
+    color: COLORS.grey,
+    textAlign: 'center',
   },
 });
 

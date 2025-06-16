@@ -81,7 +81,7 @@ const SOS = () => {
             <View style={styles.Textcontainer}>
               <TextInput
                 style={styles.input}
-                placeholder="+91-1234567890"
+                placeholder="+91-9876543210"
                 value={value}
                 onChangeText={handleChange}
                 keyboardType="numeric"
