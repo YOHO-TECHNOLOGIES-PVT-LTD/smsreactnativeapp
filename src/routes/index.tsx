@@ -55,18 +55,19 @@ const Routes: React.FC = () => {
     const checkAuthState = async () => {
       try {
         const token = await AsyncStorage.getItem('authToken');
-        const isLoggedIn = token;
+        const isLoggedIn = true;
         if (isLoggedIn) {
           navigation.reset({
             index: 0,
             routes: [{ name: 'MainStack' }],
           });
-        } else {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'AuthStack' }],
-          });
         }
+        //  else {
+        //   navigation.reset({
+        //     index: 0,
+        //     routes: [{ name: 'AuthStack' }],
+        //   });
+        // }
       } catch (error: any) {
         toast.error('Error during auth state check:', error.message || 'Unknown error');
       }
@@ -75,20 +76,23 @@ const Routes: React.FC = () => {
     checkAuthState();
   }, [navigation]);
 
-  const AuthStack: React.FC = () => (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="LoginScreen" component={LoginScreen} />
-      <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
-      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
-      <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
-      <Stack.Screen name="SetNewPasswordScreen" component={SetNewPasswordScreen} />
-    </Stack.Navigator>
-  );
+  // const AuthStack: React.FC = () => (
+  //   <Stack.Navigator screenOptions={{ headerShown: false }}>
+  //     <Stack.Screen name="LoginScreen" component={LoginScreen} />
+  //     <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+  //     <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
+  //     <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
+  //     <Stack.Screen name="SetNewPasswordScreen" component={SetNewPasswordScreen} />
+  //   </Stack.Navigator>
+  // );
 
   const MainStack: React.FC = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="CustomDrawer" component={ServiceDrawer} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
+      <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
       <Stack.Screen name="SOSScreen" component={SosScreen} />
       <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
       <Stack.Screen name="SparePartsScreen" component={SparePartsScreen} />
@@ -104,7 +108,7 @@ const Routes: React.FC = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="AuthStack" component={AuthStack} />
+      {/* <Stack.Screen name="AuthStack" component={AuthStack} /> */}
       <Stack.Screen name="MainStack" component={MainStack} />
     </Stack.Navigator>
   );

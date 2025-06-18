@@ -25,21 +25,29 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "y",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/app_icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["android.permission.RECORD_AUDIO"],
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "package": "com.suryas_1805.smsreactnativeapp"
     },
     "extra": {
       "eas": {
-        "projectId": "d9dc5352-9d84-456a-960f-95c32cb47d51"
+        "projectId": "0e396dea-0aa8-4950-b6c8-274d0c9a6900"
       }
     },
     "owner": "suryas_1805"

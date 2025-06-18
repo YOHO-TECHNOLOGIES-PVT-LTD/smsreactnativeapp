@@ -84,15 +84,15 @@ const styles = StyleSheet.create({
     // height: 100,
   },
   hand: {
-    position: 'absolute',
+    // position: 'absolute',
   },
-  leftHand: {
-    left: 36,
-    top: -8
-  },
-  rightHand: {
-    right: 60,
-  },
+  // leftHand: {
+  //   left: 36,
+  //   top: -8
+  // },
+  // rightHand: {
+  //   right: 60,
+  // },
 });
 
 export default HandShakeAnimation;

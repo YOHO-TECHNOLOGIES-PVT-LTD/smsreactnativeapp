@@ -213,9 +213,19 @@ interface CarStatusProps {
 }
 
 const Profile = () => {
+  const [Token, setToken] = useState<any>('');
+  const fetchToken = async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    setToken(token);
+  };
+
+  useEffect(() => {
+    fetchToken();
+  }, []);
+
   const fetchUserProfile = async () => {
     try {
-      const response = await getUserProfileDetails({});
+      const response = Token && (await getUserProfileDetails({}));
       if (response) {
         setUserInfo((prev) => ({
           ...prev,
@@ -229,8 +239,6 @@ const Profile = () => {
           preferredServiceCenter: response.preferredServiceCenter || prev.preferredServiceCenter,
           notifications: response.notifications || prev.notifications,
         }));
-      } else {
-        console.error('Failed to fetch user profile');
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -767,7 +775,6 @@ const Profile = () => {
             try {
               await AsyncStorage.removeItem('authToken');
               toast.success('', 'Logout Successfully.');
-              navigation.reset({ index: 0, routes: [{ name: 'AuthStack' }] });
             } catch (error) {
               toast.error('Error', 'An error occurred during logout. Please try again later.');
             }

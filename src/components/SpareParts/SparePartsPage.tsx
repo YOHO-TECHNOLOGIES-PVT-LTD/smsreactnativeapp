@@ -56,7 +56,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (item) =>
-          item.productName.toLowerCase().includes(query) || item.brand.toLowerCase().includes(query)
+          item?.productName.toLowerCase().includes(query) || item?.brand.toLowerCase().includes(query)
       );
     }
 

@@ -8,12 +8,15 @@ import {
   Modal,
   ScrollView,
   Dimensions,
+  Alert,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { COLORS, SIZES, FONTS } from '~/constants';
 import { addBookingCartItem } from '~/features/booking-cart/service.ts';
 import toast from '~/utils/toast';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 type Props = {
   part: SparePart;
@@ -41,29 +44,64 @@ const SparePartsCard = ({ part }: Props) => {
   const [added, setAdded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
+  const [Token, setToken] = useState<any>('');
+  const navigation = useNavigation();
+
+  const fetchToken = async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    setToken(token);
+  };
+
+  useEffect(() => {
+    fetchToken();
+  }, []);
 
   const handleAddtoCart = async (part: SparePart) => {
-    if (!part?.uuid || !part?.price) {
-      console.error('Missing required part data');
-      return;
-    }
-    try {
-      const data = {
-        uuid: part?.uuid,
-        products: {
-          productId: part?._id,
-          quantity,
-          price: part?.price,
-        },
-        type: 'spare',
-      };
-      const response = await addBookingCartItem(data);
-      if (response) {
-        toast.success('Added', `${part?.productName} is added to cart`);
-        setAdded(true);
+    if (Token) {
+      if (!part?.uuid || !part?.price) {
+        console.error('Missing required part data');
+        return;
       }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
+      try {
+        const data = {
+          uuid: part?.uuid,
+          products: {
+            productId: part?._id,
+            quantity,
+            price: part?.price,
+          },
+          type: 'spare',
+        };
+        const response = await addBookingCartItem(data);
+        if (response) {
+          toast.success('Added', `${part?.productName} is added to cart`);
+          setAdded(true);
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+      }
+    } else if (!Token) {
+      Alert.alert(
+        'Please SignUp',
+        'You need to sign up to add a product.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'SIGN UP',
+            onPress: async () => {
+              try {
+                navigation.navigate('RegisterScreen' as never);
+              } catch (error) {
+                toast.error('Error', error?.message);
+              }
+            },
+          },
+        ],
+        { cancelable: false }
+      );
     }
   };
 
@@ -449,7 +487,7 @@ const styles = StyleSheet.create({
   quantityButtonText: {
     ...FONTS.h3,
     color: COLORS.primary_text,
-    fontWeight: 500
+    fontWeight: 500,
   },
   quantityValue: {
     width: 40,

@@ -12,6 +12,7 @@ import {
   Dimensions,
   TextInput,
   ImageBackground,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
@@ -24,6 +25,7 @@ import { addBookingCartItem } from '~/features/booking-cart/service.ts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import toast from '~/utils/toast';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +37,7 @@ type ServiceCategory = {
 
 type Service = {
   uuid: string;
+  _id: string;
   service_name: string;
   description: string;
   price: number;
@@ -62,6 +65,16 @@ const Services = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
+  const [Token, setToken] = useState<any>('');
+
+  const fetchToken = async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    setToken(token);
+  };
+
+  useEffect(() => {
+    fetchToken();
+  }, []);
 
   const currentCategory =
     serviceCategories.find((cat) => cat.category_name === activeNavItem) || serviceCategories[0];
@@ -103,44 +116,57 @@ const Services = () => {
   }, []);
 
   const handleAddtoCart = async () => {
-    if (!selectedService?.uuid || !selectedService?.price) {
-      console.error('Missing required service data');
-      return;
-    }
-
-    const bookingData = {
-      service: selectedService,
-      type: selectedBookingType,
-      ...(selectedBookingType === 'prebook' && { date: selectedDate }),
-      quantity,
-      startTime,
-      endTime,
-    };
-
-    try {
-      const data = {
-        uuid: selectedService.uuid,
-        products: {
-          productId: selectedService.uuid,
-          quantity,
-          price: selectedService.price,
-          bookingType: selectedBookingType,
-          bookingDate: selectedBookingType === 'prebook' ? selectedDate.toISOString() : undefined,
-          startTime,
-          endTime,
-        },
-        type: 'service',
+    if (!Token) {
+      Alert.alert(
+        'Please SignUp',
+        'You need to sign up to book a service.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'SIGN UP',
+            onPress: async () => {
+              try {
+                navigation.navigate('RegisterScreen' as never);
+              } catch (error) {
+                toast.error('Error', error?.message);
+              }
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    } else if (Token) {
+      if (!selectedService?.uuid || !selectedService?.price) {
+        console.error('Missing required service data');
+        return;
+      }
+      const bookingData = {
+        service: selectedService,
+        type: selectedBookingType,
+        ...(selectedBookingType === 'prebook' && { date: selectedDate }),
+        quantity,
+        startTime,
+        endTime,
       };
 
-      const response = await addBookingCartItem(data);
-      if (response) {
-        toast.success('Booked', `${selectedService.service_name} has been booked`);
-        setAdded(true);
-        setBookingModalVisible(false);
-        setModalVisible(false);
+      try {
+        const data = {
+          service: selectedService._id,
+          type: 'service',
+        };
+        const response = await addBookingCartItem(data);
+        if (response) {
+          toast.success('Booked', `${selectedService.service_name} has been booked`);
+          setAdded(true);
+          setBookingModalVisible(false);
+          setModalVisible(false);
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error);
       }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
     }
   };
 

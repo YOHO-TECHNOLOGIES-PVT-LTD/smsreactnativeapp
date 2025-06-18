@@ -23,6 +23,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import HandShakeAnimation from '~/components/HomePage/HandShakeAnimation';
 import toast from '~/utils/toast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const services = [
   { id: '1', name: 'Car Services', icon: 'directions-car' },
@@ -110,6 +111,7 @@ const HomePage = () => {
   const bannerRef = useRef(null);
   const scrollInterval = useRef<NodeJS.Timeout>(null);
   const navigation = useNavigation();
+  const [Token, setToken] = useState<any>('');
   const blogsImage = [
     require('../../assets/sparepartsimage/category/lighting.jpg'),
     require('../../assets/sparepartsimage/category/battery.jpg'),
@@ -135,6 +137,15 @@ const HomePage = () => {
         useNativeDriver: true,
       }),
     ]).start();
+  }, []);
+
+  const fetchToken = async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    setToken(token);
+  };
+
+  useEffect(() => {
+    fetchToken();
   }, []);
 
   useEffect(() => {
@@ -168,24 +179,29 @@ const HomePage = () => {
             }}>
             <Image
               source={require('../../assets/home/LOGO.png')}
-              style={{ width: 145, height: 25, position: 'relative', top: 10 }}
+              style={{ width: 145, height: 25, position: 'relative', top: Token ? 10 : 0 }}
             />
-            <TouchableOpacity onPress={() => {}} style={{}}>
-              <HandShakeAnimation />
-            </TouchableOpacity>
-            <Text style={styles.title}>Hi, Customer</Text>
+            <View style={{ position: 'relative' }}>
+              <View style={{ position: 'absolute', right: Token ? 90 : 55 }}>
+                <HandShakeAnimation />
+              </View>
+              <Text style={styles.title}>Hi, {Token ? 'Customer' : 'User'}</Text>
+            </View>
           </View>
-          <TouchableOpacity
-            onPress={() => {}}
-            style={{
-              flexDirection: 'row',
-              // alignItems: 'center',
-              gap: 5,
-              justifyContent: 'flex-end',
-            }}>
-            <FontAwesome name="location-arrow" size={16} color={COLORS.grey} />
-            <Text style={[styles.subtitle, { textAlign: 'right' }]}>Keelkattalai</Text>
-          </TouchableOpacity>
+          {Token && (
+            <TouchableOpacity
+              onPress={() => {}}
+              style={{
+                flexDirection: 'row',
+                // alignItems: 'center',
+                gap: 5,
+                justifyContent: 'flex-end',
+              }}>
+              <FontAwesome name="location-arrow" size={16} color={COLORS.grey} />
+              <Text style={[styles.subtitle, { textAlign: 'right' }]}>Keelkattalai</Text>
+            </TouchableOpacity>
+          )}
+
           {/* Search Bar */}
           <AnimatedSearch />
         </View>
