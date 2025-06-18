@@ -76,7 +76,7 @@ const SpareParts = () => {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              <View
+              {/* <View
                 style={{
                   width: 15,
                   height: 15,
@@ -87,7 +87,7 @@ const SpareParts = () => {
                   top: -6,
                 }}>
                 <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>1</Text>
-              </View>
+              </View> */}
             </TouchableOpacity>
           </View>
         </View>

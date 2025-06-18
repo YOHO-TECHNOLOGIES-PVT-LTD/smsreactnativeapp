@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { setSelectedTab } from '~/store/tab/tabSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Product {
   _id: string;
@@ -71,11 +72,21 @@ const Bookings = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [Token, setToken] = useState<any>('');
+
+  const fetchToken = async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    setToken(token);
+  };
+
+  useEffect(() => {
+    fetchToken();
+  }, []);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await getAllBookingsCartItems({});
+        const response = Token && (await getAllBookingsCartItems({}));
         if (response?.success) {
           const allOrders = [
             ...(response.productConfirm || []),
@@ -201,7 +212,7 @@ const Bookings = () => {
           <View style={{ flexDirection: 'row', gap: 15, marginRight: 8 }}>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              <View
+              {/* <View
                 style={{
                   width: 15,
                   height: 15,
@@ -212,7 +223,7 @@ const Bookings = () => {
                   top: -6,
                 }}>
                 <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>1</Text>
-              </View>
+              </View> */}
             </TouchableOpacity>
           </View>
         </View>

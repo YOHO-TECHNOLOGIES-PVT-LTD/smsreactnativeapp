@@ -8,13 +8,24 @@ import { COLORS, FONTS, icons } from '~/constants';
 import { getAllBookingCartItems } from '~/features/booking-cart/service.ts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Settings = () => {
   const navigation = useNavigation();
   const [bookingCarts, setBookingCarts] = useState([]);
+  const [Token, setToken] = useState<any>('');
+
+  const fetchToken = async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    setToken(token);
+  };
+
+  useEffect(() => {
+    fetchToken();
+  }, []);
 
   const fetchAllBookungCarts = async () => {
-    const response = await getAllBookingCartItems({});
+    const response = Token && (await getAllBookingCartItems({}));
     setBookingCarts(response || []);
     try {
     } catch (error) {

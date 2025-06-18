@@ -47,9 +47,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "0e396dea-0aa8-4950-b6c8-274d0c9a6900"
+        // "projectId": "0e396dea-0aa8-4950-b6c8-274d0c9a6900"
       }
     },
-    "owner": "suryas_1805"
+    "owner": "surya1805"
   }
 }
