@@ -14,6 +14,7 @@ import BookingCartScreen from './booking-cart-screen/BookingCart';
 import BookingsScreen from './bookings-screen/Bookings';
 import HelpCenterScreen from './help-center-screen/HelpCenter';
 import FAQsScreen from './faqs-screen/FAQs';
+import OnboardingScreen from './OnboardingScreen/OnboardingScreen';
 
 export {
   HomeScreen,
@@ -32,4 +33,5 @@ export {
   BookingsScreen,
   HelpCenterScreen,
   FAQsScreen,
+  OnboardingScreen,
 };

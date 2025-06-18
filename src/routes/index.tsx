@@ -11,6 +11,7 @@ import {
   HomeScreen,
   LoginScreen,
   NotificationScreen,
+  OnboardingScreen,
   OtpVerificationScreen,
   ProfileScreen,
   RegisterScreen,
@@ -26,6 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Define the types for navigation stack
 export type RootStackParamList = {
   AuthStack: undefined;
+  Onboarding: undefined;
   MainStack: undefined;
   CustomDrawer: undefined;
   HomeScreen: undefined;
@@ -55,13 +57,16 @@ const Routes: React.FC = () => {
     const checkAuthState = async () => {
       try {
         const token = await AsyncStorage.getItem('authToken');
-        const isLoggedIn = true;
-        if (isLoggedIn) {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'MainStack' }],
-          });
-        }
+
+        // setTimeout(() => {
+        //   const isLoggedIn = true;
+        //   if (isLoggedIn) {
+        //     navigation.reset({
+        //       index: 0,
+        //       routes: [{ name: 'MainStack' }],
+        //     });
+        //   }
+        // }, 6000);
         //  else {
         //   navigation.reset({
         //     index: 0,
@@ -109,6 +114,7 @@ const Routes: React.FC = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {/* <Stack.Screen name="AuthStack" component={AuthStack} /> */}
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="MainStack" component={MainStack} />
     </Stack.Navigator>
   );
