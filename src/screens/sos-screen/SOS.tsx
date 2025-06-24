@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -9,21 +9,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { setSelectedTab } from '~/store/tab/tabSlice';
-import { useDispatch } from 'react-redux';
-import IconButton from '~/components/IconButton';
-import { COLORS, FONTS, icons, screens, SIZES } from '~/constants/index';
-import Header from '~/components/Header';
+import { COLORS, FONTS } from '~/constants/index';
 import MarinaMap from '~/components/SosScreen/MarinaMap';
 import SosButtons from '~/components/SosScreen/Buttons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
-import Feather from '@expo/vector-icons/Feather';
+import { AntDesign } from '@expo/vector-icons';
+import PhoneDialerButton from '~/components/PhoneDialerButton';
 
 const SOS = () => {
-  const navigation = useNavigation();
-  const dispatch = useDispatch();
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
 
@@ -67,7 +60,8 @@ const SOS = () => {
               <AntDesign name="search1" size={24} color={COLORS.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={{ marginRight: 8 }}>
-              <Feather name="phone-call" size={22} color={COLORS.primary} />
+              {/* <Feather name="phone-call" size={22} color={COLORS.primary} /> */}
+              <PhoneDialerButton />
             </TouchableOpacity>
           </View>
         </View>

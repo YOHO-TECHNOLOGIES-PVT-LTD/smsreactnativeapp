@@ -23,7 +23,6 @@ import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
 const SpareParts = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [error, setError] = useState(false);
   const [spareParts, setSpareParts] = useState([]);
 
   const getAllSparePartsDetails = async () => {
@@ -51,13 +50,8 @@ const SpareParts = () => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
+            paddingHorizontal: 15,
             marginBottom: 10,
-            paddingHorizontal: 10,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
           }}>
           <Image
             source={require('../../assets/home/LOGO.png')}

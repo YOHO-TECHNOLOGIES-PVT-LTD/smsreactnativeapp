@@ -18,6 +18,17 @@ export const API_END_POINTS = {
     },
   },
 
+  sos: {
+    Post: '/api/sos/add',
+    GetAll: '/api/sos/getall',
+    Get: '/api/sos/get/:id',
+    Put: '/api/sos/update/',
+    put: '/api/sos/addlist',
+    getsoslis: '/api/sos/soslist',
+    updatelist: '/api/sos/updatelist/:id',
+    delete: '/api/sos/delete/',
+  },
+
   spare_parts: {
     post: '/api/admin/spareparts/create',
     getById: '/api/admin/spareparts/get/:uuid',
@@ -42,7 +53,15 @@ export const API_END_POINTS = {
     patch: '/api/booking/:id/cancel',
   },
 
-  offer: {},
+  announcement: {
+    Post: '/api/announcement/create',
+    Get: '/api/announcement/all',
+  },
+  enquiry: {
+    Post: '/api/enquiry/create',
+    Get: '/api/enquiry/all',
+    Put: '/api/enquiry/update/:uuid',
+  },
 
   auth: {
     post_login: '/api/customer/auth/login',

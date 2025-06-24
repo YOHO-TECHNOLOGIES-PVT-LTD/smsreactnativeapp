@@ -52,7 +52,6 @@ class Client {
       patch: (params: any, data: any) =>
         httpClient.patch(API_END_POINTS.service_bookings.patch, params, data),
     },
-    offer: {},
     auth: {
       login: (data: any) => httpClient.post(API_END_POINTS.auth.post_login, data),
       signUp: (data: any) => httpClient.post(API_END_POINTS.auth.post_signup, data),
@@ -73,6 +72,15 @@ class Client {
       getAll: (params: any) => httpClient.get(API_END_POINTS.bookings.getAll, params),
       postProduct: (params: any) => httpClient.post(API_END_POINTS.bookings.postProduct, params),
       postService: (params: any) => httpClient.post(API_END_POINTS.bookings.postService, params),
+    },
+    sos: {
+      post: (data: any) => httpClient.post(API_END_POINTS.sos.Post, data),
+    },
+    announcement: {
+      get: (params: any) => httpClient.get(API_END_POINTS.announcement.Get, params),
+    },
+    enquiry: {
+      post: (data: any) => httpClient.post(API_END_POINTS.enquiry.Post, data),
     },
   };
 }

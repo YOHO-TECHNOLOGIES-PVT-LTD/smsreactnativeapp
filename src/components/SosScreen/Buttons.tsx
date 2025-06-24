@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,20 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '~/constants';
 import * as ImagePicker from 'expo-image-picker';
+import { postSOSData } from '~/features/sos/service';
+import toast from '~/utils/toast';
+import CustomLogoutModal from '../CustomLogoutModal';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '~/store';
+import { selectToken } from '~/features/token/redux/selectors';
+import { getToken } from '~/features/token/redux/thunks';
+
+interface Issues{
+  id: String,
+  label: String,
+  icon: any
+}
 
 const issues = [
   {
@@ -71,11 +85,12 @@ const userDetails = {
 };
 
 export default function RoadsideAssistanceScreen() {
-  const [selectedIssues, setSelectedIssues] = useState([]);
+  const [selectedIssues, setSelectedIssues] = useState<Issues[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [activeTab, setActiveTab] = useState('own');
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState<string[]>([]);
+  const navigation = useNavigation();
   const [otherDetails, setOtherDetails] = useState({
     name: '',
     phone: '',
@@ -83,6 +98,22 @@ export default function RoadsideAssistanceScreen() {
     location: '',
     additionalNotes: '',
   });
+  const dispatch = useDispatch<AppDispatch>();
+  const TokenSelector = useSelector(selectToken);
+  const [isLoading, setIsLoading] = useState(false);
+  const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
+
+  useEffect(() => {
+    try {
+      setIsLoading(true);
+      dispatch(getToken());
+      setIsLoading(false);
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
 
   const handleSelect = (id: any) => {
     setSelectedIssue(id);
@@ -90,7 +121,7 @@ export default function RoadsideAssistanceScreen() {
   };
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    let result: any = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
@@ -99,12 +130,12 @@ export default function RoadsideAssistanceScreen() {
     });
 
     if (!result.canceled) {
-      setImages(result.assets.map((asset) => asset.uri));
+      setImages(result.assets.map((asset: any) => asset.uri));
     }
   };
 
   const takePhoto = async () => {
-    let result = await ImagePicker.launchCameraAsync({
+    let result: any = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -115,7 +146,7 @@ export default function RoadsideAssistanceScreen() {
     }
   };
 
-  const removeImage = (index) => {
+  const removeImage = (index: any) => {
     const newImages = [...images];
     newImages.splice(index, 1);
     setImages(newImages);
@@ -128,13 +159,12 @@ export default function RoadsideAssistanceScreen() {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const requestData = {
       issue: selectedIssue,
       type: activeTab,
       ...(activeTab === 'own' ? userDetails : otherDetails),
     };
-    console.log('Request Data:', requestData);
     setModalVisible(false);
     setOtherDetails({
       name: '',
@@ -143,6 +173,15 @@ export default function RoadsideAssistanceScreen() {
       location: '',
       additionalNotes: '',
     });
+
+    try {
+      const response = await postSOSData({});
+      if (response) {
+        toast.success('Success', response?.message || 'SOS details created successfully!');
+      }
+    } catch (error: any) {
+      console.log(error.message);
+    }
   };
 
   return (
@@ -150,11 +189,13 @@ export default function RoadsideAssistanceScreen() {
       <Text style={styles.heading}>Select an Issue</Text>
 
       <View style={styles.grid}>
-        {issues.map((issue) => (
+        {issues.map((issue: any) => (
           <TouchableOpacity
             key={issue.id}
             style={[styles.issueButton, selectedIssues.includes(issue.id) && styles.selectedButton]}
-            onPress={() => handleSelect(issue.id)}
+            onPress={() =>
+              TokenSelector ? handleSelect(issue.id) : () => setSignUpConfirmModalVisible(true)
+            }
             activeOpacity={0.8}>
             {selectedIssues.includes(issue.id) && (
               <Ionicons name="checkmark-circle" size={20} color="green" style={styles.checkIcon} />
@@ -228,6 +269,11 @@ export default function RoadsideAssistanceScreen() {
                 <Text style={styles.detailLabel}>License Plate:</Text>
                 <Text style={styles.detailValue}>{userDetails.licensePlate}</Text>
               </View>
+
+              <Text style={styles.sectionTitle}>Vehicle Problem</Text>
+              <Text style={styles.selectedIssue}>
+                {issues.find((i) => i.id === selectedIssue)?.label}
+              </Text>
 
               <Text style={styles.sectionTitle}>Location</Text>
               <Text style={styles.locationText}>Using your current location...</Text>
@@ -361,11 +407,28 @@ export default function RoadsideAssistanceScreen() {
           <TouchableOpacity
             style={styles.submitButton}
             onPress={handleSubmit}
-            disabled={images.length === 0}>
+            // disabled={images.length === 0}
+          >
             <Text style={styles.submitButtonText}>REQUEST ASSISTANCE</Text>
           </TouchableOpacity>
         </ScrollView>
       </Modal>
+
+      <View>
+        <CustomLogoutModal
+          visible={signUpConfirmModalVisible}
+          onConfirm={() => navigation.navigate('RegisterScreen' as never)}
+          onCancel={() => setSignUpConfirmModalVisible(false)}
+          title="Please SignUp"
+          message="You need to sign up to book a service."
+          confirmText="Sign Up"
+          cancelText="Cancel"
+          confirmButtonColor={COLORS.primary}
+          cancelButtonColor={COLORS.transparent}
+          titleTextColor={COLORS.primary}
+          messageTextColor={COLORS.grey}
+        />
+      </View>
       <View style={{ marginTop: 90 }}></View>
     </ScrollView>
   );
@@ -455,18 +518,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   modalTitle: {
-    ...FONTS.h4,
-    fontWeight: 'bold',
+    ...FONTS.h3,
+    fontWeight: 500,
     color: COLORS.primary,
   },
   tabsContainer: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGrey,
-    marginBottom: 20,
+    marginBottom: 3,
   },
   tab: {
     paddingVertical: 12,
@@ -478,15 +541,15 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.primary,
   },
   tabText: {
-    ...FONTS.body3,
+    ...FONTS.body4,
     color: COLORS.primary_01,
   },
   activeTabText: {
     color: COLORS.primary,
-    fontWeight: 'bold',
+    fontWeight: 500,
   },
   tabContent: {
-    marginBottom: 20,
+    marginBottom: 15,
   },
   sectionTitle: {
     ...FONTS.h4,

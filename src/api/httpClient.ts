@@ -42,7 +42,7 @@ Axios.interceptors.response.use(
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('HTTP Error:', error?.response || error?.message);
+      console.log('HTTP Error:', error);
     }
     // if (
     //   (error?.response?.data?.status && error?.response?.data?.message === 'Password not match') ||

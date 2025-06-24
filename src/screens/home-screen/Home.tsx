@@ -6,11 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   StatusBar,
   Animated,
   Easing,
-  Alert,
   Modal,
   TextInput,
   FlatList,
@@ -22,14 +20,19 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, icons, screens } from '~/constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import ImageCarousel from '~/components/HomePage/ImageCarousel';
-import AnimatedSearch from '~/components/HomePage/AnimatedSearch';
 import { setSelectedTab } from '~/store/tab/tabSlice';
-import { useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
 import HandShakeAnimation from '~/components/HomePage/HandShakeAnimation';
 import toast from '~/utils/toast';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AnimatedSearch from '~/components/HomePage/AnimatedSearch';
+import ImageCarousel from '~/components/HomePage/ImageCarousel';
+import { useNavigation } from '@react-navigation/native';
+import LoadingAnimation from '~/components/LoadingAnimation';
+import { getToken, logout } from '~/features/token/redux/thunks';
+import { selectToken } from '~/features/token/redux/selectors';
+import { AppDispatch } from '~/store';
+import { clearToken } from '~/features/token/redux/slices';
+import CustomLogoutModal from '~/components/CustomLogoutModal';
 
 const services = [
   { id: '1', name: 'Car Services', icon: 'directions-car' },
@@ -162,20 +165,29 @@ const chatMessages = [
   { id: '5', sender: 'user', text: "It's a Honda City 2018 model", time: '10:36 AM' },
 ];
 
+const carlogos = [
+  icons.carlogo1,
+  // icons.carlogo2,
+  icons.carlogo3,
+  icons.carlogo4,
+  icons.carlogo5,
+  icons.carlogo6,
+  icons.carlogo7,
+  // icons.carlogo8,
+  icons.carlogo9,
+  icons.carlogo10,
+  // icons.carlogo11,
+  // icons.carlogo12,
+  // icons.carlogo13,
+  // icons.carlogo14,
+  icons.carlogo15,
+];
+
 const HomePage = () => {
-  const searchContent = ['Warranty', 'Dent Paint', 'Periodic Services', 'Miles', 'Top Assist'];
-  const [searchIndex, setSearchIndex] = useState(0);
-  const [search, setSearch] = useState(searchContent[0]);
-  const dispatch = useDispatch();
-  const [showAddress, setShowAddress] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const translateYAnim = useRef(new Animated.Value(30)).current;
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-  const bannerRef = useRef(null);
-  const scrollInterval = useRef<NodeJS.Timeout>(null);
-  const navigation = useNavigation();
-  const [Token, setToken] = useState<any>('');
   const blogsImage = [
     require('../../assets/sparepartsimage/category/lighting.jpg'),
     require('../../assets/sparepartsimage/category/battery.jpg'),
@@ -183,8 +195,6 @@ const HomePage = () => {
     require('../../assets/sparepartsimage/category/tyres.jpg'),
     require('../../assets/sparepartsimage/category/ac.jpg'),
   ];
-
-  // State for modals and functionality
   const [showOfferApplied, setShowOfferApplied] = useState(false);
   const [showAllBlogs, setShowAllBlogs] = useState(false);
   const [selectedBlog, setSelectedBlog] = useState<any>(null);
@@ -193,6 +203,10 @@ const HomePage = () => {
   const [showChatModal, setShowChatModal] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState(chatMessages);
+  const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
+  const tokenSelector = useSelector(selectToken);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -215,28 +229,17 @@ const HomePage = () => {
     ]).start();
   }, []);
 
-  const fetchToken = async () => {
-    const token = await AsyncStorage.getItem('authToken');
-    setToken(token);
-  };
-
   useEffect(() => {
-    fetchToken();
-  }, []);
-
-  useEffect(() => {
-    // Set up interval to rotate through search terms
-    const interval = setInterval(() => {
-      setSearchIndex((prevIndex) => {
-        const newIndex = (prevIndex + 1) % searchContent.length;
-        setSearch(searchContent[newIndex]);
-        return newIndex;
-      });
-    }, 2000);
-
-    // Clean up interval on component unmount
-    return () => clearInterval(interval);
-  }, []);
+    try {
+      setIsLoading(true);
+      dispatch(getToken());
+      setIsLoading(false);
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
 
   const handleClaimOffer = () => {
     setShowOfferApplied(true);
@@ -308,12 +311,29 @@ const HomePage = () => {
     }
   };
 
-  const images = [icons.promo1, icons.promo2, icons.promo3];
+  const images = [icons.promo1, icons.promo2, icons.promo3, icons.promo4, icons.promo5];
+
+  const handleLogout = async () => {
+    try {
+      setIsLoading(true);
+      dispatch(logout());
+      toast.success('Logged out', 'You have been successfully logged out');
+      setIsLoading(false);
+      setLogoutModalVisible(false);
+    } catch (error) {
+      toast.error('Logout failed', 'Could not complete logout. Please try again.');
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoading(false);
+      setLogoutModalVisible(false);
+    }
+  };
 
   return (
     <>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       <SafeAreaView edges={['top']} style={styles.container}>
+        <LoadingAnimation visible={isLoading} />
         {/* Header Section */}
         <View style={styles.header}>
           <View
@@ -325,16 +345,51 @@ const HomePage = () => {
             }}>
             <Image
               source={require('../../assets/home/LOGO.png')}
-              style={{ width: 145, height: 25, position: 'relative', top: Token ? 10 : 0 }}
+              style={{ width: 145, height: 25, position: 'relative', top: tokenSelector ? 0 : 0 }}
             />
-            <View style={{ position: 'relative' }}>
-              <View style={{ position: 'absolute', right: Token ? 90 : 55 }}>
-                <HandShakeAnimation />
+            {tokenSelector ? (
+              <View style={{ position: 'relative' }}>
+                <View style={{ position: 'absolute', right: 90 }}>
+                  <HandShakeAnimation />
+                </View>
+                <Text style={styles.title}>Hi, Customer</Text>
+                {/* <TouchableOpacity
+                  onPress={() => {}}
+                  style={{
+                    flexDirection: 'row',
+                    gap: 5,
+                    justifyContent: 'flex-end',
+                  }}>
+                  <FontAwesome name="location-arrow" size={16} color={COLORS.grey} />
+                  <Text style={[styles.subtitle, { textAlign: 'right' }]}>Keelkattalai</Text>
+                </TouchableOpacity> */}
+                <TouchableOpacity
+                  onPress={() => setLogoutModalVisible(true)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 2,
+                    marginLeft: 15,
+                    marginVertical: 3,
+                  }}>
+                  <Ionicons name="log-out-outline" size={20} color={COLORS.primary} />
+                  <Text style={{ fontWeight: 400, ...FONTS.h4, color: COLORS.primary }}>
+                    Logout
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.title}>Hi, {Token ? 'Customer' : 'User'}</Text>
-            </View>
+            ) : (
+              <>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('LoginScreen' as never)}
+                  style={{ flexDirection: 'row', gap: 2 }}>
+                  <Ionicons name="log-in-outline" size={20} color={COLORS.primary} />
+                  <Text style={{ fontWeight: 400, ...FONTS.h4, color: COLORS.primary }}>Login</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
-          {Token && (
+          {/* {tokenSelector && (
             <TouchableOpacity
               onPress={() => {}}
               style={{
@@ -345,7 +400,7 @@ const HomePage = () => {
               <FontAwesome name="location-arrow" size={16} color={COLORS.grey} />
               <Text style={[styles.subtitle, { textAlign: 'right' }]}>Keelkattalai</Text>
             </TouchableOpacity>
-          )}
+          )} */}
 
           {/* Search Bar */}
           <AnimatedSearch />
@@ -441,6 +496,29 @@ const HomePage = () => {
             </View>
           </View>
 
+          {/* Original Spare parnter */}
+          <View style={styles.spareparnterConatiner}>
+            <View>
+              <Text style={{ ...FONTS.h3, fontWeight: 500, color: COLORS.primary_text }}>
+                Authorized Spare Parts
+              </Text>
+              <Text style={{ ...FONTS.body5, color: COLORS.grey, marginVertical: 5 }}>
+                Beyond Standard Warranty - YesMechanic Assurance
+              </Text>
+            </View>
+            <ScrollView
+              style={{}}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{}}>
+              {carlogos.map((item, index) => (
+                <View key={index} style={{ width: 55, paddingVertical: 15, paddingRight: 5 }}>
+                  <Image source={item} style={styles.carLogoImage} />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+
           {/* Blog Posts */}
           <View style={[styles.section, { padding: 15 }]}>
             <View style={[styles.sectionHeader, { marginBottom: 5 }]}>
@@ -494,184 +572,213 @@ const HomePage = () => {
         </ScrollView>
 
         {/* All Blogs Modal */}
-        <Modal
-          visible={showAllBlogs}
-          animationType="slide"
-          transparent={false}
-          onRequestClose={() => setShowAllBlogs(false)}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>All Blog Posts</Text>
-              <TouchableOpacity style={styles.closeButton} onPress={() => setShowAllBlogs(false)}>
-                <Ionicons name="close" size={24} color={COLORS.black} />
-              </TouchableOpacity>
-            </View>
-
-            <FlatList
-              data={blogs}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item, index }) => (
-                <TouchableOpacity style={styles.blogCardModal} onPress={() => handleReadMore(item)}>
-                  <Image source={blogsImage[index]} style={styles.blogImageModal} />
-                  <View style={styles.blogContentModal}>
-                    <Text style={styles.blogTitleModal}>{item.title}</Text>
-                    <Text style={styles.blogDateModal}>{item.date}</Text>
-                    <Text style={styles.blogReadMore}>Read More →</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-              contentContainerStyle={styles.modalContent}
-            />
-          </SafeAreaView>
-        </Modal>
-
-        {/* Single Blog Modal */}
-        <Modal
-          visible={!!selectedBlog}
-          animationType="slide"
-          transparent={false}
-          onRequestClose={handleCloseBlog}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity style={styles.backButton} onPress={handleCloseBlog}>
-                <Ionicons name="arrow-back" size={24} color={COLORS.black} />
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>Blog Details</Text>
-              <View style={{ width: 24 }} />
-            </View>
-
-            {selectedBlog && (
-              <ScrollView style={styles.blogDetailContainer}>
-                <Image
-                  source={blogsImage[blogs.findIndex((b) => b.id === selectedBlog.id)]}
-                  style={styles.blogDetailImage}
-                />
-                <Text style={styles.blogDetailTitle}>{selectedBlog.title}</Text>
-                <Text style={styles.blogDetailDate}>{selectedBlog.date}</Text>
-                <Text style={styles.blogDetailContent}>{selectedBlog.content}</Text>
-              </ScrollView>
-            )}
-          </SafeAreaView>
-        </Modal>
-
-        {/* Invite Friends Modal */}
-        <Modal
-          visible={showInviteModal}
-          animationType="slide"
-          transparent={false}
-          onRequestClose={() => setShowInviteModal(false)}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Invite Friends</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowInviteModal(false)}>
-                <Ionicons name="close" size={24} color={COLORS.black} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inviteContent}>
-              <Text style={styles.inviteText}>Select contacts to invite:</Text>
-
-              <FlatList
-                data={contacts}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.contactItem,
-                      selectedContacts.some((c: any) => c.id === item.id) && styles.selectedContact,
-                    ]}
-                    onPress={() => toggleContactSelection(item)}>
-                    <View style={styles.contactInfo}>
-                      <Text style={styles.contactName}>{item.name}</Text>
-                      <Text style={styles.contactPhone}>{item.phone}</Text>
-                    </View>
-                    {selectedContacts.some((c: any) => c.id === item.id) && (
-                      <Ionicons name="checkmark" size={20} color={COLORS.primary} />
-                    )}
-                  </TouchableOpacity>
-                )}
-                contentContainerStyle={styles.contactList}
-              />
-
-              <TouchableOpacity
-                style={[
-                  styles.sendInvitesButton,
-                  selectedContacts.length === 0 && styles.disabledButton,
-                ]}
-                onPress={handleSendInvites}
-                disabled={selectedContacts.length === 0}>
-                <Text style={styles.sendInvitesText}>Send Invites ({selectedContacts.length})</Text>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </Modal>
-
-        {/* Chat Modal */}
-        <Modal
-          visible={showChatModal}
-          animationType="slide"
-          transparent={false}
-          onRequestClose={() => setShowChatModal(false)}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity style={styles.backButton} onPress={() => setShowChatModal(false)}>
-                <Ionicons name="arrow-back" size={24} color={COLORS.black} />
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>Customer Support</Text>
-              <View style={{ width: 24 }} />
-            </View>
-
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.chatContainer}
-              keyboardVerticalOffset={80}>
-              <FlatList
-                data={[...messages].reverse()} // Show newest at bottom
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <View
-                    style={[
-                      styles.messageBubble,
-                      item.sender === 'admin' ? styles.adminMessage : styles.userMessage,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.messageText,
-                        item.sender === 'user' && styles.userMessageText,
-                      ]}>
-                      {item.text}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.messageTime,
-                        item.sender === 'user' && styles.userMessageTime,
-                      ]}>
-                      {item.time}
-                    </Text>
-                  </View>
-                )}
-                contentContainerStyle={styles.chatMessages}
-                inverted={false}
-              />
-
-              <View style={styles.messageInputContainer}>
-                <TextInput
-                  style={styles.messageInput}
-                  placeholder="Type your message..."
-                  value={message}
-                  onChangeText={setMessage}
-                  multiline
-                  onSubmitEditing={handleSendMessage}
-                />
-                <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-                  <Ionicons name="send" size={24} color={COLORS.white} />
+        <View>
+          <Modal
+            visible={showAllBlogs}
+            animationType="slide"
+            transparent={false}
+            onRequestClose={() => setShowAllBlogs(false)}>
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>All Blog Posts</Text>
+                <TouchableOpacity style={styles.closeButton} onPress={() => setShowAllBlogs(false)}>
+                  <Ionicons name="close" size={24} color={COLORS.primary} />
                 </TouchableOpacity>
               </View>
-            </KeyboardAvoidingView>
-          </SafeAreaView>
-        </Modal>
+
+              <FlatList
+                data={blogs}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item, index }) => (
+                  <TouchableOpacity
+                    style={styles.blogCardModal}
+                    onPress={() => handleReadMore(item)}>
+                    <Image source={blogsImage[index]} style={styles.blogImageModal} />
+                    <View style={styles.blogContentModal}>
+                      <Text style={styles.blogTitleModal}>{item.title}</Text>
+                      <Text style={styles.blogDateModal}>{item.date}</Text>
+                      <Text style={[styles.blogReadMore, { marginTop: 2 }]}>Read More →</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+                contentContainerStyle={styles.modalContent}
+              />
+            </SafeAreaView>
+          </Modal>
+        </View>
+
+        {/* Single Blog Modal */}
+        <View>
+          <Modal
+            visible={!!selectedBlog}
+            animationType="slide"
+            transparent={false}
+            onRequestClose={handleCloseBlog}>
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity style={styles.backButton} onPress={handleCloseBlog}>
+                  <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>Blog Details</Text>
+                <View style={{ width: 24 }} />
+              </View>
+
+              {selectedBlog && (
+                <ScrollView style={styles.blogDetailContainer}>
+                  <Image
+                    source={blogsImage[blogs.findIndex((b) => b.id === selectedBlog.id)]}
+                    style={styles.blogDetailImage}
+                  />
+                  <Text style={styles.blogDetailTitle}>{selectedBlog.title}</Text>
+                  <Text style={styles.blogDetailDate}>{selectedBlog.date}</Text>
+                  <Text style={styles.blogDetailContent}>{selectedBlog.content}</Text>
+                </ScrollView>
+              )}
+            </SafeAreaView>
+          </Modal>
+        </View>
+
+        {/* Invite Friends Modal */}
+        <View>
+          <Modal
+            visible={showInviteModal}
+            animationType="slide"
+            transparent={false}
+            onRequestClose={() => setShowInviteModal(false)}>
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Invite Friends</Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowInviteModal(false)}>
+                  <Ionicons name="close" size={24} color={COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.inviteContent}>
+                <Text style={styles.inviteText}>Select contacts to invite:</Text>
+
+                <FlatList
+                  data={contacts}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.contactItem,
+                        selectedContacts.some((c: any) => c.id === item.id) &&
+                          styles.selectedContact,
+                      ]}
+                      onPress={() => toggleContactSelection(item)}>
+                      <View style={styles.contactInfo}>
+                        <Text style={styles.contactName}>{item.name}</Text>
+                        <Text style={styles.contactPhone}>{item.phone}</Text>
+                      </View>
+                      {selectedContacts.some((c: any) => c.id === item.id) && (
+                        <Ionicons name="checkmark" size={20} color={COLORS.primary_text} />
+                      )}
+                    </TouchableOpacity>
+                  )}
+                  contentContainerStyle={styles.contactList}
+                />
+
+                <TouchableOpacity
+                  style={[
+                    styles.sendInvitesButton,
+                    selectedContacts.length === 0 && styles.disabledButton,
+                  ]}
+                  onPress={handleSendInvites}
+                  disabled={selectedContacts.length === 0}>
+                  <Text style={styles.sendInvitesText}>
+                    Send Invites ({selectedContacts.length})
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </Modal>
+        </View>
+
+        {/* Chat Modal */}
+        <View>
+          <Modal
+            visible={showChatModal}
+            animationType="slide"
+            transparent={false}
+            onRequestClose={() => setShowChatModal(false)}>
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity style={styles.backButton} onPress={() => setShowChatModal(false)}>
+                  <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>Customer Support</Text>
+                <View style={{ width: 24 }} />
+              </View>
+
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.chatContainer}
+                keyboardVerticalOffset={80}>
+                <FlatList
+                  data={[...messages].reverse()}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <View
+                      style={[
+                        styles.messageBubble,
+                        item.sender === 'admin' ? styles.adminMessage : styles.userMessage,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.messageText,
+                          item.sender === 'user' && styles.userMessageText,
+                        ]}>
+                        {item.text}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.messageTime,
+                          item.sender === 'user' && styles.userMessageTime,
+                        ]}>
+                        {item.time}
+                      </Text>
+                    </View>
+                  )}
+                  contentContainerStyle={styles.chatMessages}
+                  inverted={false}
+                />
+
+                <View style={styles.messageInputContainer}>
+                  <TextInput
+                    style={styles.messageInput}
+                    placeholder="Type your message..."
+                    value={message}
+                    onChangeText={setMessage}
+                    multiline
+                    onSubmitEditing={handleSendMessage}
+                  />
+                  <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
+                    <Ionicons name="send" size={24} color={COLORS.white} />
+                  </TouchableOpacity>
+                </View>
+              </KeyboardAvoidingView>
+            </SafeAreaView>
+          </Modal>
+        </View>
+
+        <View>
+          <CustomLogoutModal
+            visible={logoutModalVisible}
+            onConfirm={handleLogout}
+            onCancel={() => setLogoutModalVisible(false)}
+            title="Confirm Logout"
+            message="Are you sure, you want to log out?"
+            confirmText="Yes, Logout"
+            cancelText="No, Stay"
+            confirmButtonColor={COLORS.primary}
+            cancelButtonColor={COLORS.transparent}
+            titleTextColor={COLORS.primary}
+            messageTextColor={COLORS.grey}
+          />
+        </View>
       </SafeAreaView>
     </>
   );
@@ -943,6 +1050,12 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
     backgroundColor: '#F5F5F5',
   },
+  carLogoImage: {
+    width: 55,
+    height: 55,
+    borderRadius: 25,
+    resizeMode: 'contain',
+  },
   partDetails: {
     padding: 5,
   },
@@ -979,7 +1092,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 5,
     backgroundColor: COLORS.grey20,
-    borderRadius: 8,
   },
   guaranteeItem: {
     alignItems: 'center',
@@ -1154,9 +1266,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   blogDetailTitle: {
-    ...FONTS.h2,
-    color: COLORS.primary_text,
+    ...FONTS.h3,
+    color: COLORS.primary,
     marginBottom: 5,
+    fontWeight: 500,
   },
   blogDetailDate: {
     ...FONTS.body5,
@@ -1167,6 +1280,7 @@ const styles = StyleSheet.create({
     ...FONTS.body4,
     color: COLORS.primary_text,
     lineHeight: 22,
+    textAlign: 'justify',
   },
 
   // Invite modal styles
@@ -1175,9 +1289,9 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   inviteText: {
-    ...FONTS.body4,
+    ...FONTS.body3,
     color: COLORS.primary_text,
-    marginBottom: 15,
+    marginBottom: 10,
   },
   contactList: {
     paddingBottom: 80,
@@ -1191,7 +1305,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.grey20,
   },
   selectedContact: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.error08,
   },
   contactInfo: {
     flex: 1,
@@ -1262,7 +1376,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   userMessageTime: {
-    color: COLORS.grey60,
+    color: COLORS.light80,
   },
   messageInputContainer: {
     flexDirection: 'row',
@@ -1289,6 +1403,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  spareparnterConatiner: {
+    paddingVertical: 15,
+    paddingHorizontal: 15,
   },
 });
 

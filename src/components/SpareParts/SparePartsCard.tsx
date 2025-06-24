@@ -8,15 +8,18 @@ import {
   Modal,
   ScrollView,
   Dimensions,
-  Alert,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { COLORS, SIZES, FONTS } from '~/constants';
+import { useEffect, useState } from 'react';
+import { COLORS, FONTS } from '~/constants';
 import { addBookingCartItem } from '~/features/booking-cart/service.ts';
 import toast from '~/utils/toast';
 import { MaterialIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectToken } from '~/features/token/redux/selectors';
+import { getToken } from '~/features/token/redux/thunks';
+import { AppDispatch } from '~/store';
+import CustomLogoutModal from '../CustomLogoutModal';
 
 type Props = {
   part: SparePart;
@@ -44,25 +47,32 @@ const SparePartsCard = ({ part }: Props) => {
   const [added, setAdded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
-  const [Token, setToken] = useState<any>('');
   const navigation = useNavigation();
-
-  const fetchToken = async () => {
-    const token = await AsyncStorage.getItem('authToken');
-    setToken(token);
-  };
+  const dispatch = useDispatch<AppDispatch>();
+  const TokenSelector = useSelector(selectToken);
+  const [isLoading, setIsLoading] = useState(false);
+  const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
 
   useEffect(() => {
-    fetchToken();
-  }, []);
+    try {
+      setIsLoading(true);
+      dispatch(getToken());
+      setIsLoading(false);
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
 
   const handleAddtoCart = async (part: SparePart) => {
-    if (Token) {
+    if (TokenSelector) {
       if (!part?.uuid || !part?.price) {
         console.error('Missing required part data');
         return;
       }
       try {
+        setIsLoading(true);
         const data = {
           uuid: part?.uuid,
           products: {
@@ -77,31 +87,12 @@ const SparePartsCard = ({ part }: Props) => {
           toast.success('Added', `${part?.productName} is added to cart`);
           setAdded(true);
         }
+        setIsLoading(false);
       } catch (error) {
         console.error('Error adding to cart:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } else if (!Token) {
-      Alert.alert(
-        'Please SignUp',
-        'You need to sign up to add a product.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'SIGN UP',
-            onPress: async () => {
-              try {
-                navigation.navigate('RegisterScreen' as never);
-              } catch (error) {
-                toast.error('Error', error?.message);
-              }
-            },
-          },
-        ],
-        { cancelable: false }
-      );
     }
   };
 
@@ -139,7 +130,7 @@ const SparePartsCard = ({ part }: Props) => {
         );
       case 'reviews':
         return (
-          <View style={styles.tabContent}>
+          <View style={{}}>
             {renderStars(part?.rating)}
             <Text style={{ marginTop: 10 }}>No reviews yet. Be the first to review!</Text>
           </View>
@@ -286,7 +277,8 @@ const SparePartsCard = ({ part }: Props) => {
             <TouchableOpacity
               style={[styles.modalAddButton, added && styles.addedButton]}
               onPress={() => {
-                if (!added) handleAddtoCart(part);
+                if (!added)
+                  TokenSelector ? handleAddtoCart(part) : () => setSignUpConfirmModalVisible(true);
               }}
               disabled={added || !part?.inStock}>
               <Text style={styles.modalAddButtonText}>
@@ -296,6 +288,22 @@ const SparePartsCard = ({ part }: Props) => {
           </View>
         </ScrollView>
       </Modal>
+
+      <View>
+        <CustomLogoutModal
+          visible={signUpConfirmModalVisible}
+          onConfirm={() => navigation.navigate('RegisterScreen' as never)}
+          onCancel={() => setSignUpConfirmModalVisible(false)}
+          title="Please SignUp"
+          message="You need to sign up to book a service."
+          confirmText="Sign Up"
+          cancelText="Cancel"
+          confirmButtonColor={COLORS.primary}
+          cancelButtonColor={COLORS.transparent}
+          titleTextColor={COLORS.primary}
+          messageTextColor={COLORS.grey}
+        />
+      </View>
     </>
   );
 };

@@ -30,7 +30,6 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredParts, setFilteredParts] = useState<SparePartCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-
   const categories = [...new Set(spareParts.map((item) => item.category))];
 
   useEffect(() => {
@@ -55,7 +54,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (item) =>
+        (item: any) =>
           item?.productName.toLowerCase().includes(query) || item?.brand.toLowerCase().includes(query)
       );
     }
@@ -148,10 +147,11 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
 
       {/* Main Content - Grid Layout */}
       <View style={styles.cardContainer}>
-        {filteredParts.length > 0 ? (
+        {/* {filteredParts.length > 0 ? ( */}
           <FlatList
             showsVerticalScrollIndicator={false}
-            data={filteredParts}
+            data={((filteredParts?.length > 0) || (searchQuery.trim() !== ''))
+                && filteredParts}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item, index }) => (
               <View style={styles.cardWrapper} key={index}>
@@ -161,16 +161,23 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
             numColumns={2}
             columnWrapperStyle={styles.columnWrapper}
             contentContainerStyle={styles.cardsList}
+            ListEmptyComponent={<View style={styles.noResultsContainer}>
+            <Text style={styles.noResultsText}>
+              {searchQuery.trim() !== ''
+                ? 'No products found matching your search'
+                : 'No products available in this category'}
+            </Text>
+          </View>}
           />
-        ) : (
+        {/* ) : (
           <View style={styles.noResultsContainer}>
             <Text style={styles.noResultsText}>
               {searchQuery.trim() !== ''
                 ? 'No products found matching your search'
                 : 'No products available in this category'}
             </Text>
-          </View>
-        )}
+          </View> */}
+        {/* )} */}
       </View>
       <View style={{ marginTop: 35 }}></View>
     </View>

@@ -44,7 +44,7 @@ const RegisterScreen = () => {
     const response: any = await SignUpAuthentication({ email, phone, password });
     if (response?.success) {
       toast.success('Registration Successful', 'You have successfully registered.');
-      navigation.navigate('OtpVerificationScreen', { data: response.data });
+      navigation.navigate('OtpVerificationScreen' as never, { data: response.data });
     } else {
       toast.error('Something went wrong', 'Please try again.');
     }
@@ -172,14 +172,14 @@ const RegisterScreen = () => {
           </TouchableOpacity>
 
           {/* Back to Login */}
-          {/* <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 20 }}>
             <Text style={styles.backText}>Already have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
+            <TouchableOpacity onPress={() => navigation.navigate("LoginScreen" as never)}>
               <Text style={[styles.backText, { color: COLORS.primary_01, ...FONTS.h4 }]}>
                 Login
               </Text>
             </TouchableOpacity>
-          </View> */}
+          </View>
         </View>
       </ImageBackground>
     </KeyboardAvoidingView>

@@ -127,7 +127,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, autoScrollInterva
                 <Image
                   source={typeof image === 'string' ? { uri: image } : image}
                   style={styles.image}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
               </TouchableWithoutFeedback>
             </View>
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   carousel: {
     width: screenWidth,
-    height: 250,
+    height: 205,
   },
   slide: {
     width: screenWidth,

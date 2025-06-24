@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
 import { Ionicons, AntDesign, Foundation, MaterialIcons } from '@expo/vector-icons';
 import { Clock, Wrench, Car, ShoppingCart } from 'lucide-react-native';
@@ -25,9 +25,11 @@ import { addBookingCartItem } from '~/features/booking-cart/service.ts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import toast from '~/utils/toast';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const { width } = Dimensions.get('window');
+import { AppDispatch } from '~/store';
+import { selectToken } from '~/features/token/redux/selectors';
+import { getToken } from '~/features/token/redux/thunks';
+import LoadingAnimation from '~/components/LoadingAnimation';
+import CustomLogoutModal from '~/components/CustomLogoutModal';
 
 type ServiceCategory = {
   uuid: string;
@@ -48,7 +50,7 @@ type Service = {
 
 const Services = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [error, setError] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState<string>('');
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
@@ -65,16 +67,21 @@ const Services = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
-  const [Token, setToken] = useState<any>('');
-
-  const fetchToken = async () => {
-    const token = await AsyncStorage.getItem('authToken');
-    setToken(token);
-  };
+  const TokenSelector = useSelector(selectToken);
+  const [isLoading, setIsLoading] = useState(false);
+  const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
 
   useEffect(() => {
-    fetchToken();
-  }, []);
+    try {
+      setIsLoading(true);
+      dispatch(getToken());
+      setIsLoading(false);
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
 
   const currentCategory =
     serviceCategories.find((cat) => cat.category_name === activeNavItem) || serviceCategories[0];
@@ -116,41 +123,19 @@ const Services = () => {
   }, []);
 
   const handleAddtoCart = async () => {
-    if (!Token) {
-      Alert.alert(
-        'Please SignUp',
-        'You need to sign up to book a service.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'SIGN UP',
-            onPress: async () => {
-              try {
-                navigation.navigate('RegisterScreen' as never);
-              } catch (error) {
-                toast.error('Error', error?.message);
-              }
-            },
-          },
-        ],
-        { cancelable: false }
-      );
-    } else if (Token) {
+    if (TokenSelector) {
       if (!selectedService?.uuid || !selectedService?.price) {
         console.error('Missing required service data');
         return;
       }
-      const bookingData = {
-        service: selectedService,
-        type: selectedBookingType,
-        ...(selectedBookingType === 'prebook' && { date: selectedDate }),
-        quantity,
-        startTime,
-        endTime,
-      };
+      // const bookingData = {
+      //   service: selectedService,
+      //   type: selectedBookingType,
+      //   ...(selectedBookingType === 'prebook' && { date: selectedDate }),
+      //   quantity,
+      //   startTime,
+      //   endTime,
+      // };
 
       try {
         const data = {
@@ -217,7 +202,7 @@ const Services = () => {
         );
       case 'reviews':
         return (
-          <View style={styles.tabContent}>
+          <View style={{}}>
             {renderStars()}
             <Text style={{ marginTop: 10 }}>No reviews yet. Be the first to review!</Text>
           </View>
@@ -377,7 +362,9 @@ const Services = () => {
           )}
 
           {/* Book Service Button */}
-          <TouchableOpacity style={styles.bookButton} onPress={handleAddtoCart}>
+          <TouchableOpacity
+            style={styles.bookButton}
+            onPress={TokenSelector ? handleAddtoCart : () => setSignUpConfirmModalVisible(true)}>
             <Text style={styles.bookButtonText}>
               {selectedBookingType === 'general' ? 'BOOK NOW' : 'PRE-BOOK SERVICE'}
             </Text>
@@ -391,6 +378,7 @@ const Services = () => {
     <>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       <SafeAreaView edges={['top']} style={[styles.container, { paddingVertical: 10 }]}>
+        <LoadingAnimation visible={isLoading} />
         <View style={styles.header}>
           <Image
             source={require('../../assets/home/LOGO.png')}
@@ -408,7 +396,7 @@ const Services = () => {
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
               {/* <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>1</Text>
-              </View> */}
+                </View> */}
             </TouchableOpacity>
           </View>
         </View>
@@ -451,7 +439,7 @@ const Services = () => {
           </ScrollView>
 
           {/* Search Input */}
-          <View style={{ marginVertical: 5, marginHorizontal: 15, marginBottom: 15 }}>
+          <View style={{ marginVertical: 5, marginHorizontal: 15, marginTop: -5 }}>
             <View style={styles.searchContainer}>
               <View style={styles.searchIcon}>
                 <Ionicons name="search" size={22} color={COLORS.grey} />
@@ -612,6 +600,22 @@ const Services = () => {
           </ScrollView>
         </Modal>
 
+        <View>
+          <CustomLogoutModal
+            visible={signUpConfirmModalVisible}
+            onConfirm={() => navigation.navigate('RegisterScreen' as never)}
+            onCancel={() => setSignUpConfirmModalVisible(false)}
+            title="Please SignUp"
+            message="You need to sign up to book a service."
+            confirmText="Sign Up"
+            cancelText="Cancel"
+            confirmButtonColor={COLORS.primary}
+            cancelButtonColor={COLORS.transparent}
+            titleTextColor={COLORS.primary}
+            messageTextColor={COLORS.grey}
+          />
+        </View>
+
         {/* Booking Modal */}
         {renderBookingModal()}
       </SafeAreaView>
@@ -634,6 +638,7 @@ const styles = StyleSheet.create({
   headerIcons: {
     flexDirection: 'row',
     gap: 20,
+    marginRight: 5,
   },
   cartBadge: {
     width: 15,
@@ -660,11 +665,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
   },
   sectionTitle: {
-    ...FONTS.h4,
-    fontWeight: '500',
+    ...FONTS.h5,
+    fontWeight: 500,
     color: COLORS.primary,
     marginLeft: 3,
-    marginBottom: 5,
   },
   categoriesContainer: {
     paddingHorizontal: 10,
