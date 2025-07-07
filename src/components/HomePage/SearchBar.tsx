@@ -26,7 +26,7 @@ export default SearchBarExample;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff', // optional, to set background
+    backgroundColor: COLORS.white,
   },
   container: {
     padding: 15,
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     height: 15,
     tintColor: COLORS.primary_text,
     position: 'absolute',
-    right: 25,
+    right: 30,
     top: 30,
     resizeMode: 'contain',
   },

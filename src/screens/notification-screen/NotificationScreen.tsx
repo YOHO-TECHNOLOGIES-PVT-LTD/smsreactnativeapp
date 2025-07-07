@@ -1,48 +1,20 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Image } from 'react-native';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, icons, SIZES } from '~/constants';
+import { getAllNotifications } from '~/features/notification/service';
+import { formatTime } from '~/utils/formatDate';
 
 type Notification = {
-  id: string;
+  uuid: string;
   title: string;
   message: string;
-  status: 'read' | 'unread';
-  time: string; // e.g., '2h ago', 'Today, 3:00 PM', etc.
+  is_read: boolean;
+  updated_at: string;
+  recipient_type: string;
 };
-
-const notifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Welcome!',
-    message: 'Thanks for joining our service.',
-    status: 'read',
-    time: '1d ago',
-  },
-  {
-    id: '2',
-    title: 'New Offer!',
-    message: 'Flat 20% off on all services this week!',
-    status: 'unread',
-    time: '3h ago',
-  },
-  {
-    id: '3',
-    title: 'Reminder',
-    message: 'Your car service is due tomorrow.',
-    status: 'unread',
-    time: '10m ago',
-  },
-  {
-    id: '4',
-    title: 'Feedback Request',
-    message: 'Please rate your last visit.',
-    status: 'read',
-    time: '5d ago',
-  },
-];
 
 const FILTERS = ['All', 'Read', 'Unread'] as const;
 type FilterType = (typeof FILTERS)[number];
@@ -50,18 +22,44 @@ type FilterType = (typeof FILTERS)[number];
 const NotificationScreen: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('All');
   const navigate = useNavigation();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const fetchAllNotifications = async () => {
+    try {
+      const response = await getAllNotifications({});
+      if (response) {
+        const userNotifications = response.filter((n: Notification) => n.recipient_type === 'user');
+        setNotifications(userNotifications);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllNotifications();
+  }, []);
 
   const filteredNotifications = useMemo(() => {
-    if (filter === 'All') return notifications;
-    return notifications.filter((n) => n.status === filter.toLowerCase());
-  }, [filter]);
+    let filtered = notifications;
+
+    if (filter === 'Read') {
+      filtered = filtered.filter((n) => n.is_read);
+    } else if (filter === 'Unread') {
+      filtered = filtered.filter((n) => !n.is_read);
+    }
+
+    return [...filtered].sort((a, b) => {
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
+  }, [filter, notifications]);
 
   const renderNotification = ({ item }: { item: Notification }) => (
-    <View style={[styles.notificationItem, item.status === 'unread' && styles.unread]}>
+    <View style={[styles.notificationItem, !item.is_read && styles.unread]}>
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.message}>{item.message}</Text>
       <View style={styles.timeWrapper}>
-        <Text style={styles.timeText}>{item.time}</Text>
+        <Text style={styles.timeText}>{formatTime(item?.updated_at, true)}</Text>
       </View>
     </View>
   );
@@ -93,7 +91,7 @@ const NotificationScreen: React.FC = () => {
       {/* Notification List */}
       <FlatList
         data={filteredNotifications}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.uuid}
         renderItem={renderNotification}
         contentContainerStyle={{ padding: SIZES.radius }}
         ListEmptyComponent={<Text style={styles.emptyText}>No notifications found</Text>}
@@ -162,6 +160,6 @@ const styles = StyleSheet.create({
   },
   timeText: {
     color: COLORS.grey,
-    ...FONTS.body7,
+    ...FONTS.body6,
   },
 });

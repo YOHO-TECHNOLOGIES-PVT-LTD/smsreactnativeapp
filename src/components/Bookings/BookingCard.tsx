@@ -44,7 +44,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
     opacity: opacity.value,
   }));
 
-  console.log('BookingCard', data);
+  console.log('BookingCard data:', data);
 
   return (
     <Animated.View style={[animatedStyle, { marginVertical: 5 }]}>
@@ -72,16 +72,27 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
             marginTop: 15,
           }}>
           <Image
-            source={{ uri: data?.imageUrl }}
+            source={{
+              uri:
+                data?.imageUrl !== ''
+                  ? data?.imageUrl
+                  : '../../assets/sparepartsimage/parts/brakepads.jpg',
+            }}
             style={{ width: 55, height: 55, resizeMode: 'cover', borderRadius: 50 }}
           />
           <View style={{ flexDirection: 'row', gap: 2 }}>
             <Image
-              source={icons.tick}
+              source={data?.status === 'pending' ? '' : icons.tick}
               style={{ width: 10, height: 10 }}
-              tintColor={COLORS.success_lightgreen}
+              tintColor={data?.status === 'pending' ? COLORS.error : COLORS.success_lightgreen}
             />
-            <Text style={{ ...FONTS.h7, color: COLORS.success_lightgreen }}>Completed</Text>
+            <Text
+              style={{
+                ...FONTS.h7,
+                color: data?.status === 'pending' ? COLORS.error : COLORS.success_lightgreen,
+              }}>
+              {data?.status === 'pending' ? 'Pending' : 'Completed'}
+            </Text>
           </View>
         </View>
         <View style={{ flex: 1 }}>
@@ -98,7 +109,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 5 }}>
             <Text style={{ ...FONTS.body6, color: COLORS.primary_01 }}>
-              Compatibility: {data?.compatibility}
+              Warranty: {data?.warranty}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 3, marginTop: 5 }}>

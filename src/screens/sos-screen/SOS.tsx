@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
-import { COLORS, icons, screens, SIZES } from '~/constants/index';
+import { COLORS, FONTS, icons, screens, SIZES } from '~/constants/index';
 import Header from '~/components/Header';
 import MarinaMap from '~/components/SosScreen/MarinaMap';
 import SosButtons from '~/components/SosScreen/Buttons';
@@ -24,7 +24,7 @@ const SOS = () => {
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
 
-  const handleChange = (text) => {
+  const handleChange = (text: any) => {
     if (/^\d*$/.test(text)) {
       setValue(text);
       const num = parseInt(text);
@@ -71,7 +71,7 @@ const SOS = () => {
                 borderColor: COLORS.primary,
               }}
               onPress={() => {
-                navigation.navigate('NotificationScreen');
+                navigation.navigate('NotificationScreen' as never);
               }}
             />
 
@@ -99,27 +99,24 @@ const SOS = () => {
       />
 
       {/* Display Google Map */}
-      <ScrollView>
+      <ScrollView style={{ position: 'relative' }}>
         <View style={styles.mapContainer}>
           <MarinaMap />
         </View>
 
-        <View style={{ position: 'relative', top: -290 }}>
-          <Text style={{ fontSize: SIZES.h3, paddingTop: 50, paddingLeft: 10 }}>
-            Mobile Number:
-          </Text>
+        <View style={{ }}>
+          <Text style={{ ...FONTS.body4, paddingTop: 20, paddingLeft: 10 }}>Mobile Number:</Text>
 
           <View style={styles.Textcontainer}>
             <TextInput
               style={styles.input}
-              placeholder=""
+              placeholder="+91-1234567890"
               value={value}
               onChangeText={handleChange}
               keyboardType="numeric"
               maxLength={10}
             />
           </View>
-
           <SosButtons />
         </View>
       </ScrollView>
@@ -132,22 +129,23 @@ export default SOS;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.white,
-    marginTop: 35,
   },
   mapContainer: {
-    height: 500,
+    borderTopColor: COLORS.primary,
+    borderWidth: 3,
+    height: 250,
   },
   Textcontainer: {
-    padding: 5,
+    paddingHorizontal: 15,
     marginBottom: 5,
   },
   input: {
     height: 50,
-    borderWidth: 1,
-    borderColor: COLORS.dark,
+    borderWidth: 0.3,
+    borderColor: COLORS.grey,
     borderRadius: 8,
     paddingHorizontal: 12,
-    fontSize: 16,
-    marginTop: 15,
+    ...FONTS.body4,
+    marginTop: 10,
   },
 });

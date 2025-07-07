@@ -16,7 +16,7 @@ const html = `
     <iframe
       src="${EMBED_URL}"
       width="100%"
-      height="50%"
+      height="100%"
       frameborder="0"
       style="border:0;"
       allowfullscreen
@@ -28,18 +28,13 @@ const html = `
 
 const MarinaMap = () => (
   <View style={styles.container}>
-    <WebView
-      originWhitelist={['*']}
-      source={{ html }}
-      style={styles.map}
-    />
+    <WebView originWhitelist={['*']} source={{ html }} style={styles.map} />
   </View>
 );
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-
 });
 
 export default MarinaMap;

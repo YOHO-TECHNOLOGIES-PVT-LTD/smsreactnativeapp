@@ -1,36 +1,21 @@
-import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import { Image, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import Header from '~/components/Header';
+import { COLORS, FONTS, icons, screens, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
-import { COLORS, icons, screens, SIZES } from '~/constants';
-import Header from '~/components/Header';
-import SparePartsPage from '~/components/SpareParts/SparePartsPage';
-import { getAllSpareParts } from '~/features/spare-parts/service';
-import { SparePart } from '../../components/SpareParts/sparePartsData';
+import TitleSearchBar from '../../components/HomePage/SearchBar';
+import App from '../../components/HomePage/App';
+import AutoSlidingCarousel from '../../components/HomePage/AutoSlidingCarousel';
+import Offercard from '../../components/HomePage/offercard';
+import BlinkingImage from '../../components/HomePage/BlinkingCardsContainer';
 
-const SpareParts = () => {
+const HomeScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [error, setError] = useState(false);
-  const [spareParts, setSpareParts] = useState([]);
-
-  const getAllSparePartsDetails = async () => {
-    try {
-      const data = '';
-      const response = await getAllSpareParts(data);
-      if (response) {
-        setSpareParts(response);
-      }
-    } catch (error) {
-      console.error('Error fetching spare parts:', error);
-    }
-  };
-
-  useEffect(() => {
-    getAllSparePartsDetails();
-  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -65,7 +50,7 @@ const SpareParts = () => {
                 borderColor: COLORS.primary,
               }}
               onPress={() => {
-                navigation.navigate('NotificationScreen' as never);
+                navigation.navigate('NotificationScreen');
               }}
             />
 
@@ -91,18 +76,34 @@ const SpareParts = () => {
           </View>
         }
       />
-      <View style={{ flex: 1 }}>
-        <SparePartsPage spareParts={spareParts} />
-      </View>
+      <View style={{ borderBottomWidth: 3, borderColor: COLORS.primary }}></View>
+      <ScrollView>
+        <View>
+          <TitleSearchBar />
+          <AutoSlidingCarousel />
+          <App />
+          <Offercard />
+          <BlinkingImage />
+          <View style={{ marginBottom: 45 }}></View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default SpareParts;
+export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
+  },
+  btn: {
+    backgroundColor: 'red',
+    padding: SIZES.padding,
+    marginVertical: SIZES.padding,
+    borderRadius: SIZES.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -1,26 +1,62 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '~/constants';
+import { COLORS, FONTS } from '~/constants';
 
 const issues = [
-  { id: 'battery', label: 'Battery Discharged', icon: require('../../assets/icons/images/sosimages/battery.png') },
-  { id: 'accident', label: 'Accident', icon: require('../../assets/icons/images/sosimages/fender-bender.png') },
-  { id: 'fuel', label: 'Fuel Problem', icon: require('../../assets/icons/images/sosimages/gasoline-pump.png') },
-  { id: 'keys', label: 'Lost / Locked Keys', icon: require('../../assets/icons/images/sosimages/key.png') },
+  {
+    id: 'battery',
+    label: 'Battery Discharged',
+    icon: require('../../assets/icons/images/sosimages/battery.png'),
+  },
+  {
+    id: 'accident',
+    label: 'Accident',
+    icon: require('../../assets/icons/images/sosimages/fender-bender.png'),
+  },
+  {
+    id: 'fuel',
+    label: 'Fuel Problem',
+    icon: require('../../assets/icons/images/sosimages/gasoline-pump.png'),
+  },
+  {
+    id: 'keys',
+    label: 'Lost / Locked Keys',
+    icon: require('../../assets/icons/images/sosimages/key.png'),
+  },
   { id: 'tyre', label: 'Flat Tyre', icon: require('../../assets/icons/images/sosimages/tyre.png') },
-  { id: 'breakdown', label: 'Breakdown', icon: require('../../assets/icons/images/sosimages/break.png') },
-  { id: 'engine', label: 'Engine Overtheating', icon: require('../../assets/icons/images/sosimages/car-engine.png') },
-  { id: 'coolant', label: 'Coolant Leakage', icon: require('../../assets/icons/images/sosimages/coolant.png') },
-  { id: 'brake', label: 'Brake Problem', icon: require('../../assets/icons/images/sosimages/car-wash.png') },
-  { id: 'clutch', label: 'Clutch Problem', icon: require('../../assets/icons/images/sosimages/carbreak.png') },
+  {
+    id: 'breakdown',
+    label: 'Breakdown',
+    icon: require('../../assets/icons/images/sosimages/break.png'),
+  },
+  {
+    id: 'engine',
+    label: 'Engine Overtheating',
+    icon: require('../../assets/icons/images/sosimages/car-engine.png'),
+  },
+  {
+    id: 'coolant',
+    label: 'Coolant Leakage',
+    icon: require('../../assets/icons/images/sosimages/coolant.png'),
+  },
+  {
+    id: 'brake',
+    label: 'Brake Problem',
+    icon: require('../../assets/icons/images/sosimages/car-wash.png'),
+  },
+  {
+    id: 'clutch',
+    label: 'Clutch Problem',
+    icon: require('../../assets/icons/images/sosimages/carbreak.png'),
+  },
 ];
 
 export default function RoadsideAssistanceScreen() {
   const [selectedIssues, setSelectedIssues] = useState([]);
 
-  const handleSelect = (id) => {
-    if (selectedIssues.includes(id)) {
+  const handleSelect = (id: any) => {
+    if (selectedIssues.includes(id as never)) {
       setSelectedIssues((prev) => prev.filter((item) => item !== id));
     } else {
       setSelectedIssues((prev) => [...prev, id]);
@@ -35,24 +71,15 @@ export default function RoadsideAssistanceScreen() {
         {issues.map((issue) => (
           <TouchableOpacity
             key={issue.id}
-            style={[
-              styles.issueButton,
-              selectedIssues.includes(issue.id) && styles.selectedButton,
-            ]}
+            style={[styles.issueButton, selectedIssues.includes(issue.id) && styles.selectedButton]}
             onPress={() => handleSelect(issue.id)}
-          >
+            activeOpacity={0.8}>
             {selectedIssues.includes(issue.id) && (
-              <Ionicons
-                name="checkmark-circle"
-                size={20}
-                color="green"
-                style={styles.checkIcon}
-              />
+              <Ionicons name="checkmark-circle" size={20} color="green" style={styles.checkIcon} />
             )}
-            <View style={styles.rowWithImage}>
-              <Image source={issue.icon} style={styles.issueIcon} />
-              <Text style={styles.label}>{issue.label}</Text>
-            </View>
+
+            <Image source={issue.icon} style={styles.issueIcon} />
+            <Text style={styles.label}>{issue.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -66,6 +93,7 @@ export default function RoadsideAssistanceScreen() {
       <TouchableOpacity>
         <Text style={styles.callText}>CALL US?</Text>
       </TouchableOpacity>
+      <View style={{ marginTop: 135 }}></View>
     </ScrollView>
   );
 }
@@ -76,9 +104,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heading: {
-    fontSize: 15,
-    fontWeight: 'bold',
+    ...FONTS.h4,
     marginBottom: 16,
+    color: COLORS.primary,
     alignSelf: 'flex-start',
   },
   grid: {
@@ -88,62 +116,58 @@ const styles = StyleSheet.create({
   },
   issueButton: {
     width: '47%',
-    backgroundColor:COLORS.lightGrey05,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    backgroundColor: COLORS.lightGrey05,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    marginBottom: 16,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    elevation: 2,
   },
   selectedButton: {
     backgroundColor: '#e6f9f0',
     borderColor: 'green',
     borderWidth: 1,
   },
-  rowWithImage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
   issueIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
+    width: 30,
+    height: 30,
     resizeMode: 'contain',
+    marginBottom: 8,
+    tintColor: COLORS.primary_text,
   },
   label: {
-    fontSize: 14,
+    ...FONTS.body5,
     textAlign: 'center',
+    color: COLORS.primary_borders,
   },
   checkIcon: {
     position: 'absolute',
     top: 8,
     right: 8,
-    zIndex: 1,
+    zIndex: 2,
   },
   confirmButton: {
-    backgroundColor: '#FF6B00',
-    paddingVertical: 12,
-    paddingHorizontal: 50,
-    borderRadius: 30,
-    marginTop: 20,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 50,
+    marginTop: 15,
   },
   confirmText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: COLORS.white,
+    ...FONTS.h5,
   },
   orText: {
-    marginTop: 16,
-    fontSize: 14,
+    marginTop: 10,
+    ...FONTS.body5,
     color: '#666',
   },
   callText: {
-    marginTop: 4,
-    fontSize: 16,
-    color: '#0000cc',
-    fontWeight: 'bold',
+    ...FONTS.h5,
+    color: COLORS.indigo[500],
+    textDecorationLine: 'underline',
   },
 });

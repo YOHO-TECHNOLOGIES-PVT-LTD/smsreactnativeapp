@@ -13,6 +13,7 @@ import { setSelectedTab } from '../store/tab/tabSlice';
 import { useNavigation } from '@react-navigation/native';
 import toast from '../utils/toast';
 import { RootState } from '../store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type CustomDrawerItemProps = {
   label: string;
@@ -76,16 +77,9 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
           text: 'OK',
           onPress: async () => {
             try {
-              const response = '';
-              if (response) {
-                toast.success('', 'Logout Successfully.');
-                navigation.reset({ index: 0, routes: [{ name: 'AuthStack' }] });
-              } else {
-                toast.error(
-                  'Logout Failed',
-                  'There was an issue logging you out. Please try again.'
-                );
-              }
+              await AsyncStorage.removeItem('authToken');
+              toast.success('', 'Logout Successfully.');
+              navigation.reset({ index: 0, routes: [{ name: 'AuthStack' }] });
             } catch (error) {
               toast.error('Error', 'An error occurred during logout. Please try again later.');
             }
