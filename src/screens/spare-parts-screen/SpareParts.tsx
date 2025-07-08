@@ -1,28 +1,20 @@
 import {
   Image,
-  ImageBackground,
   StatusBar,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { setSelectedTab } from '~/store/tab/tabSlice';
-import { useDispatch } from 'react-redux';
-import IconButton from '~/components/IconButton';
-import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
-import Header from '~/components/Header';
+import { COLORS, icons, } from '~/constants';
 import SparePartsPage from '~/components/SpareParts/SparePartsPage';
 import { getAllSpareParts } from '~/features/spare-parts/service';
-import { SparePart } from '../../components/SpareParts/sparePartsData';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
+import {  Ionicons } from '@expo/vector-icons';
 
 const SpareParts = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
   const [spareParts, setSpareParts] = useState([]);
 
   const getAllSparePartsDetails = async () => {

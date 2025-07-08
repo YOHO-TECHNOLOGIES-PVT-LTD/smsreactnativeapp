@@ -191,13 +191,13 @@ const Services = () => {
       case 'description':
         return (
           <Text style={styles.tabContent}>
-            {selectedService.description || 'No description available'}
+            {selectedService?.description || 'No description available'}
           </Text>
         );
       case 'delivery':
         return (
           <Text style={styles.tabContent}>
-            Service duration: {selectedService.duration || '1-2 hours'}
+            Service duration: {selectedService?.duration || '1-2 hours'}
           </Text>
         );
       case 'reviews':
@@ -603,11 +603,11 @@ const Services = () => {
         <View>
           <CustomLogoutModal
             visible={signUpConfirmModalVisible}
-            onConfirm={() => navigation.navigate('RegisterScreen' as never)}
+            onConfirm={() => navigation.navigate('LoginScreen' as never)}
             onCancel={() => setSignUpConfirmModalVisible(false)}
-            title="Please SignUp"
-            message="You need to sign up to book a service."
-            confirmText="Sign Up"
+            title="Please Login"
+            message="You need to login to book a service."
+            confirmText="Login"
             cancelText="Cancel"
             confirmButtonColor={COLORS.primary}
             cancelButtonColor={COLORS.transparent}

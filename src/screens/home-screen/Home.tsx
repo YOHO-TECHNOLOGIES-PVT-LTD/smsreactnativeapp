@@ -407,7 +407,7 @@ const HomePage = () => {
         </View>
         <ScrollView>
           {/* Image Carousel */}
-          <View style={{ backgroundColor: COLORS.grey08, paddingVertical: 10 }}>
+          <View style={{ backgroundColor: COLORS.primary_04, paddingVertical: 10 }}>
             <ImageCarousel images={images} />
           </View>
 
@@ -427,7 +427,7 @@ const HomePage = () => {
           </View>
 
           {/* Available Spare Parts */}
-          <View style={[styles.section, { padding: 15, backgroundColor: COLORS.grey20 }]}>
+          <View style={[styles.section, { padding: 15, backgroundColor: COLORS.primary_04 }]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Available Spare Parts</Text>
               <TouchableOpacity onPress={() => dispatch(setSelectedTab(screens.spare_parts))}>
@@ -483,15 +483,15 @@ const HomePage = () => {
           {/* Guarantee Terms */}
           <View style={styles.guaranteeContainer}>
             <View style={styles.guaranteeItem}>
-              <MaterialIcons name="verified" size={28} color="#8B0000" />
+              <MaterialIcons name="verified" size={28} color={COLORS.primary_02} />
               <Text style={styles.guaranteeText}>100% Genuine Parts</Text>
             </View>
             <View style={styles.guaranteeItem}>
-              <MaterialIcons name="security" size={28} color="#8B0000" />
+              <MaterialIcons name="security" size={28} color={COLORS.primary_02} />
               <Text style={styles.guaranteeText}>6 Months Warranty</Text>
             </View>
             <View style={styles.guaranteeItem}>
-              <MaterialIcons name="money-off" size={28} color="#8B0000" />
+              <MaterialIcons name="money-off" size={28} color={COLORS.primary_02} />
               <Text style={styles.guaranteeText}>Price Match Guarantee</Text>
             </View>
           </View>
@@ -502,7 +502,7 @@ const HomePage = () => {
               <Text style={{ ...FONTS.h3, fontWeight: 500, color: COLORS.primary_text }}>
                 Authorized Spare Parts
               </Text>
-              <Text style={{ ...FONTS.body5, color: COLORS.grey, marginVertical: 5 }}>
+              <Text style={{ ...FONTS.body5, color: COLORS.black, marginVertical: 5 }}>
                 Beyond Standard Warranty - YesMechanic Assurance
               </Text>
             </View>
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.primary,
   },
   subtitle: {
     fontSize: 12,
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     ...FONTS.body6,
-    color: COLORS.grey80,
+    color: COLORS.black,
     marginVertical: 5,
   },
   servicesContainer: {
@@ -966,7 +966,7 @@ const styles = StyleSheet.create({
   },
   offerDiscount: {
     ...FONTS.body6,
-    color: COLORS.grey,
+    color: COLORS.black,
     marginBottom: 10,
   },
   offerButton: {
@@ -1091,7 +1091,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     marginBottom: 5,
-    backgroundColor: COLORS.grey20,
+    backgroundColor: COLORS.primary_04,
   },
   guaranteeItem: {
     alignItems: 'center',
@@ -1099,7 +1099,7 @@ const styles = StyleSheet.create({
   },
   guaranteeText: {
     ...FONTS.body6,
-    color: '#333',
+    color: COLORS.primary_text,
     textAlign: 'center',
     marginTop: 8,
   },

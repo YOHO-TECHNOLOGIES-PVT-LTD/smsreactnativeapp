@@ -13,8 +13,11 @@ import toast from '~/utils/toast';
 import { COLORS, FONTS } from '~/constants';
 import { VerifyOtp } from '../service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { RouteProp } from '@react-navigation/native';
 
-const OtpVerificationScreen = ({ route }) => {
+type OtpVerificationScreenRouteProp = RouteProp<any, any>;
+
+const OtpVerificationScreen = ({ route }: { route: OtpVerificationScreenRouteProp }) => {
   const navigation = useNavigation();
   const [otp, setOtp] = React.useState(Array(6).fill(''));
   const inputsRef = React.useRef<Array<TextInput | null>>([]);

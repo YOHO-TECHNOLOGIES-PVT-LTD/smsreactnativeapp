@@ -203,14 +203,14 @@ export const COLORS = {
     900: '#040d2b',
   },
   // Primary
-  primary: '#9b111e',
-  primary_01: '#c22d3e',
-  primary_02: '#e0646f',
-  primary_03: '#f09ca3',
-  primary_04: '#f8d4d8',
-  primary_text: '#600912',
-  primary_borders: '#7f0d18',
-  primary_active: '#40060c',
+  primary: '#0050A5',
+  primary_01: '#0050A5',
+  primary_02: '#0050A5',
+  primary_03: '#BED0EC',
+  primary_04: '#d8e1ef',
+  primary_text: '#0050A5',
+  primary_borders: '#0050A5',
+  primary_active: '#0050A5',
 
   // Secondary
   secondary: 'rgba(161, 219, 245)',
@@ -240,7 +240,7 @@ export const COLORS = {
   dark08: 'rgba(13, 15, 35, 0.08)',
 
   // Grey
-  grey: 'rgba(160, 161, 180, 1)',
+  grey: '000',
   grey80: 'rgba(160, 161, 180, 0.8)',
   grey60: 'rgba(160, 161, 180, 0.6)',
   grey40: 'rgba(160, 161, 180, 0.4)',

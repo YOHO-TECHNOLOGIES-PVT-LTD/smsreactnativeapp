@@ -16,12 +16,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { COLORS, FONTS } from '~/constants';
 import toast from '~/utils/toast';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { LoginAuthentication } from '../service';
+import { LoginAuthentication, SignUpAuthentication } from '../service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type LoginFormData = {
-  email: string;
-  password: string;
+  phone: string;
 };
 
 const LoginScreen = () => {
@@ -36,14 +35,12 @@ const LoginScreen = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await LoginAuthentication(data);
-      if (response) {
-        await AsyncStorage.setItem('authToken', response);
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainStack' }],
+      const response: any = await SignUpAuthentication({ phoneNumber: data?.phone });
+      if (response?.success === true) {
+        navigation.navigate('OtpVerificationScreen' as never, {
+          data: response?.data,
+          method: 'login',
         });
-        toast.success('Success', 'Logged in successfully');
       }
     } catch (error: any) {
       console.log('Login Error:', error.message);
@@ -65,11 +62,11 @@ const LoginScreen = () => {
           {/* Identifier Input */}
           <Controller
             control={control}
-            rules={{ required: 'Username or phone is required' }}
-            name="email"
+            rules={{ required: 'Phone Number is required' }}
+            name="phone"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
-                placeholder="Email or Phone Number"
+                placeholder="Phone Number"
                 placeholderTextColor="#999"
                 style={styles.input}
                 onBlur={onBlur}
@@ -78,9 +75,10 @@ const LoginScreen = () => {
               />
             )}
           />
-          {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+          {errors.phone && <Text style={styles.errorText}>{errors.phone.message}</Text>}
+
           {/* Password Input */}
-          <Controller
+          {/* <Controller
             control={control}
             rules={{ required: 'Password is required' }}
             name="password"
@@ -105,13 +103,14 @@ const LoginScreen = () => {
               </View>
             )}
           />
-          {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
+          {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>} */}
           {/* Login Button */}
           <TouchableOpacity style={styles.loginButton} onPress={handleSubmit(onSubmit)}>
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
+
           {/* Links */}
-          <View style={styles.bottomLinks}>
+          {/* <View style={styles.bottomLinks}>
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPasswordScreen' as never)}>
               <Text style={styles.forgotText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -121,7 +120,7 @@ const LoginScreen = () => {
                 <Text style={{ color: COLORS.primary, ...FONTS.h4 }}>Sign Up</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </View> */}
         </Animated.View>
       </ImageBackground>
     </KeyboardAvoidingView>

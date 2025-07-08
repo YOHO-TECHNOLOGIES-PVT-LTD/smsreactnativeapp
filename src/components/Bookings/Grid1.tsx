@@ -17,6 +17,8 @@ import toast from '~/utils/toast';
 
 type CartItem = {
   _id: string;
+  service_name: string;
+  description?: string;
   productId?: {
     _id: string;
     productName: string;
@@ -92,7 +94,6 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
     try {
       const data = { cartId: bookingCarts[0]?._id };
       const response = await addSparePartCartItems(data);
-      console.log('Order confirmation response:', response);
       if (response) {
         toast.success('Success', response.message || 'Successfully placed your order!');
       } else {
@@ -123,13 +124,13 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
 
           {item?.productId && (
             <>
-              <Text style={styles.itemInfo}>{item.productId.warrantyPeriod} warranty</Text>
+              <Text style={styles.itemInfo}>{item.productId?.warrantyPeriod} warranty</Text>
               <Text
                 style={[
                   styles.stockStatus,
-                  item.productId.inStock ? styles.inStock : styles.outOfStock,
+                  item.productId?.inStock ? styles.inStock : styles.outOfStock,
                 ]}>
-                {item.productId.inStock ? 'In Stock' : 'Out of Stock'}
+                {item.productId?.inStock ? 'In Stock' : 'Out of Stock'}
               </Text>
             </>
           )}
@@ -174,9 +175,9 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
               ))}
             </View>
 
-            {filteredItems.length > 0 ? (
+            {filteredItems?.length > 0 ? (
               <View style={styles.itemsContainer}>
-                {filteredItems.map((item, index) => renderItem(item, index))}
+                {filteredItems?.map((item, index) => renderItem(item, index))}
               </View>
             ) : (
               <View style={styles.emptyContainer}>

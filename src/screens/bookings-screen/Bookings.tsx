@@ -9,16 +9,17 @@ import {
   FlatList,
   StatusBar,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { COLORS, FONTS, icons, screens, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import BookingCard from '~/components/Bookings/BookingCard';
 import { getAllBookingsCartItems } from '~/features/bookings/service';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
-import { useDispatch } from 'react-redux';
-import { setSelectedTab } from '~/store/tab/tabSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectToken } from '~/features/token/redux/selectors';
+import { getToken } from '~/features/token/redux/thunks';
+import { AppDispatch } from '~/store';
 
 interface Product {
   _id: string;
@@ -72,21 +73,27 @@ const Bookings = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [Token, setToken] = useState<any>('');
-
-  const fetchToken = async () => {
-    const token = await AsyncStorage.getItem('authToken');
-    setToken(token);
-  };
+  const [isLoading, setIsLoading] = useState(false);
+  const tokenSelector = useSelector(selectToken);
+  const dispatch = useDispatch<AppDispatch>();
+  const navigation = useNavigation();
 
   useEffect(() => {
-    fetchToken();
-  }, []);
+    try {
+      setIsLoading(true);
+      dispatch(getToken());
+      setIsLoading(false);
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = Token && (await getAllBookingsCartItems({}));
+        const response = tokenSelector && (await getAllBookingsCartItems({}));
         if (response?.success) {
           const allOrders = [
             ...(response.productConfirm || []),
@@ -185,8 +192,6 @@ const Bookings = () => {
   const totalOrders = allOrderItems.length;
   const completedOrders = allOrderItems.filter((order) => order.status === 'completed').length;
   const pendingOrders = allOrderItems.filter((order) => order.status === 'pending').length;
-  const navigation = useNavigation();
-  const dispatch = useDispatch();
 
   return (
     <>

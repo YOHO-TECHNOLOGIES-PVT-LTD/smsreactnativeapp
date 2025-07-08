@@ -292,11 +292,11 @@ const SparePartsCard = ({ part }: Props) => {
       <View>
         <CustomLogoutModal
           visible={signUpConfirmModalVisible}
-          onConfirm={() => navigation.navigate('RegisterScreen' as never)}
+          onConfirm={() => navigation.navigate('LoginScreen' as never)}
           onCancel={() => setSignUpConfirmModalVisible(false)}
-          title="Please SignUp"
-          message="You need to sign up to book a service."
-          confirmText="Sign Up"
+          title="Please Login"
+          message="You need to login to book a spare parts."
+          confirmText="Login"
           cancelText="Cancel"
           confirmButtonColor={COLORS.primary}
           cancelButtonColor={COLORS.transparent}

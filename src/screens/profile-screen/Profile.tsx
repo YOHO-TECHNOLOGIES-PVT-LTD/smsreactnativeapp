@@ -81,15 +81,15 @@ const { width } = Dimensions.get('window');
 
 const COLORS1 = {
   // Primary colors1 - Refined Deep Crimson Theme
-  primary: '#9b111e',
-  primaryLight: '#c22d3e',
-  primaryDark: '#40060c',
-  primaryUltraLight: '#f8d4d8',
-  primaryBorder: '#FFB3B3',
+  primary: '#0050A5',
+  primaryLight: '#4566de',
+  primaryDark: '#0050A5',
+  primaryUltraLight: '#d8e1ef',
+  primaryBorder: '#BED0EC',
 
   // Background colors1
-  background: '#8B0000',
-  backgroundGradient: ['#8B0000', '#660000'],
+  background: '#0050A5',
+  backgroundGradient: ['#0050A5', '#BED0EC'],
 
   // Card colors1 with sophisticated combinations
   cardPrimary: '#FFFFFF',
@@ -134,7 +134,7 @@ const COLORS1 = {
   shadowStrong: 'rgba(0, 0, 0, 0.7)',
 
   // Special gradient combinations
-  gradientPrimary: ['#8B0000', '#B22222'] as [string, string],
+  gradientPrimary: ['#0050A5', '#BED0EC'] as [string, string],
   gradientprimary: ['#D97706', '#F59E0B'] as [string, string],
   gradientSuccess: ['#059669', '#10B981'] as [string, string],
   gradientInfo: ['#2563EB', '#3B82F6'] as [string, string],
@@ -1374,7 +1374,7 @@ const Profile = () => {
                   <View style={styles.profileImageContainer}>
                     {userInfo.profileImage ? (
                       <Image
-                        source={require('../../assets/images/profile_picture.jpg')}
+                        source={{ uri: userInfo?.profileImage }}
                         style={{ width: 100, height: 100, borderRadius: 50 }}
                       />
                     ) : (
@@ -2188,16 +2188,16 @@ const Profile = () => {
             <CustomLogoutModal
               visible={logoutModalVisible}
               onConfirm={
-                TokenSelector ? handleLogout : () => navigation.navigate('RegisterScreen' as never)
+                TokenSelector ? handleLogout : () => navigation.navigate('LoginScreen' as never)
               }
               onCancel={() => setLogoutModalVisible(false)}
-              title={TokenSelector ? 'Confirm Logout' : 'Please SignUp'}
+              title={TokenSelector ? 'Confirm Logout' : 'Please Login'}
               message={
                 TokenSelector
                   ? 'Are you sure, you want to log out?'
-                  : 'You need to sign up to book a service.'
+                  : 'You need to login to edit your profile.'
               }
-              confirmText={TokenSelector ? 'Yes, Logout' : 'Sign Up'}
+              confirmText={TokenSelector ? 'Yes, Logout' : 'Login'}
               cancelText={TokenSelector ? 'No, Stay' : 'Cancel'}
               confirmButtonColor={COLORS.primary}
               cancelButtonColor={COLORS.transparent}
@@ -2858,7 +2858,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: COLORS.error08,
+    borderColor: COLORS.primary_04,
   },
   editCameraIcon: {
     position: 'absolute',
@@ -2893,7 +2893,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: COLORS.error08,
+    borderColor: COLORS.primary_04,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
