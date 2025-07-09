@@ -7,6 +7,7 @@ import {
   FlatList,
   useWindowDimensions,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -92,7 +93,7 @@ const TabButton: React.FC<TabButtonProps> = ({
               width: isScanButton ? 45 : '100%',
               height: isScanButton ? 45 : SPACING.small,
               borderRadius: isScanButton ? 32.5 : 25,
-              backgroundColor: isScanButton ? COLORS.primary_04 : '',
+              backgroundColor: isScanButton ? 'white' : undefined,
               justifyContent: 'center',
               alignItems: 'center',
               elevation: isScanButton ? 5 : 0,
@@ -105,26 +106,32 @@ const TabButton: React.FC<TabButtonProps> = ({
           ]}>
           <View
             style={{
-              backgroundColor: isScanButton ? '' : isFocused ? COLORS.primary_04 : COLORS.white,
+              backgroundColor: isScanButton ? '' : isFocused ? undefined : undefined,
               paddingHorizontal: 10,
               paddingVertical: 5,
-              borderRadius: 50,
+              borderRadius: 5,
             }}>
             <Image
               source={icon}
               style={{
-                width: isScanButton ? 35 : 25,
-                height: isScanButton ? 35 : 25,
+                width: isScanButton ? 45 : 20,
+                height: isScanButton ? 45 : 20,
                 tintColor: isScanButton
                   ? undefined
                   : isFocused
                     ? COLORS.primary_borders
-                    : undefined,
+                    : COLORS.grey,
               }}
             />
           </View>
           {!isScanButton && (
-            <Text numberOfLines={1} style={{ color: COLORS.primary_text, ...FONTS.h7 }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: isFocused ? COLORS.primary_text : COLORS.grey,
+                ...FONTS.h7,
+                fontWeight: 600,
+              }}>
               {label}
             </Text>
           )}
@@ -142,7 +149,7 @@ const MainLayout: React.FC = () => {
   const selectedTab = useSelector((state: any) => state.tabReducer.selectedTab);
 
   const sosAnimation = useSharedValue(1);
-  // const radialPulse = useSharedValue(0);
+  const radialPulse = useSharedValue(0);
 
   const sosAnimatedStyle = useAnimatedStyle(() => {
     const scale = interpolate(sosAnimation.value, [0, 1], [1, 1.2]);
@@ -161,12 +168,12 @@ const MainLayout: React.FC = () => {
     };
   });
 
-  // const radialGlowStyle = useAnimatedStyle(() => ({
-  //   transform: [{ scale: radialPulse.value }],
-  //   opacity: interpolate(radialPulse.value, [0.9, 1], [0.5, 0]),
-  //   backgroundColor: 'rgba(255, 0, 0, 0.4)',
-  //   borderRadius: 100,
-  // }));
+  const radialGlowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: radialPulse.value }],
+    opacity: interpolate(radialPulse.value, [0.9, 1], [0.5, 0]),
+    backgroundColor: 'rgba(255, 0, 0, 0.4)',
+    borderRadius: 100,
+  }));
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -193,7 +200,7 @@ const MainLayout: React.FC = () => {
   useEffect(() => {
     sosAnimation.value = withRepeat(withTiming(1, { duration: 600 }), -1, true);
 
-    // radialPulse.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
+    radialPulse.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
   }, [sosAnimation]);
 
   useEffect(() => {
@@ -209,79 +216,85 @@ const MainLayout: React.FC = () => {
 
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: COLORS.white }, animatedStyle]}>
-      <View style={{ backgroundColor: COLORS.white }}>
-        <FlatList
-          ref={flatListRef}
-          onScrollToIndexFailed={({ index }) => {
-            flatListRef.current?.scrollToOffset({
-              offset: index * SIZES.width,
-              animated: true,
-            });
-          }}
-          horizontal
-          scrollEnabled={false}
-          pagingEnabled
-          snapToAlignment="center"
-          snapToInterval={SIZES.width}
-          showsHorizontalScrollIndicator={false}
-          data={bottom_tabs}
-          keyExtractor={(item) => `${item.id}`}
-          renderItem={({ item }) => (
-            <View style={{ width: SIZES.width, height: SIZES.height }}>
-              {item.label === screens.home && <HomeScreen />}
-              {item.label === screens.services && <ServicesScreen />}
-              {item.label === screens.sos && <SosScreen />}
-              {item.label === screens.spare_parts && <SparePartsScreen />}
-              {item.label === screens.profile && <ProfileScreen />}
-            </View>
-          )}
-        />
-      </View>
-
-      <SafeAreaView edges={['bottom']} style={{ backgroundColor: COLORS.white }}>
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: COLORS.white,
-            paddingHorizontal: SIZES.radius,
-            paddingTop: 5,
-            paddingBottom: Platform.OS === 'android' ? 10 : 20, // Adjust for nav bar height
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            elevation: 10,
-          }}>
-          {bottom_tabs.map((tab) => {
-            const isScanButton = tab.label === screens.sos;
-            const isFocused = selectedTab === tab.label;
-
-            return (
-              <View
-                key={tab.id}
-                style={{
-                  flex: isScanButton ? 0 : 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  top: isScanButton ? -20 : 0,
-                }}>
-                <TabButton
-                  label={tab.label}
-                  icon={isScanButton ? tab.icon : isFocused ? tab.activeIcon : tab.icon}
-                  isFocused={isFocused}
-                  onPress={() => dispatch(setSelectedTab(tab.label))}
-                  isScanButton={isScanButton}
-                  outerContainerStyle={isScanButton ? sosAnimatedStyle : {}}
-                />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? -50 : -50}>
+        <View style={{ flex: 1, backgroundColor: COLORS.white }}>
+          <FlatList
+            ref={flatListRef}
+            onScrollToIndexFailed={({ index }) => {
+              flatListRef.current?.scrollToOffset({
+                offset: index * SIZES.width,
+                animated: true,
+              });
+            }}
+            horizontal
+            scrollEnabled={false}
+            pagingEnabled
+            snapToAlignment="center"
+            snapToInterval={SIZES.width}
+            showsHorizontalScrollIndicator={false}
+            data={bottom_tabs}
+            keyExtractor={(item) => `${item.id}`}
+            renderItem={({ item }) => (
+              <View style={{ width: SIZES.width, height: SIZES.height }}>
+                {item.label === screens.home && <HomeScreen />}
+                {item.label === screens.services && <ServicesScreen />}
+                {item.label === screens.sos && <SosScreen />}
+                {item.label === screens.spare_parts && <SparePartsScreen />}
+                {item.label === screens.profile && <ProfileScreen />}
               </View>
-            );
-          })}
+            )}
+          />
         </View>
-      </SafeAreaView>
+
+        {/* Bottom Tab Bar - Outside of the scrollable content */}
+        <SafeAreaView edges={['bottom']} style={{ backgroundColor: COLORS.white }}>
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: COLORS.white,
+              paddingHorizontal: SIZES.radius,
+              paddingTop: 10,
+              paddingBottom: Platform.OS === 'android' ? 10 : 20,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              elevation: 10,
+            }}>
+            {bottom_tabs.map((tab) => {
+              const isScanButton = tab.label === screens.sos;
+              const isFocused = selectedTab === tab.label;
+
+              return (
+                <View
+                  key={tab.id}
+                  style={{
+                    flex: isScanButton ? 0 : 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    top: isScanButton ? 0 : 0,
+                  }}>
+                  <TabButton
+                    label={tab.label}
+                    icon={isScanButton ? tab.icon : isFocused ? tab.activeIcon : tab.icon}
+                    isFocused={isFocused}
+                    onPress={() => dispatch(setSelectedTab(tab.label))}
+                    isScanButton={isScanButton}
+                    outerContainerStyle={isScanButton ? sosAnimatedStyle : {}}
+                  />
+                </View>
+              );
+            })}
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </Animated.View>
   );
 };

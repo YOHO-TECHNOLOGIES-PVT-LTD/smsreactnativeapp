@@ -45,7 +45,7 @@ const LoginScreen = () => {
         });
         toast.success('Success', 'Logged in successfully');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log('Login Error:', error.message);
       toast.error('Error', 'Failed to log in');
     }

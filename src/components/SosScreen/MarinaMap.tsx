@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 const EMBED_URL =
-  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31109.84723617997!2d80.27598539999999!3d13.0474877!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5267d1126df05f%3A0xd1b67a0fa979a9f4!2sMarina%20Beach!5e0!3m2!1sen!2sin!4v1717052098230!5m2!1sen!2sin';
+  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1944.1720238824046!2d80.18278093519574!3d12.949822861828878!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525fc59f87dbd3%3A0x5c81dab0c9af94da!2sPatron%20International!5e0!3m2!1sen!2sin!4v1750313647179!5m2!1sen!2sin';
 
 const html = `
 <!DOCTYPE html>

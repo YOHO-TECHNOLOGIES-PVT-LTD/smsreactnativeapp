@@ -1,13 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ImageBackground,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   withTiming,
@@ -15,16 +7,32 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { COLORS, FONTS, icons, SIZES } from '~/constants';
-import EvilIcons from '@expo/vector-icons/EvilIcons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { formatDateMonthandYear } from '../../utils/formatDate';
-import { rgbaColor } from 'react-native-reanimated/lib/typescript/Colors';
 
-type BookingCardProps = {
-  data: any;
+type BookingType = 'spare' | 'service';
+
+interface BookingCardData {
+  id: string;
+  orderId: string;
+  name: string;
+  imageUrl: string;
+  description: string;
+  date: string;
+  price: number;
+  warranty?: string;
+  quantity: number;
+  status: 'pending' | 'completed';
+  type: BookingType;
+}
+
+interface BookingCardProps {
+  data: BookingCardData;
   onPress: () => void;
   delay?: number;
-};
+}
+const DEFAULT_SPARE_IMAGE = require('../../assets/sparepartsimage/parts/brakepads.jpg');
+const DEFAULT_SERVICE_IMAGE = require('../../assets/service-images/generalservice.png');
 
 const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) => {
   const translateY = useSharedValue(30);
@@ -37,124 +45,92 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
       easing: Easing.out(Easing.exp),
     });
     opacity.value = withTiming(1, { duration: 1500, delay });
-  }, []);
+  }, [delay, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
 
-  console.log('BookingCard data:', data);
+  const statusColor = data.status === 'pending' ? COLORS.error : COLORS.success_lightgreen;
+  const statusText = data.status === 'pending' ? 'Pending' : 'Completed';
+  const imageSource = data.imageUrl
+    ? { uri: data.imageUrl }
+    : data.type === 'spare'
+      ? DEFAULT_SPARE_IMAGE
+      : DEFAULT_SERVICE_IMAGE;
 
   return (
-    <Animated.View style={[animatedStyle, { marginVertical: 5 }]}>
-      <View
-        style={{
-          backgroundColor: COLORS.white2,
-          borderRadius: SIZES.radius,
-          padding: 10,
-          shadowColor: COLORS.primary,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 6,
-          elevation: 5,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}>
-        <View
-          style={{
-            width: 55,
-            height: 55,
-            borderRadius: 50,
-            alignItems: 'center',
-            marginRight: 15,
-            gap: 15,
-            marginTop: 15,
-          }}>
-          <Image
-            source={{
-              uri:
-                data?.imageUrl !== ''
-                  ? data?.imageUrl
-                  : '../../assets/sparepartsimage/parts/brakepads.jpg',
-            }}
-            style={{ width: 55, height: 55, resizeMode: 'cover', borderRadius: 50 }}
-          />
-          <View style={{ flexDirection: 'row', gap: 2 }}>
-            <Image
-              source={data?.status === 'pending' ? '' : icons.tick}
-              style={{ width: 10, height: 10 }}
-              tintColor={data?.status === 'pending' ? COLORS.error : COLORS.success_lightgreen}
-            />
-            <Text
-              style={{
-                ...FONTS.h7,
-                color: data?.status === 'pending' ? COLORS.error : COLORS.success_lightgreen,
-              }}>
-              {data?.status === 'pending' ? 'Pending' : 'Completed'}
-            </Text>
+    <Animated.View style={[animatedStyle, styles.container]}>
+      <View style={styles.card}>
+        {/* Image and Status Section */}
+        <View style={styles.imageContainer}>
+          <Image source={imageSource} style={styles.image} defaultSource={DEFAULT_SPARE_IMAGE} />
+          <View style={styles.statusContainer}>
+            {data.status !== 'pending' && (
+              <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
+            )}
+            <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
           </View>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ ...FONTS.h4, color: COLORS.primary }}>{data?.name?.substring(0, 22)}</Text>
-          <Text
-            style={{
-              ...FONTS.body6,
-              color: COLORS.primary_01,
-              width: '95%',
-              textAlign: 'justify',
-              marginTop: 5,
-            }}>
-            {data?.description}
+
+        {/* Main Content Section */}
+        <View style={styles.contentContainer}>
+          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+            {data.name}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 5 }}>
-            <Text style={{ ...FONTS.body6, color: COLORS.primary_01 }}>
-              Warranty: {data?.warranty}
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', gap: 3, marginTop: 5 }}>
+          <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
+            {data.description}
+          </Text>
+
+          {data.warranty && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailText}>Warranty: {data.warranty}</Text>
+            </View>
+          )}
+
+          <View style={styles.detailRow}>
             <AntDesign name="calendar" size={12} color={COLORS.primary_text} />
-            <Text style={{ ...FONTS.body6, color: COLORS.primary_text }}>
-              {formatDateMonthandYear(data?.date)}
-            </Text>
+            <Text style={styles.detailText}>{formatDateMonthandYear(data.date)}</Text>
           </View>
         </View>
-        <View
-          style={{
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
+
+        {/* Right Side Section */}
+        <View style={styles.rightContainer}>
           <TouchableOpacity
-            style={{
-              backgroundColor: COLORS.indigo[100],
-              borderRadius: SIZES.small,
-              width: 60,
-              paddingVertical: 2,
-              paddingHorizontal: 4,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: 5,
-            }}
+            style={[
+              styles.typeBadge,
+              data.type === 'spare' ? styles.spareBadge : styles.serviceBadge,
+            ]}
             onPress={() => {}}>
-            {data?.type === 'spare' ? (
+            {data.type === 'spare' ? (
               <Image
                 source={icons.spare_filled}
-                style={{ width: 15, height: 15 }}
+                style={styles.typeIcon}
                 tintColor={COLORS.indigo[500]}
               />
             ) : (
               <Image
                 source={icons.services_filled}
-                style={{ width: 15, height: 15 }}
+                style={styles.typeIcon}
                 tintColor={COLORS.indigo[500]}
               />
             )}
-            <Text style={{ ...FONTS.h6, color: COLORS.indigo[500] }}>{data?.type}</Text>
+            <Text
+              style={[
+                styles.typeText,
+                data.type === 'spare'
+                  ? { color: COLORS.indigo[500] }
+                  : { color: COLORS.indigo[500] },
+              ]}>
+              {data.type === 'spare' ? 'Spare' : 'Service'}
+            </Text>
           </TouchableOpacity>
-          <Text style={{ ...FONTS.h4, color: COLORS.primary_text }}>₹{data?.price}</Text>
-          <TouchableOpacity style={styles.viewBtn} onPress={() => {}}>
-            <Text style={{ ...FONTS.h6, color: COLORS.white }}>View</Text>
+
+          <Text style={styles.price}>₹ {data.price.toFixed(2)}</Text>
+
+          <TouchableOpacity style={styles.viewButton} onPress={onPress}>
+            <Text style={styles.viewButtonText}>View</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -162,10 +138,110 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
   );
 };
 
-export default BookingCard;
-
 const styles = StyleSheet.create({
-  viewBtn: {
+  container: {
+    marginVertical: 8,
+  },
+  card: {
+    backgroundColor: COLORS.white2,
+    borderRadius: SIZES.radius,
+    padding: 10,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    // alignItems: 'center',
+  },
+  imageContainer: {
+    width: 65,
+    height: 65,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginRight: 7,
+    gap: 15,
+    // marginTop: 15,
+  },
+  image: {
+    width: 65,
+    height: 65,
+    resizeMode: 'cover',
+    borderRadius: 5,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    gap: 2,
+    alignItems: 'center',
+  },
+  statusIcon: {
+    width: 10,
+    height: 10,
+  },
+  statusText: {
+    ...FONTS.h7,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  title: {
+    ...FONTS.h4,
+    color: COLORS.primary,
+    fontWeight: 500,
+  },
+  description: {
+    ...FONTS.body6,
+    color: COLORS.primary_01,
+    marginTop: 3,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 5,
+  },
+  detailText: {
+    ...FONTS.body6,
+    color: COLORS.primary_01,
+  },
+  rightContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  typeBadge: {
+    borderRadius: SIZES.small,
+    width: 50,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    flexDirection: 'row',
+    gap: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  spareBadge: {
+    backgroundColor: COLORS.indigo[100],
+  },
+  serviceBadge: {
+    backgroundColor: COLORS.indigo[100],
+  },
+  typeIcon: {
+    width: 10,
+    height: 10,
+  },
+  typeText: {
+    ...FONTS.h6,
+    fontWeight: 500,
+  },
+  price: {
+    ...FONTS.h4,
+    color: COLORS.primary_text,
+    fontWeight: 500,
+  },
+  viewButton: {
     backgroundColor: COLORS.primary_borders,
     borderRadius: SIZES.small,
     width: 60,
@@ -180,4 +256,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  viewButtonText: {
+    ...FONTS.h6,
+    color: COLORS.white,
+  },
 });
+
+export default BookingCard;

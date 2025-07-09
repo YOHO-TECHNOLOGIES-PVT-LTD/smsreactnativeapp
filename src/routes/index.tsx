@@ -11,6 +11,7 @@ import {
   HomeScreen,
   LoginScreen,
   NotificationScreen,
+  OnboardingScreen,
   OtpVerificationScreen,
   ProfileScreen,
   RegisterScreen,
@@ -21,11 +22,12 @@ import {
   SparePartsScreen,
 } from '~/screens';
 import ServiceDrawer from '../tabs/CustomDrawer';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the types for navigation stack
 export type RootStackParamList = {
   AuthStack: undefined;
+  Onboarding: undefined;
   MainStack: undefined;
   CustomDrawer: undefined;
   HomeScreen: undefined;
@@ -49,46 +51,55 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Routes: React.FC = () => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  // const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  useEffect(() => {
-    const checkAuthState = async () => {
-      try {
-        const token = await AsyncStorage.getItem('authToken');
-        const isLoggedIn = token;
-        if (isLoggedIn) {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'MainStack' }],
-          });
-        } else {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'AuthStack' }],
-          });
-        }
-      } catch (error: any) {
-        toast.error('Error during auth state check:', error.message || 'Unknown error');
-      }
-    };
+  // useEffect(() => {
+  //   const checkAuthState = async () => {
+  //     try {
+        // const token = await AsyncStorage.getItem('authToken');
 
-    checkAuthState();
-  }, [navigation]);
+        // setTimeout(() => {
+        //   const isLoggedIn = true;
+        //   if (isLoggedIn) {
+        //     navigation.reset({
+        //       index: 0,
+        //       routes: [{ name: 'MainStack' }],
+        //     });
+        //   }
+        // }, 6000);
+        //  else {
+        //   navigation.reset({
+        //     index: 0,
+        //     routes: [{ name: 'AuthStack' }],
+        //   });
+        // }
+  //     } catch (error: any) {
+  //       toast.error('Error during auth state check:', error.message || 'Unknown error');
+  //     }
+  //   };
 
-  const AuthStack: React.FC = () => (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="LoginScreen" component={LoginScreen} />
-      <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
-      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
-      <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
-      <Stack.Screen name="SetNewPasswordScreen" component={SetNewPasswordScreen} />
-    </Stack.Navigator>
-  );
+  //   checkAuthState();
+  // }, [navigation]);
+
+  // const AuthStack: React.FC = () => (
+  //   <Stack.Navigator screenOptions={{ headerShown: false }}>
+  //     <Stack.Screen name="LoginScreen" component={LoginScreen} />
+  //     <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+  //     <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
+  //     <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
+  //     <Stack.Screen name="SetNewPasswordScreen" component={SetNewPasswordScreen} />
+  //   </Stack.Navigator>
+  // );
 
   const MainStack: React.FC = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="CustomDrawer" component={ServiceDrawer} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
+      <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
+      <Stack.Screen name="SetNewPasswordScreen" component={SetNewPasswordScreen} />
       <Stack.Screen name="SOSScreen" component={SosScreen} />
       <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
       <Stack.Screen name="SparePartsScreen" component={SparePartsScreen} />
@@ -104,7 +115,8 @@ const Routes: React.FC = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="AuthStack" component={AuthStack} />
+      {/* <Stack.Screen name="AuthStack" component={AuthStack} /> */}
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="MainStack" component={MainStack} />
     </Stack.Navigator>
   );

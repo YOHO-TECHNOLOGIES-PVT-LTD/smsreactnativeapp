@@ -1,19 +1,28 @@
-import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  ImageBackground,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch } from 'react-redux';
 import IconButton from '~/components/IconButton';
-import { COLORS, icons, screens, SIZES } from '~/constants';
+import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
 import Header from '~/components/Header';
 import SparePartsPage from '~/components/SpareParts/SparePartsPage';
 import { getAllSpareParts } from '~/features/spare-parts/service';
 import { SparePart } from '../../components/SpareParts/sparePartsData';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
 
 const SpareParts = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [error, setError] = useState(false);
   const [spareParts, setSpareParts] = useState([]);
 
   const getAllSparePartsDetails = async () => {
@@ -33,68 +42,52 @@ const SpareParts = () => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header
-        containerStyle={{
-          height: 50,
-          paddingHorizontal: SIZES.padding,
-          alignItems: 'center',
-        }}
-        leftComponent={
-          <TouchableOpacity
-            style={{
-              width: 35,
-              height: 35,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderColor: COLORS.grey60,
-            }}
-            onPress={() => {
-              navigation.openDrawer();
-            }}>
-            <Image source={icons.menu} style={{ width: 20, height: 20 }} resizeMode="contain" />
-          </TouchableOpacity>
-        }
-        rightComponent={
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <IconButton
-              icon={icons.notification}
-              containerStyle={{
-                borderWidth: 0.5,
-                borderRadius: 25,
-                borderColor: COLORS.primary,
-              }}
-              onPress={() => {
-                navigation.navigate('NotificationScreen' as never);
-              }}
-            />
-
-            <TouchableOpacity
-              style={{
-                borderRadius: SIZES.radius,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onPress={() => {
-                dispatch(setSelectedTab(screens.profile));
-              }}>
+    <>
+      <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 15,
+            marginBottom: 10,
+          }}>
+          <Image
+            source={require('../../assets/home/LOGO.png')}
+            style={{ width: 145, height: 25 }}
+          />
+          <View style={{ flexDirection: 'row', gap: 20, marginRight: 5 }}>
+            {/* <TouchableOpacity>
+              <AntDesign name="search1" size={24} color={COLORS.primary} />
+            </TouchableOpacity> */}
+            <TouchableOpacity onPress={() => navigation.navigate('BookingsScreen' as never)}>
               <Image
-                source={require('../../assets/images/profile_picture.jpg')}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: SIZES.body2,
-                }}
-                onError={() => setError(true)}
+                source={icons.booking_icon}
+                style={{ width: 23, height: 23 }}
+                tintColor={COLORS.primary}
               />
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
+              <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
+              {/* <View
+                style={{
+                  width: 15,
+                  height: 15,
+                  backgroundColor: COLORS.primary,
+                  borderRadius: 25,
+                  position: 'absolute',
+                  right: -2,
+                  top: -6,
+                }}>
+                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>1</Text>
+              </View> */}
+            </TouchableOpacity>
           </View>
-        }
-      />
-      <View style={{ flex: 1 }}>
+        </View>
         <SparePartsPage spareParts={spareParts} />
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -104,5 +97,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
+    paddingVertical: 10,
   },
 });

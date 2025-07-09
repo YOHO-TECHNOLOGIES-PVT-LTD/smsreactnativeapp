@@ -1,20 +1,24 @@
 import {
   Image,
   ImageBackground,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   TextInput,
-  ScrollView,
   FlatList,
+  StatusBar,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { COLORS, FONTS, icons, SIZES, SPACING } from '~/constants';
+import { COLORS, FONTS, icons, screens, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import BookingCard from '~/components/Bookings/BookingCard';
 import { getAllBookingsCartItems } from '~/features/bookings/service';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
+import { setSelectedTab } from '~/store/tab/tabSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Product {
   _id: string;
@@ -30,14 +34,36 @@ interface Product {
   quantity: number;
 }
 
+interface Service {
+  _id: string;
+  service_name: string;
+  description: string;
+  price: number;
+}
+
 interface Order {
   _id: string;
   amount: number;
   confirm_Date: string;
   customerId: string;
-  products: Product[];
+  products?: Product[];
+  services?: Service[];
   status: string;
   uuid: string;
+}
+
+interface BookingCardItem {
+  id: string;
+  orderId: string;
+  name: string;
+  imageUrl: string;
+  description: string;
+  date: string;
+  price: number;
+  warranty?: string;
+  quantity: number;
+  status: string;
+  type: 'spare' | 'service';
 }
 
 const Bookings = () => {
@@ -46,13 +72,27 @@ const Bookings = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [Token, setToken] = useState<any>('');
+
+  const fetchToken = async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    setToken(token);
+  };
+
+  useEffect(() => {
+    fetchToken();
+  }, []);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await getAllBookingsCartItems({});
-        if (response?.success && response?.productConfirm) {
-          setOrders(response.productConfirm);
+        const response = Token && (await getAllBookingsCartItems({}));
+        if (response?.success) {
+          const allOrders = [
+            ...(response.productConfirm || []),
+            ...(response.serviceConfirm || []),
+          ];
+          setOrders(allOrders);
         }
         setLoading(false);
       } catch (error) {
@@ -60,28 +100,73 @@ const Bookings = () => {
         setLoading(false);
       }
     };
-
     fetchOrders();
   }, []);
 
-  // Transform API data to match your BookingCard component's expected format
-  const transformOrderData = (order: Order) => {
-    return order.products.map((product, index) => ({
-      id: `${order._id}-${index}`,
-      orderId: order._id,
-      name: product.productId?.productName || 'Unknown Product',
-      imageUrl: product.productId?.image || '',
-      description: product.productId?.description || 'No description available',
-      date: order.confirm_Date,
-      price: parseFloat(product.price) * product.quantity,
-      warranty: product.productId?.warrantyPeriod || 'No warranty',
-      quantity: product.quantity,
-      status: order.status,
-      type: 'spare' as const,
-    }));
+  const transformOrderData = (orders: Order[]): BookingCardItem[] => {
+    const result: BookingCardItem[] = [];
+
+    orders.forEach((order) => {
+      if (order.products && order.products.length > 0) {
+        order.products.forEach((product, index) => {
+          result.push({
+            id: `${order._id}-product-${index}`,
+            orderId: order._id,
+            name: product.productId?.productName || 'Unknown Product',
+            imageUrl: product.productId?.image || '',
+            description: product.productId?.description || 'No description available',
+            date: order.confirm_Date,
+            price: parseFloat(product.price) * product.quantity,
+            warranty: product.productId?.warrantyPeriod || 'No warranty',
+            quantity: product.quantity,
+            status: order.status,
+            type: 'spare',
+          });
+        });
+      }
+
+      if (order.services && order.services.length > 0) {
+        order.services.forEach((service, index) => {
+          result.push({
+            id: `${order._id}-service-${index}`,
+            orderId: order._id,
+            name: service.service_name || 'Unknown Service',
+            imageUrl: '',
+            description: service.description || 'No description available',
+            date: order.confirm_Date,
+            price: service.price || 0,
+            warranty: undefined,
+            quantity: 1,
+            status: order.status,
+            type: 'service',
+          });
+        });
+      }
+
+      if (
+        (!order.products || order.products.length === 0) &&
+        (!order.services || order.services.length === 0)
+      ) {
+        result.push({
+          id: `${order._id}-empty`,
+          orderId: order._id,
+          name: 'Product Order',
+          imageUrl: '',
+          description: 'No items in this order',
+          date: order.confirm_Date,
+          price: order.amount || 0,
+          warranty: undefined,
+          quantity: 1,
+          status: order.status,
+          type: 'spare',
+        });
+      }
+    });
+
+    return result;
   };
 
-  const allOrderItems = orders.flatMap(transformOrderData);
+  const allOrderItems = transformOrderData(orders);
 
   const filteredOrders = allOrderItems.filter((order) => {
     const matchesTab =
@@ -97,126 +182,168 @@ const Bookings = () => {
     return matchesTab && matchesSearch;
   });
 
-  // Counts for the summary cards
   const totalOrders = allOrderItems.length;
   const completedOrders = allOrderItems.filter((order) => order.status === 'completed').length;
   const pendingOrders = allOrderItems.filter((order) => order.status === 'pending').length;
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ImageBackground
-        source={icons.home_background}
-        style={styles.backgroundImage}
-        resizeMode="cover">
-        <View style={styles.bookingsContainer}>
-          <TouchableOpacity onPress={() => navigate.goBack()}>
-            <Image source={icons.back} style={{ width: 25, height: 25 }} />
-          </TouchableOpacity>
-
-          <View>
-            <Text style={{ ...FONTS.h1, color: COLORS.primary_text }}>My Orders</Text>
-            <Text
-              style={{
-                ...FONTS.body4,
-                color: COLORS.primary_01,
-                marginVertical: SIZES.extraSmall,
-              }}>
-              Track and manage all your orders in one place
-            </Text>
+    <>
+      <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
+      <SafeAreaView edges={['top']} style={styles.container}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10,
+            paddingHorizontal: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+          }}>
+          <Image
+            source={require('../../assets/home/LOGO.png')}
+            style={{ width: 145, height: 25 }}
+          />
+          <View style={{ flexDirection: 'row', gap: 15, marginRight: 8 }}>
+            <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
+              <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
+              {/* <View
+                style={{
+                  width: 15,
+                  height: 15,
+                  backgroundColor: COLORS.primary,
+                  borderRadius: 25,
+                  position: 'absolute',
+                  right: -2,
+                  top: -6,
+                }}>
+                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>1</Text>
+              </View> */}
+            </TouchableOpacity>
           </View>
-
-          {/* Count cards */}
-          <View style={styles.countCardsContainer}>
-            <View style={styles.countCard}>
-              <Text style={{ ...FONTS.h4, color: COLORS.support1 }}>{totalOrders}</Text>
-              <Text style={styles.text}>Total Orders</Text>
-            </View>
-            <View style={styles.countCard}>
-              <Text style={{ color: COLORS.success_lightgreen, ...FONTS.h4 }}>
-                {completedOrders}
-              </Text>
-              <Text style={styles.text}>Completed</Text>
-            </View>
-            <View style={styles.countCard}>
-              <Text style={{ ...FONTS.h4, color: COLORS.primary }}>{pendingOrders}</Text>
-              <Text style={styles.text}>Pending</Text>
-            </View>
-          </View>
-
-          {/* Search and Tabs */}
-          <View style={styles.tabContainer}>
-            <View style={styles.searchContainer}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search for your orders..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor={COLORS.grey}
-              />
-              <Image source={icons.search} style={styles.searchIcon} tintColor={COLORS.grey} />
-            </View>
-
-            <View style={styles.tabsContainer}>
-              <TouchableOpacity
-                style={[styles.tabButton, tab === 'All Orders' && styles.activeTabButton]}
-                onPress={() => setTab('All Orders')}>
-                <Text style={[styles.tabText, tab === 'All Orders' && styles.activeTabText]}>
-                  All Orders
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tabButton, tab === 'Spare Parts' && styles.activeTabButton]}
-                onPress={() => setTab('Spare Parts')}>
-                <Text style={[styles.tabText, tab === 'Spare Parts' && styles.activeTabText]}>
-                  Spare Parts
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tabButton, tab === 'Services' && styles.activeTabButton]}
-                onPress={() => setTab('Services')}>
-                <Text style={[styles.tabText, tab === 'Services' && styles.activeTabText]}>
-                  Services
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Order List */}
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={{ ...FONTS.body3, color: COLORS.grey }}>Loading orders...</Text>
-            </View>
-          ) : filteredOrders.length > 0 ? (
-            <FlatList
-              data={filteredOrders}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <BookingCard
-                  data={item}
-                  onPress={() => {
-                    // Add navigation to order details if needed
-                  }}
-                />
-              )}
-              contentContainerStyle={styles.ordersList}
-              showsVerticalScrollIndicator={false}
-            />
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={{ ...FONTS.body3, color: COLORS.grey }}>
-                {searchQuery ? 'No matching orders found' : 'No orders found'}
-              </Text>
-            </View>
-          )}
         </View>
-      </ImageBackground>
-    </SafeAreaView>
+        <ImageBackground
+          source={icons.home_background}
+          style={styles.backgroundImage}
+          resizeMode="cover">
+          <View style={styles.bookingsContainer}>
+            <View style={{ flexDirection: 'row', gap: 15 }}>
+              <TouchableOpacity onPress={() => navigate.goBack()}>
+                <Image
+                  source={icons.back}
+                  style={{ width: 25, height: 25 }}
+                  tintColor={COLORS.primary_text}
+                />
+              </TouchableOpacity>
+              <Text style={{ ...FONTS.h2, color: COLORS.primary_text, fontWeight: 500 }}>
+                My Orders
+              </Text>
+            </View>
+            <View>
+              <Text
+                style={{
+                  ...FONTS.body4,
+                  color: COLORS.primary_01,
+                  marginVertical: SIZES.extraSmall,
+                }}>
+                Track and manage all your orders in one place
+              </Text>
+            </View>
+
+            {/* Count cards */}
+            <View style={styles.countCardsContainer}>
+              <View style={styles.countCard}>
+                <Text style={{ ...FONTS.h4, color: COLORS.support1 }}>{totalOrders}</Text>
+                <Text style={styles.text}>Total Orders</Text>
+              </View>
+              <View style={styles.countCard}>
+                <Text style={{ color: COLORS.success_lightgreen, ...FONTS.h4 }}>
+                  {completedOrders}
+                </Text>
+                <Text style={styles.text}>Completed</Text>
+              </View>
+              <View style={styles.countCard}>
+                <Text style={{ ...FONTS.h4, color: COLORS.primary }}>{pendingOrders}</Text>
+                <Text style={styles.text}>Pending</Text>
+              </View>
+            </View>
+
+            {/* Search and Tabs */}
+            <View style={styles.tabContainer}>
+              <View style={styles.searchContainer}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search for your orders..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor={COLORS.grey}
+                />
+                <Image source={icons.search} style={styles.searchIcon} tintColor={COLORS.grey} />
+              </View>
+
+              <View style={styles.tabsContainer}>
+                <TouchableOpacity
+                  style={[styles.tabButton, tab === 'All Orders' && styles.activeTabButton]}
+                  onPress={() => setTab('All Orders')}>
+                  <Text style={[styles.tabText, tab === 'All Orders' && styles.activeTabText]}>
+                    All Orders
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tabButton, tab === 'Spare Parts' && styles.activeTabButton]}
+                  onPress={() => setTab('Spare Parts')}>
+                  <Text style={[styles.tabText, tab === 'Spare Parts' && styles.activeTabText]}>
+                    Spare Parts
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tabButton, tab === 'Services' && styles.activeTabButton]}
+                  onPress={() => setTab('Services')}>
+                  <Text style={[styles.tabText, tab === 'Services' && styles.activeTabText]}>
+                    Services
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Order List */}
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <Text style={{ ...FONTS.body3, color: COLORS.grey }}>Loading orders...</Text>
+              </View>
+            ) : filteredOrders.length > 0 ? (
+              <FlatList
+                data={filteredOrders}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => <BookingCard data={item} onPress={() => {}} />}
+                contentContainerStyle={styles.ordersList}
+                showsVerticalScrollIndicator={false}
+              />
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={{ ...FONTS.body3, color: COLORS.grey }}>
+                  {searchQuery ? 'No matching orders found' : 'No orders found'}
+                </Text>
+              </View>
+            )}
+          </View>
+        </ImageBackground>
+      </SafeAreaView>
+    </>
   );
 };
 
+// Keep your existing styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingVertical: 10,
+    backgroundColor: COLORS.white,
   },
   backgroundImage: {
     flex: 1,
@@ -225,7 +352,7 @@ const styles = StyleSheet.create({
   bookingsContainer: {
     flex: 1,
     paddingHorizontal: SPACING.small,
-    paddingTop: SPACING.small,
+    paddingTop: 5,
   },
   countCardsContainer: {
     flexDirection: 'row',
@@ -291,6 +418,7 @@ const styles = StyleSheet.create({
     ...FONTS.h4,
     color: COLORS.primary_text,
     textAlign: 'center',
+    fontWeight: 500,
   },
   activeTabText: {
     color: COLORS.white,

@@ -71,8 +71,7 @@ const OtpVerificationScreen = ({ route }) => {
 
   const handleResendOtp = async () => {
     // const response = await VerifyOtp({ otp: '', AuthToken: data?.token });
-    toast.success('Success', 'OTP has been resent.');
-    // Resend OTP API call
+    toast.success('Resend OTP', 'OTP has been resent.');
   };
 
   return (
