@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -56,19 +56,13 @@ const chatMessages = [
 
 const carlogos = [
   icons.carlogo1,
-  // icons.carlogo2,
   icons.carlogo3,
   icons.carlogo4,
   icons.carlogo5,
   icons.carlogo6,
   icons.carlogo7,
-  // icons.carlogo8,
   icons.carlogo9,
   icons.carlogo10,
-  // icons.carlogo11,
-  // icons.carlogo12,
-  // icons.carlogo13,
-  // icons.carlogo14,
   icons.carlogo15,
 ];
 
@@ -273,7 +267,7 @@ const HomePage = () => {
               </>
             )}
           </View>
-          
+
           {/* Search Bar */}
           <AnimatedSearch />
         </View>
