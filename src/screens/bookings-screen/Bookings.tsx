@@ -273,7 +273,7 @@ const Bookings = () => {
                 <Text style={styles.text}>Completed</Text>
               </View>
               <View style={styles.countCard}>
-                <Text style={{ ...FONTS.h4, color: COLORS.primary }}>{pendingOrders}</Text>
+                <Text style={{ ...FONTS.h4, color: COLORS.error }}>{pendingOrders}</Text>
                 <Text style={styles.text}>Pending</Text>
               </View>
             </View>

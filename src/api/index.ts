@@ -43,6 +43,20 @@ class Client {
       put: (params: any, data: any) =>
         httpClient.update(API_END_POINTS.booking_cart.put, params, data),
       getById: (params: any) => httpClient.get(API_END_POINTS.booking_cart.getById, params),
+      deleteProduct: (data: any) =>
+        httpClient.delete(
+          API_END_POINTS.booking_cart.deleteProduct
+            .replace(':cartId', data?.cartId)
+            .replace(':productId', data?.productId),
+          {}
+        ),
+      deleteService: (data: any) =>
+        httpClient.delete(
+          API_END_POINTS.booking_cart.deleteService
+            .replace(':cartId', data?.cartId)
+            .replace(':serviceId', data?.serviceId),
+          {}
+        ),
     },
     service_bookings: {
       post: (data: any) => httpClient.post(API_END_POINTS.service_bookings.post, data),

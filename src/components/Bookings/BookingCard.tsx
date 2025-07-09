@@ -54,18 +54,14 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
 
   const statusColor = data.status === 'pending' ? COLORS.error : COLORS.success_lightgreen;
   const statusText = data.status === 'pending' ? 'Pending' : 'Completed';
-  const imageSource = data.imageUrl
-    ? { uri: data.imageUrl }
-    : data.type === 'spare'
-      ? DEFAULT_SPARE_IMAGE
-      : DEFAULT_SERVICE_IMAGE;
+  const imageSource = data.imageUrl ? { uri: data.imageUrl } : '';
 
   return (
     <Animated.View style={[animatedStyle, styles.container]}>
       <View style={styles.card}>
         {/* Image and Status Section */}
         <View style={styles.imageContainer}>
-          <Image source={imageSource} style={styles.image} defaultSource={DEFAULT_SPARE_IMAGE} />
+          <Image source={imageSource} style={styles.image} />
           <View style={styles.statusContainer}>
             {data.status !== 'pending' && (
               <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
@@ -90,8 +86,10 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
           )}
 
           <View style={styles.detailRow}>
-            <AntDesign name="calendar" size={12} color={COLORS.primary_text} />
-            <Text style={styles.detailText}>{formatDateMonthandYear(data.date)}</Text>
+            <AntDesign name="calendar" size={12} color={COLORS.black} />
+            <Text style={[styles.detailText, { color: COLORS.black }]}>
+              {formatDateMonthandYear(data.date)}
+            </Text>
           </View>
         </View>
 
@@ -129,9 +127,9 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
 
           <Text style={styles.price}>₹ {data.price.toFixed(2)}</Text>
 
-          <TouchableOpacity style={styles.viewButton} onPress={onPress}>
+          {/* <TouchableOpacity style={styles.viewButton} onPress={onPress}>
             <Text style={styles.viewButtonText}>View</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </Animated.View>
@@ -154,6 +152,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     // alignItems: 'center',
+    height: 100,
   },
   imageContainer: {
     width: 65,
@@ -162,7 +161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginRight: 7,
-    gap: 15,
+    gap: 10,
     // marginTop: 15,
   },
   image: {
@@ -170,6 +169,7 @@ const styles = StyleSheet.create({
     height: 65,
     resizeMode: 'cover',
     borderRadius: 5,
+    backgroundColor: COLORS.primary_04,
   },
   statusContainer: {
     flexDirection: 'row',
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   },
   description: {
     ...FONTS.body6,
-    color: COLORS.primary_01,
+    color: COLORS.black,
     marginTop: 3,
   },
   detailRow: {

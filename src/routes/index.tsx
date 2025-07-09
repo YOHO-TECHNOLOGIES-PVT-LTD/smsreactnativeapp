@@ -57,23 +57,23 @@ const Routes: React.FC = () => {
   // useEffect(() => {
   //   const checkAuthState = async () => {
   //     try {
-        // const token = await AsyncStorage.getItem('authToken');
+  // const token = await AsyncStorage.getItem('authToken');
 
-        // setTimeout(() => {
-        //   const isLoggedIn = true;
-        //   if (isLoggedIn) {
-        //     navigation.reset({
-        //       index: 0,
-        //       routes: [{ name: 'MainStack' }],
-        //     });
-        //   }
-        // }, 6000);
-        //  else {
-        //   navigation.reset({
-        //     index: 0,
-        //     routes: [{ name: 'AuthStack' }],
-        //   });
-        // }
+  // setTimeout(() => {
+  //   const isLoggedIn = true;
+  //   if (isLoggedIn) {
+  //     navigation.reset({
+  //       index: 0,
+  //       routes: [{ name: 'MainStack' }],
+  //     });
+  //   }
+  // }, 6000);
+  //  else {
+  //   navigation.reset({
+  //     index: 0,
+  //     routes: [{ name: 'AuthStack' }],
+  //   });
+  // }
   //     } catch (error: any) {
   //       toast.error('Error during auth state check:', error.message || 'Unknown error');
   //     }

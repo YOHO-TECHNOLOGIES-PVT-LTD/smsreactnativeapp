@@ -85,9 +85,9 @@ const Settings = () => {
             <Text style={styles.title}>Booking Cart</Text>
           </View>
 
-          <ScrollView contentContainerStyle={styles.container}>
+          <View style={{ flex: 1 }}>
             <Grid1 bookingCarts={bookingCarts} />
-          </ScrollView>
+          </View>
         </GestureHandlerRootView>
       </SafeAreaView>
     </>
@@ -99,7 +99,7 @@ export default Settings;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 10,
+    paddingTop: 10,
     backgroundColor: COLORS.white,
   },
   header: {

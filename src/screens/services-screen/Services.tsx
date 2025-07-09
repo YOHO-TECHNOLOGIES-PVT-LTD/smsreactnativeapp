@@ -35,6 +35,8 @@ type ServiceCategory = {
   uuid: string;
   category_name: string;
   services: Service[];
+  image: string;
+  _id: string;
 };
 
 type Service = {
@@ -46,6 +48,7 @@ type Service = {
   duration?: string;
   warranty?: string;
   frequency?: string;
+  image: string;
 };
 
 const Services = () => {
@@ -62,7 +65,7 @@ const Services = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredParts, setFilteredParts] = useState<Service[]>([]);
-  const [selectedBookingType, setSelectedBookingType] = useState<'general' | 'prebook'>('general');
+  const [selectedBookingType, setSelectedBookingType] = useState<'general' | 'schedule'>('general');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startTime, setStartTime] = useState('09:00');
@@ -128,26 +131,26 @@ const Services = () => {
         console.error('Missing required service data');
         return;
       }
-      // const bookingData = {
-      //   service: selectedService,
-      //   type: selectedBookingType,
-      //   ...(selectedBookingType === 'prebook' && { date: selectedDate }),
-      //   quantity,
-      //   startTime,
-      //   endTime,
-      // };
-
       try {
         const data = {
-          service: selectedService._id,
+          service: selectedService?._id,
           type: 'service',
+          requestType: selectedBookingType,
+          schedule_date:
+            selectedDate.toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }) || null,
         };
         const response = await addBookingCartItem(data);
         if (response) {
-          toast.success('Booked', `${selectedService.service_name} has been booked`);
+          toast.success('Booked', `${selectedService?.service_name} has been booked`);
           setAdded(true);
           setBookingModalVisible(false);
           setModalVisible(false);
+          setSelectedDate(new Date());
         }
       } catch (error) {
         console.error('Error adding to cart:', error);
@@ -251,13 +254,13 @@ const Services = () => {
             <TouchableOpacity
               style={[
                 styles.bookingTypeButton,
-                selectedBookingType === 'prebook' && styles.selectedBookingType,
+                selectedBookingType === 'schedule' && styles.selectedBookingType,
               ]}
-              onPress={() => setSelectedBookingType('prebook')}>
+              onPress={() => setSelectedBookingType('schedule')}>
               <Text
                 style={[
                   styles.bookingTypeText,
-                  selectedBookingType === 'prebook' && styles.selectedBookingTypeText,
+                  selectedBookingType === 'schedule' && styles.selectedBookingTypeText,
                 ]}>
                 Pre-Booked Service
               </Text>
@@ -305,7 +308,7 @@ const Services = () => {
           )}
 
           {/* Pre-Booked Service Details */}
-          {selectedBookingType === 'prebook' && (
+          {selectedBookingType === 'schedule' && (
             <View style={styles.bookingDetails}>
               <Text style={styles.sectionTitle}>Select Date & Time</Text>
 
@@ -413,26 +416,27 @@ const Services = () => {
             contentContainerStyle={styles.categoriesContainer}>
             {serviceCategories?.map((category) => (
               <TouchableOpacity
-                key={category.uuid}
+                key={category?.uuid}
                 style={[
                   styles.categoryItem,
-                  activeNavItem === category.category_name && styles.activeCategoryItem,
+                  activeNavItem === category?.category_name && styles.activeCategoryItem,
                 ]}
                 onPress={() => {
-                  setActiveNavItem(category.category_name);
+                  setActiveNavItem(category?.category_name);
                   setSearchQuery('');
                 }}>
                 <Image
-                  source={require('../../assets/service-images/generalservice.png')}
+                  source={{ uri: category?.image }}
                   style={styles.categoryImage}
+                  alt="Category Image"
                 />
                 <Text
                   style={[
                     styles.categoryText,
-                    activeNavItem === category.category_name && styles.activeCategoryText,
+                    activeNavItem === category?.category_name && styles.activeCategoryText,
                   ]}
                   numberOfLines={1}>
-                  {category.category_name}
+                  {category?.category_name}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -480,7 +484,7 @@ const Services = () => {
                   setModalVisible(true);
                 }}>
                 <ImageBackground
-                  source={require('../../assets/service-images/generalservice.png')}
+                  source={{ uri: item?.image }}
                   style={styles.serviceImage}
                   resizeMode="cover">
                   <View style={styles.serviceDuration}>
@@ -533,7 +537,7 @@ const Services = () => {
             </View>
 
             <Image
-              source={require('../../assets/service-images/generalservice.png')}
+              source={{ uri: selectedService?.image }}
               style={styles.modalImage}
               resizeMode="cover"
             />
@@ -686,6 +690,7 @@ const styles = StyleSheet.create({
     height: 65,
     borderRadius: 50,
     marginBottom: 5,
+    backgroundColor: COLORS.primary_04,
   },
   categoryText: {
     ...FONTS.h6,
@@ -719,6 +724,7 @@ const styles = StyleSheet.create({
   serviceImage: {
     width: '100%',
     height: 120,
+    backgroundColor: COLORS.primary_04
   },
   serviceDuration: {
     position: 'absolute',
@@ -781,6 +787,7 @@ const styles = StyleSheet.create({
   modalImage: {
     width: '100%',
     height: 250,
+    backgroundColor: COLORS.primary_04,
   },
   modalContent: {
     padding: 15,
