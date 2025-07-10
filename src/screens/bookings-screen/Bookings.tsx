@@ -9,7 +9,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { useEffect, useState } from 'react';
-import { COLORS, FONTS, icons, screens, SIZES, SPACING } from '~/constants';
+import { COLORS, FONTS, icons, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import BookingCard from '~/components/Bookings/BookingCard';
 import { getAllBookingsCartItems } from '~/features/bookings/service';

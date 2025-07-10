@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { COLORS, FONTS } from '~/constants';
-import { addBookingCartItem } from '~/features/booking-cart/service.ts';
+import { addBookingCartItem } from '~/features/booking-cart/service';
 import toast from '~/utils/toast';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -148,7 +148,7 @@ const SparePartsCard = ({ part }: Props) => {
       <Pressable style={styles.card} onPress={() => setModalVisible(true)}>
         {/* Image at the top */}
         <Image
-          source={{uri: part?.image}}
+          source={{ uri: part?.image }}
           style={styles.cardImage}
           resizeMode="cover"
           onError={() => setError(true)}
@@ -187,11 +187,7 @@ const SparePartsCard = ({ part }: Props) => {
         <ScrollView style={styles.modalContainer}>
           {/* Image with back button */}
           <View style={styles.modalImageContainer}>
-            <Image
-              source={{uri: part?.image}}
-              style={styles.modalImage}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: part?.image }} style={styles.modalImage} resizeMode="cover" />
             <TouchableOpacity style={styles.backButton} onPress={() => setModalVisible(false)}>
               <MaterialIcons name="arrow-back" size={24} color={COLORS.white} />
             </TouchableOpacity>

@@ -21,7 +21,7 @@ import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
 import { Ionicons, AntDesign, Foundation, MaterialIcons } from '@expo/vector-icons';
 import { Clock, Wrench, Car, ShoppingCart } from 'lucide-react-native';
 import { getAllServiceCategories } from '~/features/services-page/service';
-import { addBookingCartItem } from '~/features/booking-cart/service.ts';
+import { addBookingCartItem } from '~/features/booking-cart/service';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import toast from '~/utils/toast';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -30,6 +30,8 @@ import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import LoadingAnimation from '~/components/LoadingAnimation';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
+import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
+import { selectCartItems } from '~/features/booking-cart/redux/selectors';
 
 type ServiceCategory = {
   uuid: string;
@@ -73,6 +75,7 @@ const Services = () => {
   const TokenSelector = useSelector(selectToken);
   const [isLoading, setIsLoading] = useState(false);
   const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
+  const cartItems = useSelector(selectCartItems);
 
   useEffect(() => {
     try {
@@ -122,6 +125,7 @@ const Services = () => {
   };
 
   useEffect(() => {
+    dispatch(getBookingCartItems());
     fetchAllServices();
   }, []);
 
@@ -397,9 +401,9 @@ const Services = () => {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              {/* <View style={styles.cartBadge}>
+              <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>1</Text>
-                </View> */}
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -443,7 +447,7 @@ const Services = () => {
           </ScrollView>
 
           {/* Search Input */}
-          <View style={{ marginVertical: 5, marginHorizontal: 15, marginTop: -5 }}>
+          <View style={{ marginVertical: 5, marginHorizontal: 15, marginTop: 5 }}>
             <View style={styles.searchContainer}>
               <View style={styles.searchIcon}>
                 <Ionicons name="search" size={22} color={COLORS.grey} />
@@ -702,7 +706,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   servicesContainer: {
-    paddingHorizontal: 10,
+    padding: 15,
     paddingBottom: 20,
   },
   columnWrapper: {
@@ -724,7 +728,7 @@ const styles = StyleSheet.create({
   serviceImage: {
     width: '100%',
     height: 120,
-    backgroundColor: COLORS.primary_04
+    backgroundColor: COLORS.primary_04,
   },
   serviceDuration: {
     position: 'absolute',

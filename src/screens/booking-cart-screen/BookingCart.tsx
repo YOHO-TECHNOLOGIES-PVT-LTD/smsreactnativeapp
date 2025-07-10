@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Grid1 from '../../components/Bookings/Grid1';
 import { COLORS, FONTS, icons } from '~/constants';
-import { getAllBookingCartItems } from '~/features/booking-cart/service.ts';
+import { getAllBookingCartItems } from '~/features/booking-cart/service';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';

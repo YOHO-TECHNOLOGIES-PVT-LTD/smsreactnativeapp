@@ -15,7 +15,7 @@ import {
   addBookingCartItem,
   deleteBookingCartProduct,
   deleteBookingCartService,
-} from '~/features/booking-cart/service.ts';
+} from '~/features/booking-cart/service';
 import { addServiceCartItems, addSparePartCartItems } from '~/features/bookings/service';
 import toast from '~/utils/toast';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8,
     marginRight: 15,
-    backgroundColor: COLORS.primary_04
+    backgroundColor: COLORS.primary_04,
   },
   itemDetails: {
     flex: 1,
