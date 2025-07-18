@@ -16,7 +16,6 @@ import { getToken } from '~/features/token/redux/thunks';
 const Settings = () => {
   const navigation = useNavigation();
   const [bookingCarts, setBookingCarts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const tokenSelector = useSelector(selectToken);
   const dispatch = useDispatch<AppDispatch>();
@@ -34,7 +33,7 @@ const Settings = () => {
   }, [dispatch]);
 
   const fetchAllBookingCarts = async () => {
-    const response = await getAllBookingCartItems({});
+    const response = tokenSelector && (await getAllBookingCartItems({}));
     if (response) {
       setBookingCarts(response || []);
     }

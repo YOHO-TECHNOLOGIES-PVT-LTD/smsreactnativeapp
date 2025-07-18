@@ -7,16 +7,12 @@ import {
   TouchableOpacity,
   Image,
   Text,
-  Dimensions,
   TextInput,
 } from 'react-native';
 import SparePartsCard from '../../components/SpareParts/SparePartsCard';
-import sparePartsData, { SparePartCategory } from '../../components/SpareParts/sparePartsData';
-import { COLORS, FONTS, icons } from '../../constants/index';
+import { SparePartCategory } from '../../components/SpareParts/sparePartsData';
+import { COLORS, FONTS } from '../../constants/index';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 20) / 2;
 
 type SparePartsPageProps = {
   spareParts: SparePartCategory[];
@@ -24,8 +20,6 @@ type SparePartsPageProps = {
 
 const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
   const scrollRef = useRef<ScrollView>(null);
-  const scrollStep = 120;
-  const scrollX = useRef(0);
   const [error, setError] = React.useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredParts, setFilteredParts] = useState<SparePartCategory[]>([]);
@@ -45,12 +39,10 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
   const filterParts = () => {
     let result = spareParts;
 
-    // Filter by category first
     if (selectedCategory) {
       result = result.filter((item) => item.category === selectedCategory);
     }
 
-    // Then filter by search query if it exists
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -65,16 +57,6 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
 
   const clearSearch = () => {
     setSearchQuery('');
-  };
-
-  const scrollLeft = () => {
-    scrollX.current = Math.max(scrollX.current - scrollStep, 0);
-    scrollRef.current?.scrollTo({ x: scrollX.current, animated: true });
-  };
-
-  const scrollRight = () => {
-    scrollX.current += scrollStep;
-    scrollRef.current?.scrollTo({ x: scrollX.current, animated: true });
   };
 
   return (
@@ -96,7 +78,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalNavContent1}>
-          {categories.map((item: any, index) => {
+          {categories?.map((item: any, index) => {
             const isSelected = selectedCategory === item;
             return (
               <TouchableOpacity
@@ -135,7 +117,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
             value={searchQuery}
             onChangeText={(text) => setSearchQuery(text)}
           />
-          {searchQuery.length > 0 && (
+          {searchQuery?.length > 0 && (
             <TouchableOpacity
               style={styles.clearIcon}
               onPress={clearSearch}

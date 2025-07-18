@@ -285,7 +285,7 @@ const Profile = () => {
     try {
       const response: any = await getUserProfileDetails({});
       if (response) {
-        await AsyncStorage.setItem('userId', formData?._id);
+        await AsyncStorage.setItem('userId', response?._id);
         setFormData({
           firstName: response?.firstName,
           lastName: response?.lastName,
@@ -331,7 +331,7 @@ const Profile = () => {
       fetchUserProfile();
       fetchOrders();
     }
-  }, [TokenSelector, dispatch]);
+  }, [dispatch, TokenSelector]);
 
   const [userInfo, setUserInfo] = useState({
     name: '',
@@ -653,7 +653,6 @@ const Profile = () => {
     if (formData?.image) {
       saveUserProfileImage(formData?.image);
     }
-    await AsyncStorage.setItem('userName', formData?.firstName);
     Animated.sequence([
       Animated.timing(headerOpacity, {
         toValue: 0.8,
@@ -1406,7 +1405,10 @@ const Profile = () => {
                 <View style={styles.profileInfo}>
                   <View style={styles.nameContainer}>
                     <Text style={styles.profileName}>
-                      {(TokenSelector && formData?.firstName + ' ' + formData?.lastName) || 'User'}
+                      {(TokenSelector &&
+                        formData?.firstName != null &&
+                        formData?.firstName + ' ' + formData?.lastName) ||
+                        'Customer'}
                     </Text>
                     <Verified size={16} color={COLORS1.success} />
                   </View>
@@ -1440,7 +1442,11 @@ const Profile = () => {
               <View style={styles.card}>
                 <MenuItem
                   title="Full Name"
-                  subtitle={TokenSelector && profileData?.firstName + ' ' + profileData?.lastName}
+                  subtitle={
+                    TokenSelector &&
+                    profileData?.firstName != null &&
+                    profileData?.firstName + ' ' + profileData?.lastName
+                  }
                   icon={<User size={20} color={COLORS1.primary} />}
                 />
                 <View style={styles.separator} />
@@ -1515,11 +1521,12 @@ const Profile = () => {
                   <MenuItem
                     title="Car Details"
                     subtitle={
+                      profileData?.vehicleInfo?.company != null &&
                       profileData?.vehicleInfo?.company +
-                      ' ' +
-                      profileData?.vehicleInfo?.model +
-                      ' ' +
-                      profileData?.vehicleInfo?.year
+                        ' ' +
+                        profileData?.vehicleInfo?.model +
+                        ' ' +
+                        profileData?.vehicleInfo?.year
                     }
                     icon={<Car size={20} color={COLORS1.primary} />}
                   />

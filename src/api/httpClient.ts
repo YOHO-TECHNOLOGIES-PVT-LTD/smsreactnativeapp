@@ -39,6 +39,8 @@ Axios.interceptors.response.use(
       if (logoutCallback) {
         logoutCallback();
       }
+    } else if (error?.response && error?.response?.status == 403) {
+      Alert.alert('Profile Details', 'Please complete your profile details.');
     }
 
     if (process.env.NODE_ENV === 'development') {
@@ -84,7 +86,7 @@ class HttpClient {
 
   async fileGet(url: string) {
     const response = await Axios.get(url, {
-      responseType: 'blob', 
+      responseType: 'blob',
     });
     return response.data;
   }

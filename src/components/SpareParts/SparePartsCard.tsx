@@ -72,7 +72,6 @@ const SparePartsCard = ({ part }: Props) => {
         return;
       }
       try {
-        setIsLoading(true);
         const data = {
           uuid: part?.uuid,
           products: {
@@ -92,8 +91,6 @@ const SparePartsCard = ({ part }: Props) => {
         setIsLoading(false);
       } catch (error) {
         console.error('Error adding to cart:', error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -258,14 +255,14 @@ const SparePartsCard = ({ part }: Props) => {
                 <TouchableOpacity
                   onPress={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
                   style={styles.quantityButton}
-                  disabled={added}>
+                  disabled={!part?.inStock}>
                   <Text style={styles.quantityButtonText}>−</Text>
                 </TouchableOpacity>
                 <Text style={styles.quantityValue}>{quantity}</Text>
                 <TouchableOpacity
                   onPress={() => setQuantity((q) => q + 1)}
                   style={styles.quantityButton}
-                  disabled={added}>
+                  disabled={!part?.inStock}>
                   <Text style={styles.quantityButtonText}>+</Text>
                 </TouchableOpacity>
               </View>
@@ -273,14 +270,13 @@ const SparePartsCard = ({ part }: Props) => {
 
             {/* Add to Cart Button */}
             <TouchableOpacity
-              style={[styles.modalAddButton, added && styles.addedButton]}
+              style={[styles.modalAddButton]}
               onPress={() => {
-                if (!added)
-                  TokenSelector ? handleAddtoCart(part) : () => setSignUpConfirmModalVisible(true);
+                TokenSelector ? handleAddtoCart(part) : () => setSignUpConfirmModalVisible(true);
               }}
-              disabled={added || !part?.inStock}>
+              disabled={!part?.inStock}>
               <Text style={styles.modalAddButtonText}>
-                {added ? 'ADDED' : part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
+                {part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
               </Text>
             </TouchableOpacity>
           </View>

@@ -36,6 +36,7 @@ import { getAllSpareParts } from '~/features/spare-parts/service';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserProfileDetails } from '~/features/profile/service';
 
 const chatMessages = [
   { id: '1', sender: 'admin', text: 'Hello! How can I help you today?', time: '10:30 AM' },
@@ -90,6 +91,7 @@ const HomePage = () => {
   const [spareParts, setSpareParts] = useState([]);
   const [serviceCategories, setServiceCategories] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [profileData, setProfileData] = useState<{ firstName?: string }>({})
 
   useEffect(() => {
     Animated.parallel([
@@ -136,29 +138,6 @@ const HomePage = () => {
     setShowChatModal(true);
   };
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      const newMessage = {
-        id: String(messages.length + 1),
-        sender: 'user',
-        text: message,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages([...messages, newMessage]);
-      setMessage('');
-      Keyboard.dismiss();
-      setTimeout(() => {
-        const replyMessage = {
-          id: String(messages.length + 2),
-          sender: 'admin',
-          text: 'Thanks for your message. Our team will get back to you shortly.',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, replyMessage]);
-      }, 1000);
-    }
-  };
-
   const images = [icons.promo1, icons.promo2, icons.promo3, icons.promo4, icons.promo5];
 
   const handleLogout = async () => {
@@ -174,6 +153,17 @@ const HomePage = () => {
     } finally {
       setIsLoading(false);
       setLogoutModalVisible(false);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const response: any = await getUserProfileDetails({});
+      if (response) {
+        setProfileData(response)
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -211,13 +201,14 @@ const HomePage = () => {
     }
   };
 
-  const userName: any = AsyncStorage.getItem('userName');
-
   useEffect(() => {
     getAllSparePartsDetails();
     fetchAllServices();
     fetchAllOffers();
-  }, []);
+    if (tokenSelector) {
+      fetchUserProfile();
+    }
+  }, [dispatch, tokenSelector]);
 
   const handleSubmitEnquiry = () => {
     setShowChatModal(false);
@@ -246,9 +237,7 @@ const HomePage = () => {
               <View style={{}}>
                 <View style={{ flexDirection: 'row' }}>
                   <HandShakeAnimation />
-                  <Text style={styles.title}>
-                    Hi, {userName?.value == null ? 'Customer' : userName}
-                  </Text>
+                  <Text style={styles.title}>Hi, {tokenSelector ? profileData?.firstName : 'Customer'}</Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => setLogoutModalVisible(true)}

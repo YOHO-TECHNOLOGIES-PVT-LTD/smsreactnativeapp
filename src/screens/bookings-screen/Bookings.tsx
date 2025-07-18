@@ -71,7 +71,6 @@ const Bookings = () => {
   const navigate = useNavigation();
   const [tab, setTab] = useState<'All Orders' | 'Spare Parts' | 'Services'>('All Orders');
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const tokenSelector = useSelector(selectToken);
   const dispatch = useDispatch<AppDispatch>();
@@ -94,7 +93,7 @@ const Bookings = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await getAllBookingsCartItems({});
+        const response = tokenSelector && (await getAllBookingsCartItems({}));
         if (response?.success) {
           const allOrders = [
             ...(response.productConfirm || []),
@@ -102,10 +101,8 @@ const Bookings = () => {
           ];
           setOrders(allOrders);
         }
-        setLoading(false);
       } catch (error) {
         console.log('Error fetching orders:', error);
-        setLoading(false);
       }
     };
     if (tokenSelector) {
@@ -253,11 +250,7 @@ const Bookings = () => {
             </View>
 
             {/* Order List */}
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <Text style={{ ...FONTS.body3, color: COLORS.grey }}>Loading orders...</Text>
-              </View>
-            ) : filteredOrders?.length > 0 ? (
+            {filteredOrders?.length > 0 ? (
               <FlatList
                 data={filteredOrders}
                 keyExtractor={(item: any) => item._id}

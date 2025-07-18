@@ -28,12 +28,13 @@ const SpareParts = () => {
         setSpareParts(response);
       }
     } catch (error) {
-      console.error('Error fetching spare parts:', error);
+      console.log('Error fetching spare parts:', error);
     }
   };
 
   useEffect(() => {
     dispatch(getBookingCartItems());
+    getAllSparePartsDetails();
     const getCartCount = () => {
       if (cartItems?.length == 1) {
         return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
