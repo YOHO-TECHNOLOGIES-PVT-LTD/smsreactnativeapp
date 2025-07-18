@@ -5,25 +5,21 @@ export const getUserProfileDetails = async (params: any) => {
     const response = await new Client().user.auth.getUserProfile(params);
     if (response) {
       return response?.data;
-    } else {
-      throw new Error('Failed to fetch user profile details');
     }
   } catch (error) {
-    console.error('Error fetching user profile details:', error);
+    console.log('Error fetching user profile details:', error);
     return null;
   }
 };
 
-export const updateUserProfileDetails = async (params: any, data: any) => {
+export const updateUserProfileDetails = async (data: any) => {
   try {
-    const response = await new Client().user.auth.updateUserProfile(params, data);
+    const response = await new Client().user.auth.updateUserProfile(data);
     if (response) {
-      return response?.data;
-    } else {
-      throw new Error('Failed to update user profile details');
+      return response;
     }
   } catch (error) {
-    console.error('Error updating user profile details:', error);
+    console.log('Error updating user profile details:', error);
     return null;
   }
 };

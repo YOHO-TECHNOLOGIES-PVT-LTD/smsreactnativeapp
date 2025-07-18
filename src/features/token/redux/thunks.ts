@@ -25,6 +25,8 @@ export const getToken = (): AppThunk<Promise<string | null>> => async (dispatch:
 export const logout = () => async (dispatch: any) => {
   try {
     await AsyncStorage.removeItem('authToken');
+    await AsyncStorage.removeItem('userId');
+    await AsyncStorage.removeItem('userName');
     dispatch(clearToken());
   } catch (error) {
     console.error('Error during logout:', error);

@@ -53,9 +53,10 @@ type CartProps = {
     totalAmount: number;
     _id: string;
   }[];
+  onChangeCart: () => void;
 };
 
-const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
+const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart }) => {
   const [activeTab, setActiveTab] = useState<'Spare Parts' | 'Services'>('Spare Parts');
   const [cartItems, setCartItems] = useState<{
     products: CartItem[];
@@ -112,6 +113,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
         const data = { cartId: bookingCarts[0]?._id };
         const response = await addSparePartCartItems(data);
         if (response) {
+          onChangeCart();
           toast.success('Success', response.message || 'Successfully placed your order!');
         } else {
           toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
@@ -120,6 +122,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
         const data = { cartId: bookingCarts[0]?._id };
         const response = await addServiceCartItems(data);
         if (response) {
+          onChangeCart();
           toast.success('Success', response.message || 'Successfully placed your order!');
         } else {
           toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
@@ -134,18 +137,19 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
     if (activeTab === 'Spare Parts') {
       const response = await deleteBookingCartProduct({ cartId: cartId, productId: id });
       if (response) {
-        toast.success('Product removed successfully', { autoClose: 2000 });
+        onChangeCart();
+        toast.success('Product removed from the cart', { autoClose: 2000 });
       }
     } else if (activeTab === 'Services') {
       const response = await deleteBookingCartService({ cartId: serviceId, serviceId: id });
       if (response) {
-        toast.success('Service removed successfully', { autoClose: 2000 });
+        onChangeCart();
+        toast.success('Service removed from the cart', { autoClose: 2000 });
       }
     }
   };
 
   const renderItem = (item: CartItem, index?: any) => {
-    console.log('Rendering item:', item);
     const name = item?.productId?.productName || item?.service_name || 'Unknown Item';
     const price = parseInt(item?.price);
     const totalPrice = item?.productId ? item?.productId?.price * item?.quantity : price;

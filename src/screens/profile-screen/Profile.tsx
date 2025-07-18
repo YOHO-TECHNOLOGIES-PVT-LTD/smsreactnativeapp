@@ -60,10 +60,14 @@ import {
   Activity,
   Gauge,
   MoreVertical,
+  MapPinHouse,
+  Building2,
+  BookUser,
+  Fuel,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getUserProfileDetails } from '~/features/profile/service';
+import { getUserProfileDetails, updateUserProfileDetails } from '~/features/profile/service';
 import { COLORS, FONTS, icons, screens } from '~/constants';
 import toast from '~/utils/toast';
 import { useNavigation } from '@react-navigation/native';
@@ -76,6 +80,9 @@ import { selectToken } from '~/features/token/redux/selectors';
 import { getToken, logout } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
+import { getAllBookingsCartItems } from '~/features/bookings/service';
+import { formatDateandmonth, formatDateMonthandYear } from '../../utils/formatDate';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -143,26 +150,16 @@ const COLORS1 = {
 
 // Enhanced Type Definitions
 interface Vehicle {
-  id: number;
-  make: string;
+  id: string;
+  registerNumber: string;
   model: string;
   year: string;
-  plate: string;
-  color: string;
-  mileage: string;
-  image360: string;
-  services: Service[];
-  lastService?: string;
-  nextService?: string;
-  healthScore?: number;
-  fuelLevel?: number;
-  batteryHealth?: number;
-  tireHealth?: number;
-  engineStatus?: 'excellent' | 'good' | 'fair' | 'poor';
+  fuleType: string;
+  company: string;
 }
 
 interface Service {
-  id: number;
+  id: string;
   type: string;
   date: string;
   cost: string;
@@ -174,13 +171,15 @@ interface Service {
 }
 
 interface Order {
-  id: number;
+  _id: any;
   date: string;
   items: OrderItem[];
-  total: string;
-  status: 'processing' | 'shipped' | 'delivered';
+  products: [];
+  services: [];
+  amount: string;
+  status: 'pending' | 'delivered';
   trackingNumber?: string;
-  estimatedDelivery?: string;
+  confirm_Date?: string;
 }
 
 interface OrderItem {
@@ -215,10 +214,60 @@ interface CarStatusProps {
   icon: React.ReactNode;
 }
 
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  image?: string;
+  contact_info: {
+    city: string;
+    state: string;
+    phoneNumber: string;
+    address1: string;
+    address2: string;
+    [key: string]: string; // Allow dynamic access for nested fields
+  };
+  vehicleInfo: {
+    registerNumber: string;
+    model: string;
+    year: string;
+    company: string;
+    fuleType: string;
+    [key: string]: string;
+  };
+  [key: string]: any; // Allow dynamic access for top-level fields
+}
+
 const Profile = () => {
   const TokenSelector = useSelector(selectToken);
   const dispatch = useDispatch<AppDispatch>();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [profileData, setProfileData] = useState<any>({});
+  const [bookingOrders, setBookingOrders] = useState<{
+    serviceConfirm?: any[];
+    productConfirm?: any[];
+    success?: boolean;
+  } | null>(null);
+  const [formData, setFormData] = useState<FormData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    image: '',
+    contact_info: {
+      city: '',
+      state: '',
+      phoneNumber: '',
+      address1: '',
+      address2: '',
+    },
+    vehicleInfo: {
+      registerNumber: '',
+      model: '',
+      company: '',
+      fuleType: '',
+      year: '',
+    },
+  });
 
   useEffect(() => {
     try {
@@ -234,26 +283,55 @@ const Profile = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = TokenSelector && (await getUserProfileDetails({}));
+      const response: any = await getUserProfileDetails({});
       if (response) {
-        setUserInfo((prev) => ({
-          ...prev,
-          name: response.firstName || prev.name,
-          email: response.email || prev.email,
-          phone: response.phone || prev.phone,
-          location: response.location || prev.location,
-          profileImage: response.profileImage || prev.profileImage,
-          notifications: response.notifications || prev.notifications,
-        }));
+        await AsyncStorage.setItem('userId', formData?._id);
+        setFormData({
+          firstName: response?.firstName,
+          lastName: response?.lastName,
+          email: response?.email,
+          image: response?.image,
+          contact_info: {
+            city: response?.contact_info?.city,
+            state: response?.contact_info?.state,
+            phoneNumber: response?.contact_info?.phoneNumber,
+            address1: response?.contact_info?.address1,
+            address2: response?.contact_info?.address2,
+          },
+          vehicleInfo: {
+            registerNumber: response?.vehicleInfo?.registerNumber,
+            model: response?.vehicleInfo?.model,
+            company: response?.vehicleInfo?.company,
+            fuleType: response?.vehicleInfo?.fuleType,
+            year: response?.vehicleInfo?.year,
+          },
+        });
+        setProfileData(response);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
   };
 
+  const fetchOrders = async () => {
+    try {
+      const response = await getAllBookingsCartItems({});
+      if (response?.success) {
+        const allOrders = [...(response.productConfirm || []), ...(response.serviceConfirm || [])];
+        setOrders(allOrders);
+        setBookingOrders(response);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  };
+
   useEffect(() => {
-    fetchUserProfile();
-  }, []);
+    if (TokenSelector) {
+      fetchUserProfile();
+      fetchOrders();
+    }
+  }, [TokenSelector, dispatch]);
 
   const [userInfo, setUserInfo] = useState({
     name: '',
@@ -357,56 +435,7 @@ const Profile = () => {
     },
   ]);
 
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: 1,
-      date: '2024-03-15',
-      total: '$245.99',
-      status: 'delivered',
-      trackingNumber: 'TRK123456789',
-      estimatedDelivery: 'Delivered on March 18, 2024',
-      items: [
-        {
-          id: 101,
-          name: 'Synthetic Engine Oil 5W-30',
-          quantity: 2,
-          price: '$39.99',
-          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200',
-          partNumber: 'OIL-5W30-SYN',
-          warranty: '30 days',
-        },
-        {
-          id: 102,
-          name: 'Oil Filter',
-          quantity: 1,
-          price: '$12.99',
-          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200',
-          partNumber: 'FLT-OIL-1234',
-          warranty: '90 days',
-        },
-      ],
-    },
-    {
-      id: 2,
-      date: '2024-04-22',
-      total: '$189.50',
-      status: 'shipped',
-      trackingNumber: 'TRK987654321',
-      estimatedDelivery: 'Expected by April 26, 2024',
-      items: [
-        {
-          id: 201,
-          name: 'Brake Pads Set',
-          quantity: 1,
-          price: '$89.50',
-          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200',
-          partNumber: 'BRK-PAD-2022',
-          warranty: '1 year',
-        },
-      ],
-    },
-  ]);
-
+  const [orders, setOrders] = useState<Order[]>([]);
   const [editProfileModal, setEditProfileModal] = useState(false);
   const [addVehicleModal, setAddVehicleModal] = useState(false);
   const [vehicleDetailModal, setVehicleDetailModal] = useState(false);
@@ -426,14 +455,6 @@ const Profile = () => {
     settings: false,
   });
   const [editForm, setEditForm] = useState({ ...userInfo });
-  const [vehicleForm, setVehicleForm] = useState({
-    make: '',
-    model: '',
-    year: '',
-    plate: '',
-    color: '',
-    mileage: '',
-  });
 
   const slideAnims = useRef(
     Array(8)
@@ -597,7 +618,7 @@ const Profile = () => {
 
   // Utility Functions
   const saveUserProfileImage = (imageUri: string) => {
-    console.log('Saving profile image to local storage:', imageUri);
+    // console.log('Saving profile image to local storage:', imageUri);
   };
 
   const getUserProfileImage = () => {
@@ -628,13 +649,11 @@ const Profile = () => {
     }
   };
 
-  const handleSaveProfile = () => {
-    setUserInfo({ ...editForm });
-    if (editForm.profileImage) {
-      saveUserProfileImage(editForm.profileImage);
+  const handleSaveProfile = async () => {
+    if (formData?.image) {
+      saveUserProfileImage(formData?.image);
     }
-    setEditProfileModal(false);
-
+    await AsyncStorage.setItem('userName', formData?.firstName);
     Animated.sequence([
       Animated.timing(headerOpacity, {
         toValue: 0.8,
@@ -648,42 +667,35 @@ const Profile = () => {
       }),
     ]).start();
 
-    toast.success('Success', 'Profile updated successfully!');
+    try {
+      const response: any = await updateUserProfileDetails(formData);
+      if (response) {
+        setEditProfileModal(false);
+        fetchUserProfile();
+        toast.success('Success', 'Profile updated successfully!');
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleAddVehicle = () => {
-    if (!vehicleForm.make || !vehicleForm.model || !vehicleForm.year || !vehicleForm.plate) {
-      toast.error('Error', 'Please fill in all required fields');
-      return;
+  const handleAddVehicle = async () => {
+    try {
+      const response: any = await updateUserProfileDetails(formData);
+      if (response) {
+        setAddVehicleModal(false);
+        fetchUserProfile();
+        toast.success('Success', 'Vehicle added successfully!');
+      }
+    } catch (error) {
+      console.log(error);
     }
-
-    const newVehicle: Vehicle = {
-      id: vehicles.length + 1,
-      ...vehicleForm,
-      image360: 'https://images.unsplash.com/photo-1549924231-f129b911e442?w=400',
-      services: [],
-      healthScore: 100,
-      fuelLevel: 100,
-      batteryHealth: 100,
-      tireHealth: 100,
-      engineStatus: 'excellent',
-    };
-
-    setVehicles([...vehicles, newVehicle]);
-    setVehicleForm({ make: '', model: '', year: '', plate: '', color: '', mileage: '' });
-    setAddVehicleModal(false);
-    toast.success('Success', 'Vehicle added successfully!');
   };
 
   const handleVehiclePress = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
     setCurrentImageIndex(0);
     setVehicleDetailModal(true);
-  };
-
-  const handleOrderPress = (order: Order) => {
-    setSelectedOrder(order);
-    setOrderDetailModal(true);
   };
 
   const handleDeleteVehicle = (vehicleId: number) => {
@@ -713,9 +725,8 @@ const Profile = () => {
 
       if (!result.canceled) {
         const newImageUri = result.assets[0].uri;
-        setEditForm({ ...editForm, profileImage: newImageUri });
+        setFormData({ ...formData, image: newImageUri });
         saveUserProfileImage(newImageUri);
-        toast.success('Success', 'Profile photo updated!');
       }
     } catch (error) {
       toast.error('Error', 'Failed to upload image. Please try again.');
@@ -735,9 +746,8 @@ const Profile = () => {
 
       if (!result.canceled) {
         const newImageUri = result.assets[0].uri;
-        setEditForm({ ...editForm, profileImage: newImageUri });
+        setFormData({ ...formData, image: newImageUri });
         saveUserProfileImage(newImageUri);
-        toast.success('Success', 'Profile photo updated!');
       }
     } catch (error) {
       toast.error('Error', 'Failed to take photo. Please try again.');
@@ -747,11 +757,15 @@ const Profile = () => {
   };
 
   const handlePhotoUpload = () => {
-    Alert.alert('Upload Photo', 'Choose photo source', [
-      { text: 'Take Photo', onPress: takePhoto },
-      { text: 'Choose from Gallery', onPress: pickImage },
-      { text: 'Cancel', style: 'cancel', onPress: () => setPhotoUploadModal(false) },
-    ]);
+    if (TokenSelector) {
+      Alert.alert('Upload Photo', 'Choose photo source', [
+        { text: 'Take Photo', onPress: takePhoto },
+        { text: 'Choose from Gallery', onPress: pickImage },
+        { text: 'Cancel', style: 'cancel', onPress: () => setPhotoUploadModal(false) },
+      ]);
+    } else {
+      setLogoutModalVisible(true);
+    }
   };
 
   const handleLogout = () => {
@@ -770,7 +784,6 @@ const Profile = () => {
     }
   };
 
-  // Enhanced Component Definitions
   const MenuItem: React.FC<MenuItemProps> = ({
     title,
     subtitle,
@@ -811,39 +824,17 @@ const Profile = () => {
 
     return (
       <View style={styles.menuItem}>
-        <TouchableOpacity
-          style={styles.menuItemContent}
-          onPress={() => animateCardPress(onPress)}
-          activeOpacity={0.8}>
+        <TouchableOpacity style={styles.menuItemContent} onPress={() => {}} activeOpacity={0.8}>
           <View style={[styles.menuItemIcon, styles.vehicleIconContainer]}>
             <Car size={20} color={COLORS.primary} />
           </View>
           <View style={styles.menuItemText}>
             <View style={styles.vehicleItemHeader}>
               <Text style={styles.menuItemTitle}>
-                {vehicle.year} {vehicle.make} {vehicle.model}
+                {vehicle.year} {vehicle.company} {vehicle.model}
               </Text>
-              {vehicle.healthScore && (
-                <View
-                  style={[
-                    styles.healthBadge,
-                    { backgroundColor: getHealthColor(vehicle.healthScore) },
-                  ]}>
-                  <Text style={styles.healthBadgeText}>{vehicle.healthScore}%</Text>
-                </View>
-              )}
             </View>
-            <Text style={styles.menuItemSubtitle}>
-              License: {vehicle.plate} • {vehicle.color} • {vehicle.mileage} miles
-            </Text>
-            {vehicle.nextService && (
-              <View style={styles.nextServiceContainer}>
-                <Calendar size={12} color={COLORS.primary} />
-                <Text style={styles.nextServiceText}>Next service: {vehicle.nextService}</Text>
-              </View>
-            )}
           </View>
-          <ChevronRight size={20} color={COLORS1.gray400} />
         </TouchableOpacity>
       </View>
     );
@@ -852,10 +843,8 @@ const Profile = () => {
   const OrderItem = ({ order }: { order: Order }) => {
     const getStatusColor = () => {
       switch (order.status) {
-        case 'processing':
+        case 'pending':
           return COLORS1.warning;
-        case 'shipped':
-          return COLORS1.info;
         case 'delivered':
           return COLORS1.success;
         default:
@@ -867,22 +856,27 @@ const Profile = () => {
       <View style={styles.menuItem}>
         <TouchableOpacity
           style={styles.menuItemContent}
-          onPress={() => animateCardPress(() => handleOrderPress(order))}
+          onPress={() => {
+            navigation.navigate('BookingsScreen' as never);
+          }}
           activeOpacity={0.8}>
           <View style={[styles.menuItemIcon, styles.orderIconContainer]}>
             <ShoppingCart size={18} color={COLORS.primary} />
           </View>
           <View style={styles.menuItemText}>
-            <Text style={styles.menuItemTitle}>Order #{order.id}</Text>
+            <Text style={styles.menuItemTitle}>Order #{order?._id?.substring(0, 8)}</Text>
             <Text style={styles.menuItemSubtitle}>
-              {order.date} • {order.items.length} items • {order.total}
+              {order?.products ? order?.products?.length : order?.services?.length} items - &#8377;{' '}
+              {order?.amount}
             </Text>
-            {order.estimatedDelivery && (
-              <Text style={styles.estimatedDeliveryText}>{order.estimatedDelivery}</Text>
+            {order?.confirm_Date && (
+              <Text style={styles.estimatedDeliveryText}>
+                Date: {formatDateMonthandYear(order?.confirm_Date)}
+              </Text>
             )}
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
-            <Text style={styles.statusText}>{order.status}</Text>
+            <Text style={styles.statusText}>{order?.status}</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -1002,7 +996,6 @@ const Profile = () => {
     );
   };
 
-  // Individual Dropdown Section Component - Reduced height
   const DropdownSection = ({
     title,
     icon,
@@ -1045,25 +1038,25 @@ const Profile = () => {
           </View>
           <Text style={styles.sectionTitle}>My Vehicles</Text>
         </View>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.addButton, styles.fullWidthButton]}
           onPress={() => setAddVehicleModal(true)}
           activeOpacity={0.8}>
           <Plus size={16} color={COLORS.white} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       <View style={styles.card}>
-        {vehicles.length > 0 ? (
-          vehicles.map((vehicle, index) => (
-            <View key={vehicle.id}>
-              <VehicleItem vehicle={vehicle} onPress={() => handleVehiclePress(vehicle)} />
-              {index < vehicles.length - 1 && <View style={styles.separator} />}
-            </View>
-          ))
+        {formData?.vehicleInfo ? (
+          <View>
+            <VehicleItem
+              vehicle={formData?.vehicleInfo}
+              onPress={() => handleVehiclePress(formData?.vehicleInfo)}
+            />
+          </View>
         ) : (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconContainer}>
-              <Car size={48} color={COLORS1.gray300} />
+              <Car size={48} color={COLORS.primary_03} />
             </View>
             <Text style={styles.emptyStateText}>No vehicles added yet</Text>
             <Text style={styles.emptyStateSubtext}>
@@ -1137,14 +1130,15 @@ const Profile = () => {
         <Text style={styles.sectionTitle}>My Orders</Text>
       </View>
       <View style={styles.card}>
-        {orders.length > 0 ? (
+        {orders ? (
           orders.map((order, index) => (
-            <View key={order.id}>
+            <View key={index}>
               <OrderItem order={order} />
-              {index < orders.length - 1 && <View style={styles.separator} />}
+              <View style={styles.separator} />
             </View>
           ))
         ) : (
+          // <></>
           <View style={styles.emptyState}>
             <View style={styles.emptyIconContainer}>
               <ShoppingCart size={48} color={COLORS1.gray300} />
@@ -1182,6 +1176,9 @@ const Profile = () => {
                   />
                 }
                 showArrow={false}
+                onPress={() => {
+                  toast.info('No updates', 'Features not available right now');
+                }}
               />
               <View style={styles.separator} />
               <MenuItem
@@ -1197,6 +1194,9 @@ const Profile = () => {
                   />
                 }
                 showArrow={false}
+                onPress={() => {
+                  toast.info('No updates', 'Features not available right now');
+                }}
               />
               <View style={styles.separator} />
             </>
@@ -1212,6 +1212,9 @@ const Profile = () => {
               />
             }
             showArrow={false}
+            onPress={() => {
+              toast.info('No updates', 'Features not available right now');
+            }}
           />
           <View style={styles.separator} />
           <MenuItem
@@ -1225,6 +1228,9 @@ const Profile = () => {
               />
             }
             showArrow={false}
+            onPress={() => {
+              toast.info('No updates', 'Features not available right now');
+            }}
           />
         </View>
       </View>
@@ -1243,6 +1249,9 @@ const Profile = () => {
                 title="Payment Methods"
                 subtitle="Manage your payment options"
                 icon={<CreditCard size={20} color={COLORS.primary} />}
+                onPress={() => {
+                  toast.info('No updates', 'Features not available right now');
+                }}
               />
               <View style={styles.separator} />
             </>
@@ -1251,6 +1260,9 @@ const Profile = () => {
             title="App Preferences"
             subtitle="Customize your app experience"
             icon={<Settings size={20} color={COLORS.primary} />}
+            onPress={() => {
+              toast.info('No updates', 'Features not available right now');
+            }}
           />
         </View>
       </View>
@@ -1288,6 +1300,9 @@ const Profile = () => {
             title="Rate Our App"
             subtitle="Share your feedback"
             icon={<Star size={20} color={COLORS1.primary} />}
+            onPress={() => {
+              toast.info('No updates', 'Features not available right now');
+            }}
           />
         </View>
       </View>
@@ -1306,12 +1321,6 @@ const Profile = () => {
               subtitle="View and edit your account details"
               icon={<User size={20} color={COLORS1.primary} />}
               onPress={handleEditProfile}
-            />
-            <View style={styles.separator} />
-            <MenuItem
-              title="Subscription"
-              subtitle="Manage your premium membership"
-              icon={<Award size={20} color={COLORS1.primary} />}
             />
             <View style={styles.separator} />
             <MenuItem
@@ -1372,10 +1381,17 @@ const Profile = () => {
               <View style={styles.profileSection}>
                 <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
                   <View style={styles.profileImageContainer}>
-                    {userInfo.profileImage ? (
+                    {formData?.image ? (
                       <Image
-                        source={{ uri: userInfo?.profileImage }}
-                        style={{ width: 100, height: 100, borderRadius: 50 }}
+                        source={{ uri: formData?.image }}
+                        accessibilityLabel={`${formData?.firstName + ' ' + formData?.lastName || 'Customer'}`}
+                        style={{
+                          width: 100,
+                          height: 100,
+                          borderRadius: 50,
+                          borderWidth: 0.5,
+                          borderColor: COLORS.white,
+                        }}
                       />
                     ) : (
                       <View style={styles.placeholderImage}>
@@ -1389,7 +1405,9 @@ const Profile = () => {
                 </TouchableOpacity>
                 <View style={styles.profileInfo}>
                   <View style={styles.nameContainer}>
-                    <Text style={styles.profileName}>{userInfo.name || 'User'}</Text>
+                    <Text style={styles.profileName}>
+                      {(TokenSelector && formData?.firstName + ' ' + formData?.lastName) || 'User'}
+                    </Text>
                     <Verified size={16} color={COLORS1.success} />
                   </View>
                   <Text style={styles.profileEmail}>{userInfo.email}</Text>
@@ -1422,25 +1440,43 @@ const Profile = () => {
               <View style={styles.card}>
                 <MenuItem
                   title="Full Name"
-                  subtitle={userInfo.name}
+                  subtitle={TokenSelector && profileData?.firstName + ' ' + profileData?.lastName}
                   icon={<User size={20} color={COLORS1.primary} />}
                 />
                 <View style={styles.separator} />
                 <MenuItem
                   title="Email Address"
-                  subtitle={userInfo.email}
+                  subtitle={profileData?.email}
                   icon={<Mail size={20} color={COLORS1.primary} />}
                 />
                 <View style={styles.separator} />
                 <MenuItem
                   title="Phone Number"
-                  subtitle={userInfo.phone}
+                  subtitle={profileData?.contact_info?.phoneNumber}
                   icon={<Phone size={20} color={COLORS1.primary} />}
                 />
                 <View style={styles.separator} />
                 <MenuItem
-                  title="Location"
-                  subtitle={userInfo.location}
+                  title="Address 1"
+                  subtitle={profileData?.contact_info?.address1}
+                  icon={<MapPinHouse size={20} color={COLORS1.primary} />}
+                />
+                <View style={styles.separator} />
+                <MenuItem
+                  title="Address 2"
+                  subtitle={profileData?.contact_info?.address2}
+                  icon={<MapPinHouse size={20} color={COLORS1.primary} />}
+                />
+                <View style={styles.separator} />
+                <MenuItem
+                  title="City"
+                  subtitle={profileData?.contact_info?.city}
+                  icon={<Building2 size={20} color={COLORS1.primary} />}
+                />
+                <View style={styles.separator} />
+                <MenuItem
+                  title="State"
+                  subtitle={profileData?.contact_info?.state}
                   icon={<MapPin size={20} color={COLORS1.primary} />}
                 />
                 <View style={styles.separator} />
@@ -1461,27 +1497,65 @@ const Profile = () => {
             </View>
 
             {TokenSelector && (
+              <View style={styles.section}>
+                <View style={styles.sectionTitleContainer}>
+                  <View style={styles.sectionIconContainer}>
+                    <Car size={20} color={COLORS1.primary} />
+                  </View>
+                  <Text style={styles.sectionTitle}>Vehicle Information</Text>
+                </View>
+
+                <View style={styles.card}>
+                  <MenuItem
+                    title="Register Number"
+                    subtitle={profileData?.vehicleInfo?.registerNumber}
+                    icon={<BookUser size={20} color={COLORS1.primary} />}
+                  />
+                  <View style={styles.separator} />
+                  <MenuItem
+                    title="Car Details"
+                    subtitle={
+                      profileData?.vehicleInfo?.company +
+                      ' ' +
+                      profileData?.vehicleInfo?.model +
+                      ' ' +
+                      profileData?.vehicleInfo?.year
+                    }
+                    icon={<Car size={20} color={COLORS1.primary} />}
+                  />
+
+                  <View style={styles.separator} />
+                  <MenuItem
+                    title="Fuel Type"
+                    subtitle={profileData?.vehicleInfo?.fuleType}
+                    icon={<Fuel size={20} color={COLORS1.primary} />}
+                  />
+                </View>
+              </View>
+            )}
+
+            {TokenSelector && (
               <View style={styles.statsContainer}>
                 <View style={[styles.statCard, styles.statCardPrimary]}>
                   <View style={styles.statIconContainer}>
                     <Wrench size={24} color={COLORS.primary} />
                   </View>
-                  <Text style={styles.statNumber}>12</Text>
-                  <Text style={styles.statLabel}>Services</Text>
+                  <Text style={styles.statNumber}>{bookingOrders?.serviceConfirm?.length}</Text>
+                  <Text style={styles.statLabel}>Services booked</Text>
                 </View>
                 <View style={[styles.statCard, styles.statCardPrimary]}>
                   <View style={styles.statIconContainer}>
                     <ShoppingCart size={24} color={COLORS.primary} />
                   </View>
-                  <Text style={styles.statNumber}>8</Text>
+                  <Text style={styles.statNumber}>{bookingOrders?.productConfirm?.length}</Text>
                   <Text style={styles.statLabel}>Parts Ordered</Text>
                 </View>
                 <View style={[styles.statCard, styles.statCardPrimary]}>
                   <View style={styles.statIconContainer}>
                     <Car size={24} color={COLORS.primary} />
                   </View>
-                  <Text style={styles.statNumber}>{vehicles.length}</Text>
-                  <Text style={styles.statLabel}>Vehicles</Text>
+                  <Text style={styles.statNumber}>1</Text>
+                  <Text style={styles.statLabel}>My Vehicle</Text>
                 </View>
               </View>
             )}
@@ -1614,20 +1688,7 @@ const Profile = () => {
                 <View style={styles.photoSection}>
                   <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
                     <View style={styles.editProfileImageContainer}>
-                      {editForm.profileImage ? (
-                        <Image
-                          source={{ uri: editForm.profileImage }}
-                          style={styles.editProfileImage}
-                        />
-                      ) : (
-                        <View style={styles.editPlaceholderImage}>
-                          <Image
-                            source={require('../../assets/images/profile_picture.jpg')}
-                            style={{ width: 100, height: 100, borderRadius: 50 }}
-                          />
-                          {/* <User size={40} color={COLORS1.gray400} /> */}
-                        </View>
-                      )}
+                      <Image source={{ uri: formData?.image }} style={styles.editProfileImage} />
                       <View style={styles.editCameraIcon}>
                         <Camera size={16} color={COLORS1.white} />
                       </View>
@@ -1637,13 +1698,23 @@ const Profile = () => {
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Full Name</Text>
+                  <Text style={styles.fieldLabel}>First Name</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={editForm.name}
-                    onChangeText={(text) => setEditForm({ ...editForm, name: text })}
-                    placeholder="Enter your full name"
-                    placeholderTextColor={COLORS1.gray400}
+                    value={formData?.firstName}
+                    onChangeText={(name) => setFormData({ ...formData, firstName: name })}
+                    placeholder="Enter your first name"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Last Name</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.lastName}
+                    onChangeText={(name) => setFormData({ ...formData, lastName: name })}
+                    placeholder="Enter your last name"
+                    placeholderTextColor={COLORS.primary_03}
                   />
                 </View>
 
@@ -1651,10 +1722,10 @@ const Profile = () => {
                   <Text style={styles.fieldLabel}>Email Address</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={editForm.email}
-                    onChangeText={(text) => setEditForm({ ...editForm, email: text })}
+                    value={formData?.email}
+                    onChangeText={(text) => setFormData({ ...formData, email: text })}
                     placeholder="Enter your email"
-                    placeholderTextColor={COLORS1.gray400}
+                    placeholderTextColor={COLORS.primary_03}
                     keyboardType="email-address"
                     autoCapitalize="none"
                   />
@@ -1664,24 +1735,160 @@ const Profile = () => {
                   <Text style={styles.fieldLabel}>Phone Number</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={editForm.phone}
-                    onChangeText={(text) => setEditForm({ ...editForm, phone: text })}
+                    value={formData?.contact_info?.phoneNumber}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        contact_info: { ...formData?.contact_info, phoneNumber: text },
+                      })
+                    }
                     placeholder="Enter your phone number"
-                    placeholderTextColor={COLORS1.gray400}
+                    placeholderTextColor={COLORS.primary_03}
                     keyboardType="phone-pad"
                   />
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Location</Text>
+                  <Text style={styles.fieldLabel}>Address 1</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={editForm.location}
-                    onChangeText={(text) => setEditForm({ ...editForm, location: text })}
-                    placeholder="Enter your location"
-                    placeholderTextColor={COLORS1.gray400}
+                    value={formData?.contact_info?.address1}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        contact_info: { ...formData.contact_info, address1: text },
+                      })
+                    }
+                    placeholder="Enter your address 1"
+                    placeholderTextColor={COLORS.primary_03}
                   />
                 </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Address 2</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.contact_info?.address2}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        contact_info: { ...formData.contact_info, address2: text },
+                      })
+                    }
+                    placeholder="Enter your email"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>City</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.contact_info?.city}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        contact_info: { ...formData.contact_info, city: text },
+                      })
+                    }
+                    placeholder="Enter your city"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>State</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.contact_info?.state}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        contact_info: { ...formData.contact_info, state: text },
+                      })
+                    }
+                    placeholder="Enter your state"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Register Number</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.vehicleInfo?.registerNumber}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: { ...formData.vehicleInfo, registerNumber: text },
+                      })
+                    }
+                    placeholder="Enter your register number"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Car Company</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.vehicleInfo?.company}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: { ...formData.vehicleInfo, company: text },
+                      })
+                    }
+                    placeholder="Enter your car company"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Car Model</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.vehicleInfo?.model}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: { ...formData.vehicleInfo, model: text },
+                      })
+                    }
+                    placeholder="Enter your car model"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Model Year</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.vehicleInfo?.year}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: { ...formData.vehicleInfo, year: text },
+                      })
+                    }
+                    placeholder="Enter your model year"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Fuel Type</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData?.vehicleInfo?.fuleType}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: { ...formData.vehicleInfo, fuleType: text },
+                      })
+                    }
+                    placeholder="Enter your car fuel type"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                </View>
+
                 <TouchableOpacity
                   onPress={handleSaveProfile}
                   style={{
@@ -1689,7 +1896,8 @@ const Profile = () => {
                     width: '25%',
                     padding: 10,
                     borderRadius: 10,
-                    marginTop: 15,
+                    marginVertical: 15,
+                    marginBottom: 35,
                     alignSelf: 'center',
                   }}>
                   <Text style={[styles.saveButton, { textAlign: 'center' }]}>Save</Text>
@@ -1714,85 +1922,110 @@ const Profile = () => {
 
               <ScrollView style={styles.modalContent}>
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Make *</Text>
+                  <Text style={styles.fieldLabel}>Register Number *</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={vehicleForm.make}
-                    onChangeText={(text) => setVehicleForm({ ...vehicleForm, make: text })}
-                    placeholder="e.g., Toyota"
-                    placeholderTextColor={COLORS1.gray400}
+                    value={formData?.vehicleInfo?.registerNumber}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: {
+                          ...formData.vehicleInfo,
+                          registerNumber: text,
+                        },
+                      })
+                    }
+                    placeholder="Enter you car register number"
+                    placeholderTextColor={COLORS.primary_03}
                   />
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Model *</Text>
+                  <Text style={styles.fieldLabel}>Car Company *</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={vehicleForm.model}
-                    onChangeText={(text) => setVehicleForm({ ...vehicleForm, model: text })}
-                    placeholder="e.g., Camry"
-                    placeholderTextColor={COLORS1.gray400}
+                    value={formData?.vehicleInfo?.company}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: {
+                          ...formData.vehicleInfo,
+                          company: text,
+                        },
+                      })
+                    }
+                    placeholder="Enter you car company"
+                    placeholderTextColor={COLORS.primary_03}
                   />
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Year *</Text>
+                  <Text style={styles.fieldLabel}>Car Model *</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={vehicleForm.year}
-                    onChangeText={(text) => setVehicleForm({ ...vehicleForm, year: text })}
-                    placeholder="e.g., 2020"
-                    placeholderTextColor={COLORS1.gray400}
-                    keyboardType="numeric"
+                    value={formData?.vehicleInfo?.model}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: {
+                          ...formData.vehicleInfo,
+                          model: text,
+                        },
+                      })
+                    }
+                    placeholder="Enter you car model"
+                    placeholderTextColor={COLORS.primary_03}
                   />
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>License Plate *</Text>
+                  <Text style={styles.fieldLabel}>Model Year *</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={vehicleForm.plate}
-                    onChangeText={(text) => setVehicleForm({ ...vehicleForm, plate: text })}
-                    placeholder="e.g., ABC-123"
-                    placeholderTextColor={COLORS1.gray400}
-                    autoCapitalize="characters"
+                    value={formData?.vehicleInfo?.year}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: {
+                          ...formData.vehicleInfo,
+                          year: text,
+                        },
+                      })
+                    }
+                    placeholder="Enter you car model year"
+                    placeholderTextColor={COLORS.primary_03}
                   />
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Color</Text>
+                  <Text style={styles.fieldLabel}>Fuel Type *</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={vehicleForm.color}
-                    onChangeText={(text) => setVehicleForm({ ...vehicleForm, color: text })}
-                    placeholder="e.g., Silver"
-                    placeholderTextColor={COLORS1.gray400}
-                  />
-                </View>
-
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Mileage</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={vehicleForm.mileage}
-                    onChangeText={(text) => setVehicleForm({ ...vehicleForm, mileage: text })}
-                    placeholder="e.g., 45,000"
-                    placeholderTextColor={COLORS1.gray400}
-                    keyboardType="numeric"
+                    value={formData?.vehicleInfo?.fuleType}
+                    onChangeText={(text) =>
+                      setFormData({
+                        ...formData,
+                        vehicleInfo: {
+                          ...formData.vehicleInfo,
+                          fuleType: text,
+                        },
+                      })
+                    }
+                    placeholder="Enter you car fuel type"
+                    placeholderTextColor={COLORS.primary_03}
                   />
                 </View>
 
                 <View>
                   <TouchableOpacity
-                    onPress={() => {
-                      handleAddVehicle;
-                    }}
+                    onPress={handleAddVehicle}
                     style={{
                       backgroundColor: COLORS1.primary,
                       padding: 12,
                       width: '25%',
                       borderRadius: 10,
                       alignSelf: 'center',
+                      marginTop: 25,
                     }}>
                     <Text
                       style={{
@@ -2441,8 +2674,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   menuItemSubtitle: {
-    ...FONTS.body6,
-    color: COLORS.grey,
+    ...FONTS.body5,
+    color: COLORS.black,
     lineHeight: 15,
   },
   vehicleItemHeader: {
@@ -2556,8 +2789,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   addButtonText: {
-    color: COLORS1.white,
-    fontSize: 5,
+    color: COLORS.white,
+    fontSize: 12,
     fontWeight: '700',
     marginLeft: 6,
   },
@@ -2580,17 +2813,17 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   emptyStateText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: COLORS1.primary,
+    color: COLORS.primary,
     marginBottom: 8,
   },
   emptyStateSubtext: {
-    fontSize: 15,
-    color: 'gray',
+    fontSize: 12,
+    color: COLORS.grey80,
     textAlign: 'center',
     marginBottom: 24,
-    lineHeight: 22,
+    lineHeight: 20,
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -2883,7 +3116,7 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
   },
   formSection: {
-    marginBottom: 24,
+    marginBottom: 10,
   },
   fieldLabel: {
     ...FONTS.body4,

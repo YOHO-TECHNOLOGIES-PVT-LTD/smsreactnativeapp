@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
+import { selectCartItems } from '~/features/booking-cart/redux/selectors';
 
 interface Product {
   _id: string;
@@ -75,6 +76,8 @@ const Bookings = () => {
   const tokenSelector = useSelector(selectToken);
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation();
+  const cartItems = useSelector(selectCartItems);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     try {
@@ -91,7 +94,7 @@ const Bookings = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = tokenSelector && (await getAllBookingsCartItems({}));
+        const response = await getAllBookingsCartItems({});
         if (response?.success) {
           const allOrders = [
             ...(response.productConfirm || []),
@@ -101,12 +104,27 @@ const Bookings = () => {
         }
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.log('Error fetching orders:', error);
         setLoading(false);
       }
     };
-    fetchOrders();
-  }, []);
+    if (tokenSelector) {
+      fetchOrders();
+    }
+    const getCartCount = () => {
+      if (cartItems?.length == 1) {
+        return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
+      } else if (cartItems?.length > 1) {
+        return (
+          Number(cartItems[0]?.products?.length) +
+          Number(cartItems[0]?.services?.length) +
+          Number(cartItems[1]?.products?.length) +
+          Number(cartItems[1]?.services?.length)
+        );
+      }
+    };
+    setCartCount(getCartCount() ?? 0);
+  }, [dispatch, tokenSelector]);
 
   const filteredOrders = orders?.filter((order: any) => {
     const matchesTab =
@@ -144,6 +162,20 @@ const Bookings = () => {
           <View style={{ flexDirection: 'row', gap: 15, marginRight: 8 }}>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
+              <View
+                style={{
+                  width: 15,
+                  height: 15,
+                  backgroundColor: COLORS.primary,
+                  borderRadius: 25,
+                  position: 'absolute',
+                  right: -2,
+                  top: -6,
+                }}>
+                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>
+                  {cartCount}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>

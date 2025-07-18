@@ -1,21 +1,24 @@
-import {
-  Image,
-  StatusBar,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import  { useEffect, useState } from 'react';
+import { Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { COLORS, icons, } from '~/constants';
+import { COLORS, FONTS, icons } from '~/constants';
 import SparePartsPage from '~/components/SpareParts/SparePartsPage';
 import { getAllSpareParts } from '~/features/spare-parts/service';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {  Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '~/store';
+import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
+import { selectCartItems } from '~/features/booking-cart/redux/selectors';
+import { selectToken } from '~/features/token/redux/selectors';
 
 const SpareParts = () => {
   const navigation = useNavigation();
   const [spareParts, setSpareParts] = useState([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const cartItems = useSelector(selectCartItems);
+  const TokenSelector = useSelector(selectToken);
+  const [cartCount, setCartCount] = useState(0);
 
   const getAllSparePartsDetails = async () => {
     try {
@@ -30,8 +33,21 @@ const SpareParts = () => {
   };
 
   useEffect(() => {
-    getAllSparePartsDetails();
-  }, []);
+    dispatch(getBookingCartItems());
+    const getCartCount = () => {
+      if (cartItems?.length == 1) {
+        return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
+      } else if (cartItems?.length > 1) {
+        return (
+          Number(cartItems[0]?.products?.length) +
+          Number(cartItems[0]?.services?.length) +
+          Number(cartItems[1]?.products?.length) +
+          Number(cartItems[1]?.services?.length)
+        );
+      }
+    };
+    setCartCount(getCartCount() ?? 0);
+  }, [dispatch, TokenSelector]);
 
   return (
     <>
@@ -50,9 +66,6 @@ const SpareParts = () => {
             style={{ width: 145, height: 25 }}
           />
           <View style={{ flexDirection: 'row', gap: 20, marginRight: 5 }}>
-            {/* <TouchableOpacity>
-              <AntDesign name="search1" size={24} color={COLORS.primary} />
-            </TouchableOpacity> */}
             <TouchableOpacity onPress={() => navigation.navigate('BookingsScreen' as never)}>
               <Image
                 source={icons.booking_icon}
@@ -62,7 +75,7 @@ const SpareParts = () => {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              {/* <View
+              <View
                 style={{
                   width: 15,
                   height: 15,
@@ -72,8 +85,10 @@ const SpareParts = () => {
                   right: -2,
                   top: -6,
                 }}>
-                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>1</Text>
-              </View> */}
+                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>
+                  {cartCount}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>

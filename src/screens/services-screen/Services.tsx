@@ -62,7 +62,6 @@ const Services = () => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,6 +75,7 @@ const Services = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
   const cartItems = useSelector(selectCartItems);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     try {
@@ -127,7 +127,21 @@ const Services = () => {
   useEffect(() => {
     dispatch(getBookingCartItems());
     fetchAllServices();
-  }, []);
+
+    const getCartCount = () => {
+      if (cartItems?.length == 1) {
+        return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
+      } else if (cartItems?.length > 1) {
+        return (
+          Number(cartItems[0]?.products?.length) +
+          Number(cartItems[0]?.services?.length) +
+          Number(cartItems[1]?.products?.length) +
+          Number(cartItems[1]?.services?.length)
+        );
+      }
+    };
+    setCartCount(getCartCount() ?? 0);
+  }, [dispatch, TokenSelector]);
 
   const handleAddtoCart = async () => {
     if (TokenSelector) {
@@ -147,6 +161,10 @@ const Services = () => {
               month: 'long',
               day: 'numeric',
             }) || null,
+          preferredTime: {
+            startTime,
+            endTime,
+          },
         };
         const response = await addBookingCartItem(data);
         if (response) {
@@ -232,7 +250,7 @@ const Services = () => {
               <TouchableOpacity
                 style={styles.backButton1}
                 onPress={() => setBookingModalVisible(false)}>
-                <Ionicons name="arrow-back" size={26} color={COLORS.black} />
+                <Ionicons name="arrow-back" size={26} color={COLORS.primary} />
               </TouchableOpacity>
             </View>
             <Text style={styles.modalTitle}>Booking Options</Text>
@@ -285,12 +303,12 @@ const Services = () => {
                 <MaterialIcons name="access-time" size={20} color={COLORS.primary} />
                 <Text style={styles.detailText}>Working Hours: 9:00 AM - 5:00 PM</Text>
               </View>
-              <View style={styles.detailRow}>
+              {/* <View style={styles.detailRow}>
                 <MaterialIcons name="location-on" size={20} color={COLORS.primary} />
                 <Text style={styles.detailText}>Service Center Location</Text>
-              </View>
+              </View> */}
 
-              <View style={styles.timeSelection}>
+              {/* <View style={styles.timeSelection}>
                 <Text style={styles.timeLabel}>Preferred Time:</Text>
                 <View style={styles.timeInputContainer}>
                   <TextInput
@@ -307,7 +325,7 @@ const Services = () => {
                     placeholder="End time"
                   />
                 </View>
-              </View>
+              </View> */}
             </View>
           )}
 
@@ -402,7 +420,7 @@ const Services = () => {
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
               <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>1</Text>
+                <Text style={styles.cartBadgeText}>{cartCount}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -812,6 +830,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 15,
     marginBottom: 5,
+    color: COLORS.primary,
   },
   modalPrice: {
     ...FONTS.h3,

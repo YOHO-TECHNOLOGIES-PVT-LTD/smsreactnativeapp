@@ -67,7 +67,7 @@ class HttpClient {
     return response.data;
   }
 
-  async update<T = any>(url: string, params: Record<string, any>, data: any) {
+  async update<T = any>(url: string, data: any, params?: Record<string, any>) {
     const response = await Axios.put<T>(url, data, { params });
     return response.data;
   }
@@ -84,7 +84,7 @@ class HttpClient {
 
   async fileGet(url: string) {
     const response = await Axios.get(url, {
-      responseType: 'blob', // On RN, this may be a base64 string or binary
+      responseType: 'blob', 
     });
     return response.data;
   }

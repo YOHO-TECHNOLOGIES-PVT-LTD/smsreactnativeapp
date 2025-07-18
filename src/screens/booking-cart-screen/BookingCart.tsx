@@ -34,17 +34,21 @@ const Settings = () => {
   }, [dispatch]);
 
   const fetchAllBookingCarts = async () => {
-    const response = tokenSelector && (await getAllBookingCartItems({}));
-    setBookingCarts(response || []);
+    const response = await getAllBookingCartItems({});
+    if (response) {
+      setBookingCarts(response || []);
+    }
     try {
     } catch (error) {
-      console.error('Error fetching booking carts:', error);
+      console.log('Error fetching booking carts:', error);
     }
   };
 
   useEffect(() => {
-    fetchAllBookingCarts();
-  }, []);
+    if (tokenSelector) {
+      fetchAllBookingCarts();
+    }
+  }, [dispatch, tokenSelector]);
 
   return (
     <>
@@ -86,7 +90,7 @@ const Settings = () => {
           </View>
 
           <View style={{ flex: 1 }}>
-            <Grid1 bookingCarts={bookingCarts} />
+            <Grid1 bookingCarts={bookingCarts} onChangeCart={fetchAllBookingCarts} />
           </View>
         </GestureHandlerRootView>
       </SafeAreaView>

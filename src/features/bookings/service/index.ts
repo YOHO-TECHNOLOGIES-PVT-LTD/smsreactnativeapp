@@ -8,7 +8,7 @@ export const getAllServiceBookings = async (data: any) => {
     }
     return null;
   } catch (error) {
-    console.error('Error fetching booking cart items:', error);
+    console.log('Error fetching booking cart items:', error);
     return null;
   }
 };
@@ -21,7 +21,7 @@ export const addServiceBooking = async (data: any) => {
     }
     return null;
   } catch (error) {
-    console.error('Error adding booking cart item:', error);
+    console.log('Error adding booking cart item:', error);
     return null;
   }
 };
@@ -34,7 +34,7 @@ export const updateServiceBooking = async (id: any, data: any) => {
     }
     return null;
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return null;
   }
 };
@@ -46,7 +46,7 @@ export const getAllBookingsCartItems = async (data: any) => {
       return response;
     }
   } catch (error) {
-    console.error('Error fetching booking cart items:', error);
+    console.log('Error fetching booking cart items:', error);
     return null;
   }
 };
@@ -59,7 +59,7 @@ export const addServiceCartItems = async (data: any) => {
     }
     return null;
   } catch (error) {
-    console.error('Error fetching service cart items:', error);
+    console.log('Error fetching service cart items:', error);
     return null;
   }
 };
@@ -72,7 +72,7 @@ export const addSparePartCartItems = async (data: any) => {
     }
     return null;
   } catch (error) {
-    console.error('Error fetching spare part cart items:', error);
+    console.log('Error fetching spare part cart items:', error);
     return null;
   }
 };
