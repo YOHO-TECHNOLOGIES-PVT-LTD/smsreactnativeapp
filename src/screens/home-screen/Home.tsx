@@ -89,7 +89,23 @@ const HomePage = () => {
   const [spareParts, setSpareParts] = useState([]);
   const [serviceCategories, setServiceCategories] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
-  const [profileData, setProfileData] = useState<{ firstName?: string }>({});
+  const [profileData, setProfileData] = useState<{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    contact_info: {
+      phoneNumber: string;
+    };
+    vehicleInfo: string;
+  }>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    contact_info: {
+      phoneNumber: '',
+    },
+    vehicleInfo: '',
+  });
 
   useEffect(() => {
     Animated.parallel([
@@ -500,6 +516,7 @@ const HomePage = () => {
                         color: COLORS.primary,
                         ...FONTS.body4,
                       }}
+                      value={profileData?.firstName + " " + profileData?.lastName}
                     />
                   </View>
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
@@ -513,6 +530,7 @@ const HomePage = () => {
                         color: COLORS.primary,
                         ...FONTS.body4,
                       }}
+                      value={profileData?.email}
                     />
                   </View>
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
@@ -526,6 +544,7 @@ const HomePage = () => {
                         color: COLORS.primary,
                         ...FONTS.body4,
                       }}
+                      value={profileData?.contact_info?.phoneNumber}
                     />
                   </View>
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>

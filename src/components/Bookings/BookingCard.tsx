@@ -108,7 +108,7 @@ const OrderDetailsModal: React.FC<{
         throw new Error('Invalid order type');
       }
       const fileUri = FileSystem.documentDirectory + `invoice_${order.uuid}.pdf`;
-      await FileSystem.writeAsStringAsync(fileUri, response.data, {
+      await FileSystem.writeAsStringAsync(fileUri, response, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
@@ -117,8 +117,8 @@ const OrderDetailsModal: React.FC<{
         dialogTitle: 'Save Invoice',
         UTI: 'com.adobe.pdf',
       });
+      toast.success('Success', 'Invoice downloaded successfully!');
     } catch (error) {
-      console.log('Error downloading invoice:', error);
       toast.error('Error', 'Failed to download invoice');
     }
   };
@@ -126,10 +126,10 @@ const OrderDetailsModal: React.FC<{
   const handleViewTrackSlip = async () => {
     setIsLoading(true);
     try {
-      console.log('Viewing track slip for order:', order.track_id);
+      toast.success('Success', `Viewing track slip for order: ${order?.track_id}`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error('Failed to view track slip:', error);
+    } catch (error: any) {
+      toast.error('Failed to view track slip:', error.message);
     } finally {
       setIsLoading(false);
     }
@@ -209,14 +209,14 @@ const OrderDetailsModal: React.FC<{
                     </View>
                     <View style={styles.itemDetails}>
                       <Text style={styles.itemName} numberOfLines={2}>
-                        {service.service_name}
+                        {service?.service_name}
                       </Text>
                       <Text style={styles.itemDescription} numberOfLines={2}>
-                        {service.description}
+                        {service?.description}
                       </Text>
                       <View style={styles.itemMeta}>
-                        <Text style={styles.itemPrice}>₹{service.price.toFixed(2)}</Text>
-                        <Text style={styles.itemDuration}>Duration: {service.duration} hours</Text>
+                        <Text style={styles.itemPrice}>₹{service?.price.toFixed(2)}</Text>
+                        <Text style={styles.itemDuration}>Duration: {service?.duration} hours</Text>
                       </View>
                     </View>
                   </View>

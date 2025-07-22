@@ -130,8 +130,8 @@ const Services = () => {
       if (categories) {
         setServiceCategories(categories);
         if (categories?.length > 0) {
-          setActiveNavItem(categories[0].category_name);
-          setFilteredParts(categories[0].services);
+          setActiveNavItem(categories[0]?.category_name);
+          setFilteredParts(categories[0]?.services);
         }
       }
     } catch (error) {
@@ -210,6 +210,10 @@ const Services = () => {
           setSelectedDate(new Date());
           setSelectedVehicleIndex(null);
         } else {
+          setBookingModalVisible(false);
+          setModalVisible(false);
+          setSelectedDate(new Date());
+          setSelectedVehicleIndex(null);
           toast.error('Error', 'Something went wrong, try again.');
         }
       } catch (error) {

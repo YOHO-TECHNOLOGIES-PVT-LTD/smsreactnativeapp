@@ -254,7 +254,7 @@ const Bookings = () => {
               <FlatList
                 data={filteredOrders}
                 keyExtractor={(item: any) => item._id}
-                renderItem={({ item }) => <BookingCard data={item} onPress={() => {}} />}
+                renderItem={({ item }) => <BookingCard data={item} />}
                 contentContainerStyle={styles.ordersList}
                 showsVerticalScrollIndicator={false}
               />
