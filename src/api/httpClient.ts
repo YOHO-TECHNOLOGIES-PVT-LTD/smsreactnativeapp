@@ -90,7 +90,7 @@ class HttpClient {
       params,
       responseType: 'blob',
     });
-    return response.data;
+    return response;
   }
 
   async uploadFile<T = any>(url: string, data: FormData) {

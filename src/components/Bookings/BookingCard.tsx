@@ -23,6 +23,7 @@ import { getinvoiceProduct, getinvoiceService } from '~/features/bookings/servic
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
+import * as Linking from 'expo-linking';
 import toast from '~/utils/toast';
 
 type BookingType = 'spare' | 'service';
@@ -100,15 +101,21 @@ const OrderDetailsModal: React.FC<{
       }
 
       let response;
-      if (order?.type === 'service') {
-        response = await getinvoiceService({ uuid: order.uuid });
-      } else if (order?.type === 'spare') {
-        response = await getinvoiceProduct({ uuid: order.uuid });
+      if (order?.services?.length) {
+        response = await getinvoiceService({ uuid: order?.uuid });
+      } else if (order?.products?.length) {
+        response = await getinvoiceProduct({ uuid: order?.uuid });
       } else {
         throw new Error('Invalid order type');
       }
-      const fileUri = FileSystem.documentDirectory + `invoice_${order.uuid}.pdf`;
-      await FileSystem.writeAsStringAsync(fileUri, response, {
+      const blob = response?.data;
+      const base64Data = await blobToBase64(blob);
+
+      // 4. Create file and share
+      const fileName = `invoice_${order?.uuid}.pdf`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
@@ -121,6 +128,19 @@ const OrderDetailsModal: React.FC<{
     } catch (error) {
       toast.error('Error', 'Failed to download invoice');
     }
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64Data = result.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.readAsDataURL(blob);
+    });
   };
 
   const handleViewTrackSlip = async () => {
@@ -335,6 +355,57 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
+
+  const handleDownloadInvoice = async () => {
+    try {
+      if (!data?.uuid) {
+        throw new Error('No order UUID available');
+      }
+
+      // 1. Get the PDF blob from API
+      let response;
+      if (data?.services?.length) {
+        response = await getinvoiceService({ uuid: data.uuid });
+      } else if (data?.products?.length) {
+        response = await getinvoiceProduct({ uuid: data.uuid });
+      } else {
+        console.log('Invalid order type');
+      }
+
+      // 2. Create a reference to the Blob
+      const blob = response?.data;
+      const base64Data = await blobToBase64(blob);
+
+      // 4. Create file and share
+      const fileName = `invoice_${data.uuid}.pdf`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Save Invoice',
+        UTI: 'com.adobe.pdf',
+      });
+    } catch (error) {
+      toast.error('Error', 'Failed to download invoice');
+    }
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64Data = result.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.readAsDataURL(blob);
+    });
+  };
 
   useEffect(() => {
     translateY.value = withTiming(0, {
