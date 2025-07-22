@@ -6,10 +6,8 @@ export const getAllBookingCartItems = async (data: any) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
     console.log('Error fetching booking cart items:', error);
-    return null;
   }
 };
 
@@ -19,10 +17,8 @@ export const addBookingCartItem = async (data: any) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
     console.log('Error adding booking cart item:', error);
-    return null;
   }
 };
 
@@ -32,10 +28,8 @@ export const deleteBookingCartItem = async (id: any) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
     console.log('Error deleting booking cart item:', error);
-    return null;
   }
 };
 
@@ -45,10 +39,8 @@ export const updateBookingCartItem = async (id: any, data: string) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
     console.log('Error updating booking cart item:', error);
-    return null;
   }
 };
 
@@ -58,10 +50,8 @@ export const getBookingCartItemById = async (id: any) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
     console.log('Error fetching booking cart item by ID:', error);
-    return null;
   }
 };
 
@@ -73,7 +63,6 @@ export const deleteBookingCartProduct = async (params: any) => {
     }
   } catch (error) {
     console.log('Error in deleteBookingProduct:', error);
-    throw null;
   }
 };
 
@@ -85,6 +74,5 @@ export const deleteBookingCartService = async (params: any) => {
     }
   } catch (error) {
     console.log('Error in deleteBookingService:', error);
-    throw null;
   }
 };

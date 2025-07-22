@@ -1,5 +1,15 @@
-import React, { useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   withTiming,
@@ -7,43 +17,322 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { COLORS, FONTS, icons, SIZES } from '~/constants';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import { formatDateMonthandYear } from '../../utils/formatDate';
+import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { formatDateandTime, formatDateMonthandYear } from '../../utils/formatDate';
+import { getinvoiceProduct, getinvoiceService } from '~/features/bookings/service';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { Alert } from 'react-native';
+import toast from '~/utils/toast';
 
 type BookingType = 'spare' | 'service';
+type OrderStatus = 'pending' | 'Confirm Order' | 'Dispatched to Courier';
+
+interface Product {
+  id: string;
+  name: string;
+  productId: {
+    productName: string;
+    brand: string;
+    warrantyPeriod: string;
+    price: string;
+    imageUrl?: string;
+  };
+  quantity: number;
+  price: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  duration: string;
+  price: number;
+  image?: string;
+  service_name: string;
+}
 
 interface BookingCardData {
   id: string;
+  uuid: string;
   orderId: string;
   name: string;
-  imageUrl: string;
-  description: string;
+  image?: string;
+  description?: string;
   date: string;
   price: number;
   warranty?: string;
   quantity: number;
-  status: 'pending' | 'completed';
+  status: OrderStatus;
   type: BookingType;
   confirm_Date: string;
-  products: Array<{
-    id: string;
-    name: string;
-  }>;
-  services?: Array<{
-    id: string;
-    name: string;
-    description: string;
-  }>;
+  products?: Product[];
+  services?: Service[];
   amount: number;
+  track_id?: string;
+  trackslip_image?: string;
+  schedule_date?: string;
+  preferedTime?: {
+    startTime: string;
+    endTime: string;
+  };
+  createdAt: string;
 }
 
 interface BookingCardProps {
   data: BookingCardData;
-  onPress: () => void;
   delay?: number;
 }
 
-const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) => {
+const OrderDetailsModal: React.FC<{
+  visible: boolean;
+  onClose: () => void;
+  order: BookingCardData;
+}> = ({ visible, onClose, order }) => {
+  const isService = !!order?.services;
+  const isDispatched = order?.status === 'Dispatched to Courier';
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDownloadInvoice = async () => {
+    try {
+      if (!order?.uuid) {
+        throw new Error('No order UUID available');
+      }
+
+      let response;
+      if (order?.type === 'service') {
+        response = await getinvoiceService({ uuid: order.uuid });
+      } else if (order?.type === 'spare') {
+        response = await getinvoiceProduct({ uuid: order.uuid });
+      } else {
+        throw new Error('Invalid order type');
+      }
+      const fileUri = FileSystem.documentDirectory + `invoice_${order.uuid}.pdf`;
+      await FileSystem.writeAsStringAsync(fileUri, response.data, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Save Invoice',
+        UTI: 'com.adobe.pdf',
+      });
+    } catch (error) {
+      console.log('Error downloading invoice:', error);
+      toast.error('Error', 'Failed to download invoice');
+    }
+  };
+
+  const handleViewTrackSlip = async () => {
+    setIsLoading(true);
+    try {
+      console.log('Viewing track slip for order:', order.track_id);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Failed to view track slip:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getImageSource = (item: Product | Service) => {
+    return order?.image;
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={onClose}
+      statusBarTranslucent={true}>
+      <View style={styles.modalFullscreenContainer}>
+        <ScrollView
+          style={styles.modalScrollView}
+          contentContainerStyle={styles.modalContentContainer}>
+          {/* Header */}
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={onClose} style={styles.backButton}>
+              <AntDesign name="arrowleft" size={24} color={COLORS.black} />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Order Details</Text>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          {/* Order Summary */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Order Summary</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Order ID:</Text>
+              <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
+                {order?.orderId || 'N/A'}
+              </Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Order Date:</Text>
+              <Text style={styles.summaryValue}>{formatDateandTime(order?.createdAt)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Status:</Text>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: isDispatched ? COLORS.success_lightgreen : COLORS.error },
+                ]}>
+                <Text style={styles.statusText}>{order?.status}</Text>
+              </View>
+            </View>
+            {isDispatched && order?.track_id && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Tracking ID:</Text>
+                <TextInput
+                  style={styles.trackingInput}
+                  value={order?.track_id}
+                  editable={false}
+                  numberOfLines={1}
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Items Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {isService ? 'Service Details' : 'Product Details'}
+            </Text>
+
+            {isService
+              ? order?.services?.map((service, index) => (
+                  <View key={`service-${index}`} style={styles.itemContainer}>
+                    <View style={styles.itemImageContainer}>
+                      <Image source={{ uri: getImageSource(service) }} style={styles.itemImage} />
+                    </View>
+                    <View style={styles.itemDetails}>
+                      <Text style={styles.itemName} numberOfLines={2}>
+                        {service.service_name}
+                      </Text>
+                      <Text style={styles.itemDescription} numberOfLines={2}>
+                        {service.description}
+                      </Text>
+                      <View style={styles.itemMeta}>
+                        <Text style={styles.itemPrice}>₹{service.price.toFixed(2)}</Text>
+                        <Text style={styles.itemDuration}>Duration: {service.duration} hours</Text>
+                      </View>
+                    </View>
+                  </View>
+                ))
+              : order?.products?.map((product, index) => (
+                  <View key={`product-${index}`} style={styles.itemContainer}>
+                    <View style={styles.itemImageContainer}>
+                      <Image source={{ uri: getImageSource(product) }} style={styles.itemImage} />
+                    </View>
+                    <View style={styles.itemDetails}>
+                      <Text style={styles.itemName} numberOfLines={2}>
+                        {product?.productId?.productName}
+                      </Text>
+                      <Text style={styles.itemDescription} numberOfLines={1}>
+                        Brand: {product?.productId?.brand}
+                      </Text>
+                      <Text style={styles.itemDescription} numberOfLines={1}>
+                        Warranty: {product?.productId?.warrantyPeriod}
+                      </Text>
+                      <View style={styles.itemMeta}>
+                        <Text style={styles.itemPrice}>
+                          ₹
+                          {(Number(product?.price) || Number(product?.productId?.price)).toFixed(2)}
+                        </Text>
+                        <Text style={styles.itemQuantity}>Qty: {product?.quantity}</Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+          </View>
+
+          {/* Schedule Info (for services) */}
+          {isService && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Schedule Information</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Scheduled Date:</Text>
+                <Text style={styles.summaryValue}>
+                  {order?.schedule_date
+                    ? formatDateMonthandYear(order?.schedule_date)
+                    : 'Not scheduled'}
+                </Text>
+              </View>
+              {order?.preferedTime && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Preferred Time:</Text>
+                  <Text style={styles.summaryValue}>
+                    {order?.preferedTime?.startTime || '00:00'} -{' '}
+                    {order?.preferedTime?.endTime || '00:00'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Payment Summary */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Payment Summary</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal:</Text>
+              <Text style={styles.summaryValue}>₹{order?.amount?.toFixed(2)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Tax:</Text>
+              <Text style={styles.summaryValue}>₹0.00</Text>
+            </View>
+            <View style={[styles.summaryRow, styles.totalAmountRow]}>
+              <Text style={styles.summaryLabel}>Total Amount:</Text>
+              <Text style={[styles.summaryValue, styles.totalAmountText]}>
+                ₹{order?.amount?.toFixed(2)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.downloadButton]}
+              onPress={handleDownloadInvoice}
+              disabled={isLoading}>
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.white} size="small" />
+              ) : (
+                <>
+                  <MaterialIcons name="file-download" size={20} color={COLORS.white} />
+                  <Text style={styles.actionButtonText}>Download Invoice</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {isDispatched && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.trackButton]}
+                onPress={handleViewTrackSlip}
+                disabled={isLoading}>
+                {isLoading ? (
+                  <ActivityIndicator color={COLORS.white} size="small" />
+                ) : (
+                  <>
+                    <FontAwesome name="truck" size={20} color={COLORS.white} />
+                    <Text style={styles.actionButtonText}>
+                      {order?.trackslip_image ? 'View Track Slip' : 'Track Order'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+};
+
+const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
+  const [showDetails, setShowDetails] = useState(false);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
 
@@ -61,79 +350,78 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
     opacity: opacity.value,
   }));
 
-  const statusColor = data.status === 'pending' ? COLORS.error : COLORS.success_lightgreen;
-  const statusText = data.status === 'pending' ? 'Pending' : 'Completed';
+  const statusColor = data?.status === 'pending' ? COLORS.error : COLORS.success_lightgreen;
+  const statusText =
+    data?.status === 'Dispatched to Courier' ? data?.status.substring(0, 10) : data?.status;
+
+  const itemCount = data?.products?.length || data?.services?.length || 0;
+  const itemText = itemCount === 1 ? 'item' : 'items';
 
   return (
-    <Animated.View style={[animatedStyle, styles.container]}>
-      <TouchableOpacity style={styles.card}>
-        {/* Image and Status Section */}
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: data?.imageUrl }} style={styles.image} />
-          <View style={styles.statusContainer}>
-            {data.status !== 'pending' ? (
-              <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
-            ) : (
-              <Image source={icons.clock} style={styles.statusIcon} tintColor={statusColor} />
-            )}
-            <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+    <>
+      <Animated.View style={[animatedStyle, styles.container]}>
+        <TouchableOpacity style={styles.card} onPress={() => setShowDetails(true)}>
+          {/* Image and Status Section */}
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: data.image }} style={styles.image} />
+            <View style={styles.statusContainer}>
+              {data.status !== 'pending' ? (
+                <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
+              ) : (
+                <Image source={icons.clock} style={styles.statusIcon} tintColor={statusColor} />
+              )}
+              <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+            </View>
           </View>
-        </View>
 
-        {/* Main Content Section */}
-        <View style={styles.contentContainer}>
-          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-            {data?.products ? 'Products Order' : 'Service Order'}
-          </Text>
-          <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
-            Order containing {data?.products?.length} {data?.products?.length ? 'items' : 'item'}
-          </Text>
-
-          <View style={styles.detailRow}>
-            <AntDesign name="calendar" size={12} color={COLORS.black} />
-            <Text style={[styles.detailText, { color: COLORS.black }]}>
-              {formatDateMonthandYear(data?.confirm_Date)}
+          {/* Main Content Section */}
+          <View style={styles.contentContainer}>
+            <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+              {data?.products ? 'Products Order' : 'Service Order'}
             </Text>
+            <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
+              Order containing {itemCount} {itemText}
+            </Text>
+
+            <View style={styles.detailRow}>
+              <AntDesign name="calendar" size={12} color={COLORS.black} />
+              <Text style={[styles.detailText, { color: COLORS.black }]}>
+                {formatDateMonthandYear(data?.confirm_Date)}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {/* Right Side Section */}
-        <View style={styles.rightContainer}>
-          <TouchableOpacity
-            style={[styles.typeBadge, data?.services ? styles.serviceBadge : styles.spareBadge]}
-            onPress={() => {}}>
-            {data?.services ? (
-              <Image
-                source={icons.services_filled}
-                style={styles.typeIcon}
-                tintColor={COLORS.indigo[500]}
-              />
-            ) : (
-              <Image
-                source={icons.spare_filled}
-                style={styles.typeIcon}
-                tintColor={COLORS.indigo[500]}
-              />
-            )}
-            <Text
-              style={[
-                styles.typeText,
-                data.type === 'spare'
-                  ? { color: COLORS.indigo[500] }
-                  : { color: COLORS.indigo[500] },
-              ]}>
-              {data?.services ? 'Service' : 'Spare Part'}
-            </Text>
-          </TouchableOpacity>
+          {/* Right Side Section */}
+          <View style={styles.rightContainer}>
+            <TouchableOpacity
+              style={[styles.typeBadge, data.services ? styles.serviceBadge : styles.spareBadge]}>
+              {data?.services ? (
+                <Image
+                  source={icons.services_filled}
+                  style={styles.typeIcon}
+                  tintColor={COLORS.indigo[500]}
+                />
+              ) : (
+                <Image
+                  source={icons.spare_filled}
+                  style={styles.typeIcon}
+                  tintColor={COLORS.indigo[500]}
+                />
+              )}
+              <Text style={styles.typeText}>{data?.services ? 'Service' : 'Spare Part'}</Text>
+            </TouchableOpacity>
 
-          <Text style={styles.price}>₹ {data?.amount?.toFixed(2)}</Text>
+            <Text style={styles.price}>₹ {data?.amount?.toFixed(2)}</Text>
 
-          {/* <TouchableOpacity style={styles.viewButton} onPress={onPress}>
-            <Text style={styles.viewButtonText}>View</Text>
-          </TouchableOpacity> */}
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
+            <TouchableOpacity style={styles.viewButton} onPress={() => setShowDetails(true)}>
+              <Text style={styles.viewButtonText}>View</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+
+      <OrderDetailsModal visible={showDetails} onClose={() => setShowDetails(false)} order={data} />
+    </>
   );
 };
 
@@ -152,7 +440,6 @@ const styles = StyleSheet.create({
     elevation: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    // alignItems: 'center',
     height: 100,
   },
   imageContainer: {
@@ -163,7 +450,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginRight: 7,
     gap: 10,
-    // marginTop: 15,
   },
   image: {
     width: 65,
@@ -186,11 +472,12 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   title: {
     ...FONTS.h4,
     color: COLORS.primary,
-    fontWeight: 500,
+    fontWeight: '500',
   },
   description: {
     ...FONTS.body6,
@@ -234,12 +521,13 @@ const styles = StyleSheet.create({
   },
   typeText: {
     ...FONTS.h6,
-    fontWeight: 500,
+    fontWeight: '500',
+    color: COLORS.indigo[500],
   },
   price: {
     ...FONTS.h4,
     color: COLORS.primary_text,
-    fontWeight: 500,
+    fontWeight: '500',
   },
   viewButton: {
     backgroundColor: COLORS.primary_borders,
@@ -259,6 +547,169 @@ const styles = StyleSheet.create({
   viewButtonText: {
     ...FONTS.h6,
     color: COLORS.white,
+  },
+  modalFullscreenContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  modalScrollView: {
+    flex: 1,
+  },
+  modalContentContainer: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 50,
+  },
+  backButton: {
+    padding: 4,
+  },
+  modalTitle: {
+    ...FONTS.h3,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    textAlign: 'center',
+    flex: 1,
+  },
+  headerSpacer: {
+    width: 24,
+  },
+  section: {
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGrey,
+    paddingBottom: 15,
+    paddingHorizontal: 16,
+  },
+  sectionTitle: {
+    ...FONTS.h4,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 10,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    ...FONTS.body4,
+    color: COLORS.primary_01,
+  },
+  summaryValue: {
+    ...FONTS.body4,
+    color: COLORS.primary_text,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  statusText: {
+    ...FONTS.body7,
+    color: COLORS.white,
+  },
+  trackingInput: {
+    borderWidth: 1,
+    borderColor: COLORS.lightGrey,
+    borderRadius: 4,
+    padding: 8,
+    ...FONTS.body5,
+    color: COLORS.primary_text,
+    width: '60%',
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  itemImageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+  },
+  itemImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: COLORS.primary_04,
+  },
+  itemDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  itemName: {
+    ...FONTS.body3,
+    fontWeight: '500',
+    color: COLORS.primary_text,
+    marginBottom: 4,
+  },
+  itemDescription: {
+    ...FONTS.body5,
+    color: COLORS.primary_01,
+    marginBottom: 4,
+  },
+  itemMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  itemPrice: {
+    ...FONTS.body4,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  itemQuantity: {
+    ...FONTS.body5,
+    color: COLORS.primary_01,
+  },
+  itemDuration: {
+    ...FONTS.body5,
+    color: COLORS.primary_01,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  downloadButton: {
+    backgroundColor: COLORS.primary,
+  },
+  trackButton: {
+    backgroundColor: COLORS.success_lightgreen,
+  },
+  actionButtonText: {
+    ...FONTS.body4,
+    color: COLORS.white,
+    marginLeft: 8,
+  },
+  totalAmountRow: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightGrey,
+  },
+  totalAmountText: {
+    fontWeight: 'bold',
   },
 });
 

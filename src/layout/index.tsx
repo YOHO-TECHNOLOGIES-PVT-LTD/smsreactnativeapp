@@ -81,7 +81,7 @@ const TabButton: React.FC<TabButtonProps> = ({
                 height: 80,
                 zIndex: -1,
               },
-              radialGlowStyle,
+              // radialGlowStyle,
             ]}
           />
         )}

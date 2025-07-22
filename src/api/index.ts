@@ -89,6 +89,16 @@ class Client {
       getAll: (params: any) => httpClient.get(API_END_POINTS.bookings.getAll, params),
       postProduct: (params: any) => httpClient.post(API_END_POINTS.bookings.postProduct, params),
       postService: (params: any) => httpClient.post(API_END_POINTS.bookings.postService, params),
+      getServiceInvoice: (params: any) =>
+        httpClient.fileGet(
+          API_END_POINTS.bookings.getServiceInvoice.replace(':uuid', params?.uuid),
+          params
+        ),
+      getProductInvoice: (params: any) =>
+        httpClient.fileGet(
+          API_END_POINTS.bookings.getProductInvoice.replace(':uuid', params?.uuid),
+          params
+        ),
     },
     sos: {
       post: (data: any) => httpClient.post(API_END_POINTS.sos.Post, data),

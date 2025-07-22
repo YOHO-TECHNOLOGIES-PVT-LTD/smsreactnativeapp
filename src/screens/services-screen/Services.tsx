@@ -32,6 +32,7 @@ import LoadingAnimation from '~/components/LoadingAnimation';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 import { selectCartItems } from '~/features/booking-cart/redux/selectors';
+import { getUserProfileDetails } from '~/features/profile/service';
 
 type ServiceCategory = {
   uuid: string;
@@ -53,6 +54,18 @@ type Service = {
   image: string;
 };
 
+interface ProfileData {
+  // ... other profile fields ...
+  vehicleInfo: Array<{
+    _id: string;
+    registerNumber: string;
+    company: string;
+    model: string;
+    year: string;
+    fuleType: string;
+  }>;
+}
+
 const Services = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch<AppDispatch>();
@@ -69,13 +82,16 @@ const Services = () => {
   const [selectedBookingType, setSelectedBookingType] = useState<'general' | 'schedule'>('general');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('17:00');
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [startTime, setStartTime] = useState('00:00');
+  const [endTime, setEndTime] = useState('00:00');
   const TokenSelector = useSelector(selectToken);
   const [isLoading, setIsLoading] = useState(false);
   const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
   const cartItems = useSelector(selectCartItems);
   const [cartCount, setCartCount] = useState(0);
+  const [profileData, setprofileData] = useState<ProfileData>();
+  const [selectedVehicleIndex, setSelectedVehicleIndex] = useState<number | null>(null);
 
   useEffect(() => {
     try {
@@ -113,7 +129,7 @@ const Services = () => {
       const categories = await getAllServiceCategories({});
       if (categories) {
         setServiceCategories(categories);
-        if (categories.length > 0) {
+        if (categories?.length > 0) {
           setActiveNavItem(categories[0].category_name);
           setFilteredParts(categories[0].services);
         }
@@ -124,9 +140,23 @@ const Services = () => {
     }
   };
 
+  const fetchUserProfile = async () => {
+    try {
+      const response: any = TokenSelector && (await getUserProfileDetails({}));
+      if (response) {
+        setprofileData(response);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     dispatch(getBookingCartItems());
     fetchAllServices();
+    if (TokenSelector) {
+      fetchUserProfile();
+    }
 
     const getCartCount = () => {
       if (cartItems?.length == 1) {
@@ -143,10 +173,14 @@ const Services = () => {
     setCartCount(getCartCount() ?? 0);
   }, [dispatch, TokenSelector]);
 
-  const handleAddtoCart = async () => {
+  const handleAddtoCart = async (vehicleIndex: number | null) => {
     if (TokenSelector) {
-      if (!selectedService?.uuid || !selectedService?.price) {
-        console.error('Missing required service data');
+      if (!selectedService?.uuid) {
+        console.log('Missing required service data');
+        return;
+      }
+      if (selectedVehicleIndex === null) {
+        toast.error('Select Car', 'Please select a car');
         return;
       }
       try {
@@ -165,6 +199,7 @@ const Services = () => {
             startTime,
             endTime,
           },
+          vehicle: selectedVehicleIndex,
         };
         const response = await addBookingCartItem(data);
         if (response) {
@@ -173,9 +208,12 @@ const Services = () => {
           setBookingModalVisible(false);
           setModalVisible(false);
           setSelectedDate(new Date());
+          setSelectedVehicleIndex(null);
+        } else {
+          toast.error('Error', 'Something went wrong, try again.');
         }
       } catch (error) {
-        console.error('Error adding to cart:', error);
+        console.log('Error adding to cart:', error);
       }
     }
   };
@@ -295,37 +333,37 @@ const Services = () => {
               <Text style={styles.sectionTitle}>Service Details</Text>
               <View style={styles.detailRow}>
                 <MaterialIcons name="schedule" size={20} color={COLORS.primary} />
-                <Text style={styles.detailText}>
-                  Duration: {selectedService?.duration || '1-2 hours'}
-                </Text>
+                <Text style={styles.detailText}>Duration: {selectedService?.duration}</Text>
               </View>
               <View style={styles.detailRow}>
                 <MaterialIcons name="access-time" size={20} color={COLORS.primary} />
                 <Text style={styles.detailText}>Working Hours: 9:00 AM - 5:00 PM</Text>
               </View>
-              {/* <View style={styles.detailRow}>
-                <MaterialIcons name="location-on" size={20} color={COLORS.primary} />
-                <Text style={styles.detailText}>Service Center Location</Text>
-              </View> */}
-
-              {/* <View style={styles.timeSelection}>
-                <Text style={styles.timeLabel}>Preferred Time:</Text>
-                <View style={styles.timeInputContainer}>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={startTime}
-                    onChangeText={setStartTime}
-                    placeholder="Start time"
-                  />
-                  <Text style={styles.timeSeparator}>-</Text>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={endTime}
-                    onChangeText={setEndTime}
-                    placeholder="End time"
-                  />
+              {/* Vehicle Selection Dropdown */}
+              {(profileData?.vehicleInfo?.length ?? 0) > 0 && (
+                <View style={styles.vehicleSelection}>
+                  <Text style={styles.sectionTitle}>Select Your Vehicle</Text>
+                  <View style={styles.dropdownContainer}>
+                    {profileData?.vehicleInfo?.map((vehicle, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.vehicleOption,
+                          selectedVehicleIndex === index && styles.selectedVehicleOption,
+                        ]}
+                        onPress={() => setSelectedVehicleIndex(index)}>
+                        <Text style={styles.vehicleOptionText}>
+                          {vehicle?.year} {vehicle?.company} {vehicle?.model} (
+                          {vehicle?.registerNumber})
+                        </Text>
+                        {selectedVehicleIndex === index && (
+                          <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-              </View> */}
+              )}
             </View>
           )}
 
@@ -367,6 +405,15 @@ const Services = () => {
                     onChangeText={setStartTime}
                     placeholder="Start time"
                   />
+                  {showTimePicker && (
+                    <DateTimePicker
+                      value={selectedDate}
+                      mode="date"
+                      display="default"
+                      onChange={onDateChange}
+                      minimumDate={new Date()}
+                    />
+                  )}
                   <Text style={styles.timeSeparator}>-</Text>
                   <TextInput
                     style={styles.timeInput}
@@ -376,6 +423,32 @@ const Services = () => {
                   />
                 </View>
               </View>
+
+              {/* Vehicle Selection Dropdown */}
+              {(profileData?.vehicleInfo?.length ?? 0) > 0 && (
+                <View style={styles.vehicleSelection}>
+                  <Text style={styles.sectionTitle}>Select Your Vehicle</Text>
+                  <View style={styles.dropdownContainer}>
+                    {profileData?.vehicleInfo?.map((vehicle, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.vehicleOption,
+                          selectedVehicleIndex === index && styles.selectedVehicleOption,
+                        ]}
+                        onPress={() => setSelectedVehicleIndex(index)}>
+                        <Text style={styles.vehicleOptionText}>
+                          {vehicle.year} {vehicle.company} {vehicle.model} ({vehicle.registerNumber}
+                          )
+                        </Text>
+                        {selectedVehicleIndex === index && (
+                          <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
 
               <View style={styles.noteContainer}>
                 <Text style={styles.noteText}>
@@ -388,8 +461,20 @@ const Services = () => {
 
           {/* Book Service Button */}
           <TouchableOpacity
-            style={styles.bookButton}
-            onPress={TokenSelector ? handleAddtoCart : () => setSignUpConfirmModalVisible(true)}>
+            style={[
+              styles.bookButton,
+              selectedVehicleIndex === null && {
+                opacity: 0.6,
+              },
+            ]}
+            onPress={() => {
+              if (TokenSelector) {
+                handleAddtoCart(selectedVehicleIndex);
+              } else {
+                setSignUpConfirmModalVisible(true);
+              }
+            }}
+            disabled={selectedVehicleIndex === null}>
             <Text style={styles.bookButtonText}>
               {selectedBookingType === 'general' ? 'BOOK NOW' : 'PRE-BOOK SERVICE'}
             </Text>
@@ -1091,6 +1176,30 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 4,
+  },
+  vehicleSelection: {
+    marginBottom: 20,
+  },
+  dropdownContainer: {
+    borderWidth: 1,
+    borderColor: COLORS.lightGrey,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  vehicleOption: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGrey,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectedVehicleOption: {
+    backgroundColor: COLORS.primary_04,
+  },
+  vehicleOptionText: {
+    ...FONTS.body4,
+    color: COLORS.primary_text,
   },
 });
 

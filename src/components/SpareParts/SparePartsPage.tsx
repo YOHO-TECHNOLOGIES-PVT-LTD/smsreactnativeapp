@@ -27,7 +27,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
   const categories = [...new Set(spareParts.map((item) => item.category))];
 
   useEffect(() => {
-    if (spareParts.length > 0 && categories.length > 0 && !selectedCategory) {
+    if (spareParts?.length > 0 && categories?.length > 0 && !selectedCategory) {
       setSelectedCategory(categories[0]);
     }
   }, [spareParts, categories]);
@@ -40,12 +40,12 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
     let result = spareParts;
 
     if (selectedCategory) {
-      result = result.filter((item) => item.category === selectedCategory);
+      result = result?.filter((item) => item.category === selectedCategory);
     }
 
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
-      result = result.filter(
+      result = result?.filter(
         (item: any) =>
           item?.productName.toLowerCase().includes(query) ||
           item?.brand.toLowerCase().includes(query)

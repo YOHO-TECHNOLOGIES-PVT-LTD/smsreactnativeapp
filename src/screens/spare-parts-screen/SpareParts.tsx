@@ -33,7 +33,9 @@ const SpareParts = () => {
   };
 
   useEffect(() => {
-    dispatch(getBookingCartItems());
+    if (TokenSelector) {
+      dispatch(getBookingCartItems());
+    }
     getAllSparePartsDetails();
     const getCartCount = () => {
       if (cartItems?.length == 1) {
@@ -45,6 +47,8 @@ const SpareParts = () => {
           Number(cartItems[1]?.products?.length) +
           Number(cartItems[1]?.services?.length)
         );
+      } else {
+        return 0;
       }
     };
     setCartCount(getCartCount() ?? 0);

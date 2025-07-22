@@ -225,17 +225,24 @@ interface FormData {
     phoneNumber: string;
     address1: string;
     address2: string;
-    [key: string]: string; // Allow dynamic access for nested fields
+    [key: string]: string;
   };
-  vehicleInfo: {
+  vehicleInfo: Array<{
     registerNumber: string;
     model: string;
     year: string;
     company: string;
     fuleType: string;
     [key: string]: string;
+  }>;
+  newVehicle?: {
+    registerNumber: string;
+    model: string;
+    year: string;
+    company: string;
+    fuleType: string;
   };
-  [key: string]: any; // Allow dynamic access for top-level fields
+  [key: string]: any;
 }
 
 const Profile = () => {
@@ -260,13 +267,15 @@ const Profile = () => {
       address1: '',
       address2: '',
     },
-    vehicleInfo: {
-      registerNumber: '',
-      model: '',
-      company: '',
-      fuleType: '',
-      year: '',
-    },
+    vehicleInfo: [
+      {
+        registerNumber: '',
+        model: '',
+        company: '',
+        fuleType: '',
+        year: '',
+      },
+    ],
   });
 
   useEffect(() => {
@@ -298,18 +307,20 @@ const Profile = () => {
             address1: response?.contact_info?.address1,
             address2: response?.contact_info?.address2,
           },
-          vehicleInfo: {
-            registerNumber: response?.vehicleInfo?.registerNumber,
-            model: response?.vehicleInfo?.model,
-            company: response?.vehicleInfo?.company,
-            fuleType: response?.vehicleInfo?.fuleType,
-            year: response?.vehicleInfo?.year,
-          },
+          vehicleInfo: response?.vehicleInfo || [
+            {
+              registerNumber: '',
+              model: '',
+              company: '',
+              fuleType: '',
+              year: '',
+            },
+          ],
         });
         setProfileData(response);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.log('Error fetching user profile:', error);
     }
   };
 
@@ -680,14 +691,34 @@ const Profile = () => {
 
   const handleAddVehicle = async () => {
     try {
-      const response: any = await updateUserProfileDetails(formData);
+      if (!formData.newVehicle) {
+        toast.error('Error', 'Please fill all required fields');
+        return;
+      }
+      const newVehicle = {
+        registerNumber: formData.newVehicle.registerNumber,
+        model: formData.newVehicle.model,
+        company: formData.newVehicle.company,
+        fuleType: formData.newVehicle.fuleType,
+        year: formData.newVehicle.year,
+      };
+
+      const response: any = await updateUserProfileDetails({
+        ...formData,
+        vehicleInfo: [...(formData.vehicleInfo || []), newVehicle],
+      });
       if (response) {
         setAddVehicleModal(false);
+        setFormData((prev) => ({
+          ...prev,
+          newVehicle: undefined,
+        }));
         fetchUserProfile();
         toast.success('Success', 'Vehicle added successfully!');
       }
     } catch (error) {
       console.log(error);
+      toast.error('Error', 'Failed to add vehicle');
     }
   };
 
@@ -704,7 +735,7 @@ const Profile = () => {
         text: 'Delete',
         style: 'destructive',
         onPress: () => {
-          setVehicles(vehicles.filter((v) => v.id !== vehicleId));
+          // setVehicles(vehicles.filter((v) => v.id !== vehicleId));
           setVehicleDetailModal(false);
           toast.success('Success', 'Vehicle deleted successfully');
         },
@@ -815,27 +846,29 @@ const Profile = () => {
   };
 
   const VehicleItem: React.FC<VehicleItemProps> = ({ vehicle, onPress }) => {
-    const getHealthColor = (score: number) => {
-      if (score >= 90) return COLORS.success_lightgreen;
-      if (score >= 70) return COLORS.error80;
-      return COLORS1.error;
-    };
+    if (!vehicle || !Array.isArray(vehicle)) {
+      return null;
+    }
 
     return (
-      <View style={styles.menuItem}>
-        <TouchableOpacity style={styles.menuItemContent} onPress={() => {}} activeOpacity={0.8}>
-          <View style={[styles.menuItemIcon, styles.vehicleIconContainer]}>
-            <Car size={20} color={COLORS.primary} />
+      <>
+        {vehicle?.map((v, index) => (
+          <View style={styles.menuItem} key={index}>
+            <TouchableOpacity style={styles.menuItemContent} onPress={() => {}} activeOpacity={0.8}>
+              <View style={[styles.menuItemIcon, styles.vehicleIconContainer]}>
+                <Car size={20} color={COLORS.primary} />
+              </View>
+              <View style={styles.menuItemText}>
+                <View style={styles.vehicleItemHeader}>
+                  <Text style={styles.menuItemTitle}>
+                    {v.year} {v.company} {v.model}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
           </View>
-          <View style={styles.menuItemText}>
-            <View style={styles.vehicleItemHeader}>
-              <Text style={styles.menuItemTitle}>
-                {vehicle.year} {vehicle.company} {vehicle.model}
-              </Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </View>
+        ))}
+      </>
     );
   };
 
@@ -1037,12 +1070,12 @@ const Profile = () => {
           </View>
           <Text style={styles.sectionTitle}>My Vehicles</Text>
         </View>
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={[styles.addButton, styles.fullWidthButton]}
           onPress={() => setAddVehicleModal(true)}
           activeOpacity={0.8}>
           <Plus size={16} color={COLORS.white} />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
       <View style={styles.card}>
         {formData?.vehicleInfo ? (
@@ -1405,17 +1438,19 @@ const Profile = () => {
                 <View style={styles.profileInfo}>
                   <View style={styles.nameContainer}>
                     <Text style={styles.profileName}>
-                      {(TokenSelector &&
-                        formData?.firstName != null &&
-                        formData?.firstName + ' ' + formData?.lastName) ||
-                        'Customer'}
+                      {(TokenSelector
+                        ? formData?.firstName != null &&
+                          formData?.firstName + ' ' + formData?.lastName
+                        : '') ?? 'Customer'}
                     </Text>
-                    <Verified size={16} color={COLORS1.success} />
+                    {TokenSelector && <Verified size={16} color={COLORS1.success} />}
                   </View>
                   <Text style={styles.profileEmail}>{userInfo.email}</Text>
                   <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
                     <Edit size={14} color={COLORS1.primary} />
-                    <Text style={styles.editProfileText}>Edit Profile</Text>
+                    <Text style={styles.editProfileText}>
+                      {TokenSelector ? 'Edit Profile' : 'Add Profile'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
                 {/* Three Dot Menu Button */}
@@ -1431,76 +1466,86 @@ const Profile = () => {
 
           {/* Profile Information Content */}
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.section}>
-              <View style={styles.sectionTitleContainer}>
-                <View style={styles.sectionIconContainer}>
-                  <User size={20} color={COLORS1.primary} />
+            {TokenSelector ? (
+              <View style={styles.section}>
+                <View style={styles.sectionTitleContainer}>
+                  <View style={styles.sectionIconContainer}>
+                    <User size={20} color={COLORS1.primary} />
+                  </View>
+                  <Text style={styles.sectionTitle}>Personal Information</Text>
                 </View>
-                <Text style={styles.sectionTitle}>Personal Information</Text>
-              </View>
 
-              <View style={styles.card}>
-                <MenuItem
-                  title="Full Name"
-                  subtitle={
-                    TokenSelector &&
-                    profileData?.firstName != null &&
-                    profileData?.firstName + ' ' + profileData?.lastName
-                  }
-                  icon={<User size={20} color={COLORS1.primary} />}
-                />
-                <View style={styles.separator} />
-                <MenuItem
-                  title="Email Address"
-                  subtitle={profileData?.email}
-                  icon={<Mail size={20} color={COLORS1.primary} />}
-                />
-                <View style={styles.separator} />
-                <MenuItem
-                  title="Phone Number"
-                  subtitle={profileData?.contact_info?.phoneNumber}
-                  icon={<Phone size={20} color={COLORS1.primary} />}
-                />
-                <View style={styles.separator} />
-                <MenuItem
-                  title="Address 1"
-                  subtitle={profileData?.contact_info?.address1}
-                  icon={<MapPinHouse size={20} color={COLORS1.primary} />}
-                />
-                <View style={styles.separator} />
-                <MenuItem
-                  title="Address 2"
-                  subtitle={profileData?.contact_info?.address2}
-                  icon={<MapPinHouse size={20} color={COLORS1.primary} />}
-                />
-                <View style={styles.separator} />
-                <MenuItem
-                  title="City"
-                  subtitle={profileData?.contact_info?.city}
-                  icon={<Building2 size={20} color={COLORS1.primary} />}
-                />
-                <View style={styles.separator} />
-                <MenuItem
-                  title="State"
-                  subtitle={profileData?.contact_info?.state}
-                  icon={<MapPin size={20} color={COLORS1.primary} />}
-                />
-                <View style={styles.separator} />
-                {TokenSelector && (
-                  <>
-                    <MenuItem
-                      title="Notifications"
-                      subtitle="View all notifications"
-                      onPress={() => {
-                        navigation.navigate('NotificationScreen' as never);
-                      }}
-                      icon={<Bell size={20} color={COLORS1.primary} />}
-                      badge={userInfo.notifications}
-                    />
-                  </>
-                )}
+                <View style={styles.card}>
+                  <MenuItem
+                    title="Full Name"
+                    subtitle={
+                      TokenSelector &&
+                      profileData?.firstName != null &&
+                      profileData?.firstName + ' ' + profileData?.lastName
+                    }
+                    icon={<User size={20} color={COLORS1.primary} />}
+                  />
+                  <View style={styles.separator} />
+                  <MenuItem
+                    title="Email Address"
+                    subtitle={profileData?.email}
+                    icon={<Mail size={20} color={COLORS1.primary} />}
+                  />
+                  <View style={styles.separator} />
+                  <MenuItem
+                    title="Phone Number"
+                    subtitle={profileData?.contact_info?.phoneNumber}
+                    icon={<Phone size={20} color={COLORS1.primary} />}
+                  />
+                  <View style={styles.separator} />
+                  <MenuItem
+                    title="Address 1"
+                    subtitle={profileData?.contact_info?.address1}
+                    icon={<MapPinHouse size={20} color={COLORS1.primary} />}
+                  />
+                  <View style={styles.separator} />
+                  <MenuItem
+                    title="Address 2"
+                    subtitle={profileData?.contact_info?.address2}
+                    icon={<MapPinHouse size={20} color={COLORS1.primary} />}
+                  />
+                  <View style={styles.separator} />
+                  <MenuItem
+                    title="City"
+                    subtitle={profileData?.contact_info?.city}
+                    icon={<Building2 size={20} color={COLORS1.primary} />}
+                  />
+                  <View style={styles.separator} />
+                  <MenuItem
+                    title="State"
+                    subtitle={profileData?.contact_info?.state}
+                    icon={<MapPin size={20} color={COLORS1.primary} />}
+                  />
+                  <View style={styles.separator} />
+                  {TokenSelector && (
+                    <>
+                      <MenuItem
+                        title="Notifications"
+                        subtitle="View all notifications"
+                        onPress={() => {
+                          navigation.navigate('NotificationScreen' as never);
+                        }}
+                        icon={<Bell size={20} color={COLORS1.primary} />}
+                        badge={userInfo.notifications}
+                      />
+                    </>
+                  )}
+                </View>
               </View>
-            </View>
+            ) : (
+              <View style={{}}>
+                <View style={{ alignItems: 'center', justifyContent: 'center', height: 450 }}>
+                  <Text style={{ ...FONTS.body4, color: COLORS.grey80 }}>
+                    Add Profile details to book services/spare parts.{' '}
+                  </Text>
+                </View>
+              </View>
+            )}
 
             {TokenSelector && (
               <View style={styles.section}>
@@ -1512,31 +1557,29 @@ const Profile = () => {
                 </View>
 
                 <View style={styles.card}>
-                  <MenuItem
-                    title="Register Number"
-                    subtitle={profileData?.vehicleInfo?.registerNumber}
-                    icon={<BookUser size={20} color={COLORS1.primary} />}
-                  />
-                  <View style={styles.separator} />
-                  <MenuItem
-                    title="Car Details"
-                    subtitle={
-                      profileData?.vehicleInfo?.company != null &&
-                      profileData?.vehicleInfo?.company +
-                        ' ' +
-                        profileData?.vehicleInfo?.model +
-                        ' ' +
-                        profileData?.vehicleInfo?.year
-                    }
-                    icon={<Car size={20} color={COLORS1.primary} />}
-                  />
-
-                  <View style={styles.separator} />
-                  <MenuItem
-                    title="Fuel Type"
-                    subtitle={profileData?.vehicleInfo?.fuleType}
-                    icon={<Fuel size={20} color={COLORS1.primary} />}
-                  />
+                  {Array.isArray(formData?.vehicleInfo) && formData?.vehicleInfo?.length > 0 ? (
+                    <VehicleItem
+                      vehicle={formData?.vehicleInfo}
+                      onPress={(vehicle) => {
+                        setSelectedVehicle(vehicle);
+                        setVehicleDetailModal(true);
+                      }}
+                    />
+                  ) : (
+                    <View style={styles.emptyState}>
+                      <View style={styles.emptyIconContainer}>
+                        <Car size={48} color={COLORS1.gray300} />
+                      </View>
+                      <Text style={styles.emptyStateText}>No vehicles added yet</Text>
+                      <TouchableOpacity
+                        style={[styles.addButton, styles.fullWidthButton]}
+                        onPress={() => setAddVehicleModal(true)}
+                        activeOpacity={0.8}>
+                        <Plus size={16} color={COLORS1.white} />
+                        <Text style={styles.addButtonText}>Add Vehicle</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               </View>
             )}
@@ -1561,14 +1604,16 @@ const Profile = () => {
                   <View style={styles.statIconContainer}>
                     <Car size={24} color={COLORS.primary} />
                   </View>
-                  <Text style={styles.statNumber}>1</Text>
-                  <Text style={styles.statLabel}>My Vehicle</Text>
+                  <Text style={styles.statNumber}>{profileData?.vehicleInfo?.length}</Text>
+                  <Text style={styles.statLabel}>
+                    {profileData?.vehicleInfo?.length === 1 ? 'My Vehicle' : 'My Vehicles'}
+                  </Text>
                 </View>
               </View>
             )}
 
             {/* Enhanced Recent Activity Section */}
-            {TokenSelector && (
+            {/* {TokenSelector && (
               <View style={styles.section}>
                 <View style={styles.sectionTitleContainer}>
                   <View style={styles.sectionIconContainer}>
@@ -1608,7 +1653,7 @@ const Profile = () => {
                   </View>
                 </View>
               </View>
-            )}
+            )} */}
             <View style={{ marginTop: 60 }}></View>
           </ScrollView>
 
@@ -1818,83 +1863,118 @@ const Profile = () => {
                     placeholderTextColor={COLORS.primary_03}
                   />
                 </View>
+                {Array.isArray(formData?.vehicleInfo) &&
+                  formData?.vehicleInfo?.map((vehicle, index) => (
+                    <View key={index}>
+                      <View
+                        style={{
+                          borderTopWidth: 1,
+                          borderBottomWidth: 1,
+                          borderBottomColor: COLORS.primary_04,
+                          borderTopColor: COLORS.primary_04,
+                          paddingVertical: 7,
+                          backgroundColor: COLORS.grey08,
+                          marginVertical: 5,
+                        }}>
+                        <Text
+                          style={{
+                            textAlign: 'center',
+                            ...FONTS.body4,
+                            fontWeight: 500,
+                            color: COLORS.primary_text,
+                          }}>
+                          Vehicle {index + 1}
+                        </Text>
+                      </View>
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Register Number</Text>
+                        <TextInput
+                          style={styles.textInput}
+                          value={vehicle.registerNumber}
+                          onChangeText={(text) => {
+                            const updatedVehicleInfo = [...formData.vehicleInfo];
+                            updatedVehicleInfo[index].registerNumber = text;
+                            setFormData({
+                              ...formData,
+                              vehicleInfo: updatedVehicleInfo,
+                            });
+                          }}
+                          placeholder="Enter your register number"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                      </View>
 
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Register Number</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.registerNumber}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: { ...formData.vehicleInfo, registerNumber: text },
-                      })
-                    }
-                    placeholder="Enter your register number"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Car Company</Text>
+                        <TextInput
+                          style={styles.textInput}
+                          value={vehicle.company}
+                          onChangeText={(text) => {
+                            const updatedVehicleInfo = [...formData.vehicleInfo];
+                            updatedVehicleInfo[index].company = text;
+                            setFormData({
+                              ...formData,
+                              vehicleInfo: updatedVehicleInfo,
+                            });
+                          }}
+                          placeholder="Enter your car company"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                      </View>
 
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Car Company</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.company}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: { ...formData.vehicleInfo, company: text },
-                      })
-                    }
-                    placeholder="Enter your car company"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Car Model</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.model}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: { ...formData.vehicleInfo, model: text },
-                      })
-                    }
-                    placeholder="Enter your car model"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Model Year</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.year}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: { ...formData.vehicleInfo, year: text },
-                      })
-                    }
-                    placeholder="Enter your model year"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Fuel Type</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.fuleType}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: { ...formData.vehicleInfo, fuleType: text },
-                      })
-                    }
-                    placeholder="Enter your car fuel type"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Car Model</Text>
+                        <TextInput
+                          style={styles.textInput}
+                          value={vehicle.model}
+                          onChangeText={(text) => {
+                            const updatedVehicleInfo = [...formData.vehicleInfo];
+                            updatedVehicleInfo[index].model = text;
+                            setFormData({
+                              ...formData,
+                              vehicleInfo: updatedVehicleInfo,
+                            });
+                          }}
+                          placeholder="Enter your car model"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                      </View>
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Model Year</Text>
+                        <TextInput
+                          style={styles.textInput}
+                          value={vehicle.year}
+                          onChangeText={(text) => {
+                            const updatedVehicleInfo = [...formData.vehicleInfo];
+                            updatedVehicleInfo[index].year = text;
+                            setFormData({
+                              ...formData,
+                              vehicleInfo: updatedVehicleInfo,
+                            });
+                          }}
+                          placeholder="Enter your model year"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                      </View>
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Fuel Type</Text>
+                        <TextInput
+                          style={styles.textInput}
+                          value={vehicle.fuleType}
+                          onChangeText={(text) => {
+                            const updatedVehicleInfo = [...formData.vehicleInfo];
+                            updatedVehicleInfo[index].fuleType = text;
+                            setFormData({
+                              ...formData,
+                              vehicleInfo: updatedVehicleInfo,
+                            });
+                          }}
+                          placeholder="Enter your car fuel type"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                      </View>
+                    </View>
+                  ))}
 
                 <TouchableOpacity
                   onPress={handleSaveProfile}
@@ -1928,99 +2008,102 @@ const Profile = () => {
               </LinearGradient>
 
               <ScrollView style={styles.modalContent}>
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Register Number *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.registerNumber}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: {
-                          ...formData.vehicleInfo,
-                          registerNumber: text,
-                        },
-                      })
-                    }
-                    placeholder="Enter you car register number"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
+                {/* Create a new vehicle form instead of mapping existing ones */}
+                <View>
+                  <View style={styles.formSection}>
+                    <Text style={styles.fieldLabel}>Register Number *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.newVehicle?.registerNumber || ''}
+                      onChangeText={(text) =>
+                        setFormData({
+                          ...formData,
+                          newVehicle: {
+                            ...(formData.newVehicle || {}),
+                            registerNumber: text,
+                          },
+                        })
+                      }
+                      placeholder="Enter your register number"
+                      placeholderTextColor={COLORS.primary_03}
+                    />
+                  </View>
 
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Car Company *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.company}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: {
-                          ...formData.vehicleInfo,
-                          company: text,
-                        },
-                      })
-                    }
-                    placeholder="Enter you car company"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
+                  <View style={styles.formSection}>
+                    <Text style={styles.fieldLabel}>Car Company *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.newVehicle?.company || ''}
+                      onChangeText={(text) =>
+                        setFormData({
+                          ...formData,
+                          newVehicle: {
+                            ...(formData.newVehicle || {}),
+                            company: text,
+                          },
+                        })
+                      }
+                      placeholder="Enter your car company"
+                      placeholderTextColor={COLORS.primary_03}
+                    />
+                  </View>
 
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Car Model *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.model}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: {
-                          ...formData.vehicleInfo,
-                          model: text,
-                        },
-                      })
-                    }
-                    placeholder="Enter you car model"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
+                  <View style={styles.formSection}>
+                    <Text style={styles.fieldLabel}>Car Model *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.newVehicle?.model || ''}
+                      onChangeText={(text) =>
+                        setFormData({
+                          ...formData,
+                          newVehicle: {
+                            ...(formData.newVehicle || {}),
+                            model: text,
+                          },
+                        })
+                      }
+                      placeholder="Enter your car model"
+                      placeholderTextColor={COLORS.primary_03}
+                    />
+                  </View>
 
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Model Year *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.year}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: {
-                          ...formData.vehicleInfo,
-                          year: text,
-                        },
-                      })
-                    }
-                    placeholder="Enter you car model year"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
-                </View>
+                  <View style={styles.formSection}>
+                    <Text style={styles.fieldLabel}>Model Year *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.newVehicle?.year || ''}
+                      onChangeText={(text) =>
+                        setFormData({
+                          ...formData,
+                          newVehicle: {
+                            ...(formData.newVehicle || {}),
+                            year: text,
+                          },
+                        })
+                      }
+                      placeholder="Enter your model year"
+                      placeholderTextColor={COLORS.primary_03}
+                    />
+                  </View>
 
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Fuel Type *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.vehicleInfo?.fuleType}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        vehicleInfo: {
-                          ...formData.vehicleInfo,
-                          fuleType: text,
-                        },
-                      })
-                    }
-                    placeholder="Enter you car fuel type"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
+                  <View style={styles.formSection}>
+                    <Text style={styles.fieldLabel}>Fuel Type *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.newVehicle?.fuleType || ''}
+                      onChangeText={(text) =>
+                        setFormData({
+                          ...formData,
+                          newVehicle: {
+                            ...(formData.newVehicle || {}),
+                            fuleType: text,
+                          },
+                        })
+                      }
+                      placeholder="Enter your car fuel type"
+                      placeholderTextColor={COLORS.primary_03}
+                    />
+                  </View>
                 </View>
 
                 <View>

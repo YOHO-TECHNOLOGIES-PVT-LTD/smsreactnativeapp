@@ -82,8 +82,6 @@ const HomePage = () => {
   ];
   const [showOfferApplied, setShowOfferApplied] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(chatMessages);
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
   const tokenSelector = useSelector(selectToken);
@@ -91,7 +89,7 @@ const HomePage = () => {
   const [spareParts, setSpareParts] = useState([]);
   const [serviceCategories, setServiceCategories] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
-  const [profileData, setProfileData] = useState<{ firstName?: string }>({})
+  const [profileData, setProfileData] = useState<{ firstName?: string }>({});
 
   useEffect(() => {
     Animated.parallel([
@@ -149,7 +147,7 @@ const HomePage = () => {
       setLogoutModalVisible(false);
     } catch (error) {
       toast.error('Logout failed', 'Could not complete logout. Please try again.');
-      console.error('Logout error:', error);
+      console.log('Logout error:', error);
     } finally {
       setIsLoading(false);
       setLogoutModalVisible(false);
@@ -160,7 +158,7 @@ const HomePage = () => {
     try {
       const response: any = await getUserProfileDetails({});
       if (response) {
-        setProfileData(response)
+        setProfileData(response);
       }
     } catch (error) {
       console.log(error);
@@ -175,7 +173,7 @@ const HomePage = () => {
         setSpareParts(response);
       }
     } catch (error) {
-      console.error('Error fetching spare parts:', error);
+      console.log('Error fetching spare parts:', error);
     }
   };
 
@@ -186,7 +184,7 @@ const HomePage = () => {
         setServiceCategories(categories);
       }
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.log('Error fetching services:', error);
     }
   };
 
@@ -205,10 +203,13 @@ const HomePage = () => {
     getAllSparePartsDetails();
     fetchAllServices();
     fetchAllOffers();
+  }, [dispatch]);
+
+  useEffect(() => {
     if (tokenSelector) {
       fetchUserProfile();
     }
-  }, [dispatch, tokenSelector]);
+  }, [tokenSelector]);
 
   const handleSubmitEnquiry = () => {
     setShowChatModal(false);
@@ -237,7 +238,9 @@ const HomePage = () => {
               <View style={{}}>
                 <View style={{ flexDirection: 'row' }}>
                   <HandShakeAnimation />
-                  <Text style={styles.title}>Hi, {tokenSelector ? profileData?.firstName : 'Customer'}</Text>
+                  <Text style={styles.title}>
+                    Hi, {tokenSelector ? profileData?.firstName : 'Customer'}
+                  </Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => setLogoutModalVisible(true)}

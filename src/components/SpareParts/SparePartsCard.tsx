@@ -272,7 +272,11 @@ const SparePartsCard = ({ part }: Props) => {
             <TouchableOpacity
               style={[styles.modalAddButton]}
               onPress={() => {
-                TokenSelector ? handleAddtoCart(part) : () => setSignUpConfirmModalVisible(true);
+                if (TokenSelector) {
+                  handleAddtoCart(part);
+                } else {
+                  setSignUpConfirmModalVisible(true);
+                }
               }}
               disabled={!part?.inStock}>
               <Text style={styles.modalAddButtonText}>

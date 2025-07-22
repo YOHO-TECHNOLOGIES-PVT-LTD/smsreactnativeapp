@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
@@ -32,22 +32,22 @@ const Settings = () => {
     }
   }, [dispatch]);
 
-  const fetchAllBookingCarts = async () => {
-    const response = tokenSelector && (await getAllBookingCartItems({}));
-    if (response) {
-      setBookingCarts(response || []);
-    }
+  const fetchAllBookingCarts = useCallback(async () => {
     try {
+      const response = tokenSelector ? await getAllBookingCartItems({}) : [];
+      if (response) {
+        setBookingCarts(response || []);
+      }
     } catch (error) {
       console.log('Error fetching booking carts:', error);
     }
-  };
+  }, [tokenSelector]);
 
   useEffect(() => {
     if (tokenSelector) {
       fetchAllBookingCarts();
     }
-  }, [dispatch, tokenSelector]);
+  }, [tokenSelector, fetchAllBookingCarts]);
 
   return (
     <>
@@ -89,7 +89,11 @@ const Settings = () => {
           </View>
 
           <View style={{ flex: 1 }}>
-            <Grid1 bookingCarts={bookingCarts} onChangeCart={fetchAllBookingCarts} />
+            <Grid1
+              bookingCarts={bookingCarts}
+              onChangeCart={fetchAllBookingCarts}
+              token={tokenSelector}
+            />
           </View>
         </GestureHandlerRootView>
       </SafeAreaView>

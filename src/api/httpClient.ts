@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
 const backEndUrl: string = 'https://sms-node-backend-17xb.onrender.com';
+// const backEndUrl: string = 'http://192.168.1.11:3000';
 
 const Axios = axios.create({
   baseURL: backEndUrl,
@@ -84,8 +85,9 @@ class HttpClient {
     return response.data;
   }
 
-  async fileGet(url: string) {
+  async fileGet(url: string, params?: any) {
     const response = await Axios.get(url, {
+      params,
       responseType: 'blob',
     });
     return response.data;
