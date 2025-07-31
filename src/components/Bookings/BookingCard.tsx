@@ -684,10 +684,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 4,
   },
-  statusText: {
-    ...FONTS.body7,
-    color: COLORS.white,
-  },
   trackingInput: {
     borderWidth: 1,
     borderColor: COLORS.lightGrey,
