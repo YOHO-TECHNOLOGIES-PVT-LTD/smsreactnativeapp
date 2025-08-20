@@ -24,6 +24,17 @@ interface BookingCardData {
   quantity: number;
   status: 'pending' | 'completed';
   type: BookingType;
+  confirm_Date: string;
+  products: Array<{
+    id: string;
+    name: string;
+  }>;
+  services?: Array<{
+    id: string;
+    name: string;
+    description: string;
+  }>;
+  amount: number;
 }
 
 interface BookingCardProps {
@@ -31,8 +42,6 @@ interface BookingCardProps {
   onPress: () => void;
   delay?: number;
 }
-const DEFAULT_SPARE_IMAGE = require('../../assets/sparepartsimage/parts/brakepads.jpg');
-const DEFAULT_SERVICE_IMAGE = require('../../assets/service-images/generalservice.png');
 
 const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) => {
   const translateY = useSharedValue(30);
@@ -54,21 +63,18 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
 
   const statusColor = data.status === 'pending' ? COLORS.error : COLORS.success_lightgreen;
   const statusText = data.status === 'pending' ? 'Pending' : 'Completed';
-  const imageSource = data.imageUrl
-    ? { uri: data.imageUrl }
-    : data.type === 'spare'
-      ? DEFAULT_SPARE_IMAGE
-      : DEFAULT_SERVICE_IMAGE;
 
   return (
     <Animated.View style={[animatedStyle, styles.container]}>
-      <View style={styles.card}>
+      <TouchableOpacity style={styles.card}>
         {/* Image and Status Section */}
         <View style={styles.imageContainer}>
-          <Image source={imageSource} style={styles.image} defaultSource={DEFAULT_SPARE_IMAGE} />
+          <Image source={{ uri: data?.imageUrl }} style={styles.image} />
           <View style={styles.statusContainer}>
-            {data.status !== 'pending' && (
+            {data.status !== 'pending' ? (
               <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
+            ) : (
+              <Image source={icons.clock} style={styles.statusIcon} tintColor={statusColor} />
             )}
             <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
           </View>
@@ -77,41 +83,34 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
         {/* Main Content Section */}
         <View style={styles.contentContainer}>
           <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-            {data.name}
+            {data?.products ? 'Products Order' : 'Service Order'}
           </Text>
           <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
-            {data.description}
+            Order containing {data?.products?.length} {data?.products?.length ? 'items' : 'item'}
           </Text>
 
-          {data.warranty && (
-            <View style={styles.detailRow}>
-              <Text style={styles.detailText}>Warranty: {data.warranty}</Text>
-            </View>
-          )}
-
           <View style={styles.detailRow}>
-            <AntDesign name="calendar" size={12} color={COLORS.primary_text} />
-            <Text style={styles.detailText}>{formatDateMonthandYear(data.date)}</Text>
+            <AntDesign name="calendar" size={12} color={COLORS.black} />
+            <Text style={[styles.detailText, { color: COLORS.black }]}>
+              {formatDateMonthandYear(data?.confirm_Date)}
+            </Text>
           </View>
         </View>
 
         {/* Right Side Section */}
         <View style={styles.rightContainer}>
           <TouchableOpacity
-            style={[
-              styles.typeBadge,
-              data.type === 'spare' ? styles.spareBadge : styles.serviceBadge,
-            ]}
+            style={[styles.typeBadge, data?.services ? styles.serviceBadge : styles.spareBadge]}
             onPress={() => {}}>
-            {data.type === 'spare' ? (
+            {data?.services ? (
               <Image
-                source={icons.spare_filled}
+                source={icons.services_filled}
                 style={styles.typeIcon}
                 tintColor={COLORS.indigo[500]}
               />
             ) : (
               <Image
-                source={icons.services_filled}
+                source={icons.spare_filled}
                 style={styles.typeIcon}
                 tintColor={COLORS.indigo[500]}
               />
@@ -123,17 +122,17 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, onPress, delay = 0 }) =
                   ? { color: COLORS.indigo[500] }
                   : { color: COLORS.indigo[500] },
               ]}>
-              {data.type === 'spare' ? 'Spare' : 'Service'}
+              {data?.services ? 'Service' : 'Spare Part'}
             </Text>
           </TouchableOpacity>
 
-          <Text style={styles.price}>₹ {data.price.toFixed(2)}</Text>
+          <Text style={styles.price}>₹ {data?.amount?.toFixed(2)}</Text>
 
-          <TouchableOpacity style={styles.viewButton} onPress={onPress}>
+          {/* <TouchableOpacity style={styles.viewButton} onPress={onPress}>
             <Text style={styles.viewButtonText}>View</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
-      </View>
+      </TouchableOpacity>
     </Animated.View>
   );
 };
@@ -154,6 +153,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     // alignItems: 'center',
+    height: 100,
   },
   imageContainer: {
     width: 65,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginRight: 7,
-    gap: 15,
+    gap: 10,
     // marginTop: 15,
   },
   image: {
@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
     height: 65,
     resizeMode: 'cover',
     borderRadius: 5,
+    backgroundColor: COLORS.primary_04,
   },
   statusContainer: {
     flexDirection: 'row',
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
   },
   description: {
     ...FONTS.body6,
-    color: COLORS.primary_01,
+    color: COLORS.black,
     marginTop: 3,
   },
   detailRow: {
@@ -208,14 +209,13 @@ const styles = StyleSheet.create({
   },
   rightContainer: {
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   typeBadge: {
     borderRadius: SIZES.small,
-    width: 50,
     paddingVertical: 2,
-    paddingHorizontal: 4,
+    paddingHorizontal: 5,
     flexDirection: 'row',
     gap: 3,
     justifyContent: 'center',

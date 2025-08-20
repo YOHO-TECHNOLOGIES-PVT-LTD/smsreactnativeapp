@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -31,121 +31,10 @@ import LoadingAnimation from '~/components/LoadingAnimation';
 import { getToken, logout } from '~/features/token/redux/thunks';
 import { selectToken } from '~/features/token/redux/selectors';
 import { AppDispatch } from '~/store';
-import { clearToken } from '~/features/token/redux/slices';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
-
-const services = [
-  { id: '1', name: 'Car Services', icon: 'directions-car' },
-  { id: '2', name: 'AC Service & Repair', icon: 'ac-unit' },
-  { id: '3', name: 'Batteries', icon: 'battery-charging-full' },
-  { id: '4', name: 'Tyres & Wheel Care', icon: 'settings' },
-  { id: '5', name: 'Denting & Painting', icon: 'build' },
-  { id: '6', name: 'Insurance Claims', icon: 'security' },
-  { id: '7', name: 'Clutch & Body Parts', icon: 'view-in-ar' },
-  { id: '8', name: 'Suspension & Fitments', icon: 'plumbing' },
-  { id: '9', name: 'Car Inspections', icon: 'car-repair' },
-  { id: '10', name: 'Windshield & Lights', icon: 'highlight' },
-  { id: '11', name: 'Car Spa & Cleaning', icon: 'local-car-wash' },
-  { id: '12', name: 'Detailing Services', icon: 'policy' },
-];
-
-const offers = [
-  { id: '1', title: 'Free Pickup & Drop', discount: 'On all services above ₹2000' },
-  { id: '2', title: 'Refer & Earn', discount: 'Get ₹500 for every referral' },
-  { id: '3', title: 'Festive Special', discount: 'Extra 10% off this week' },
-  { id: '4', title: 'Membership Combo', discount: 'Get ₹800 for every referral' },
-];
-
-const spareParts = [
-  {
-    id: '1',
-    name: 'Battery',
-    price: '₹450',
-    oem: 'Bosch',
-    image: require('../../assets/sparepartsimage/parts/battery.jpg'),
-  },
-  {
-    id: '2',
-    name: 'Brake Pads',
-    price: '₹1200',
-    oem: 'Brembo',
-    image: require('../../assets/sparepartsimage/parts/brakepads.jpg'),
-  },
-  {
-    id: '3',
-    name: 'Exhaust System',
-    price: '₹600',
-    oem: 'Mahle',
-    image: require('../../assets/sparepartsimage/parts/exhaust.jpg'),
-  },
-  {
-    id: '4',
-    name: 'Engine',
-    price: '₹750',
-    oem: 'Mahle',
-    image: require('../../assets/sparepartsimage/parts/engine.jpg'),
-  },
-  {
-    id: '5',
-    name: 'Interior',
-    price: '₹470',
-    oem: 'Mahle',
-    image: require('../../assets/sparepartsimage/parts/interior.jpg'),
-  },
-  {
-    id: '6',
-    name: 'Suspension',
-    price: '₹300',
-    oem: 'Mahle',
-    image: require('../../assets/sparepartsimage/parts/suspension.jpg'),
-  },
-];
-
-const blogs = [
-  {
-    id: '1',
-    title: '5 Signs Your Car Needs Service',
-    date: '15 May 2023',
-    content:
-      'Regular car maintenance is crucial for vehicle longevity. Here are 5 signs your car needs service: 1) Strange noises coming from engine, 2) Warning lights on dashboard, 3) Decreased fuel efficiency, 4) Unusual vibrations, and 5) Difficulty starting the engine. Ignoring these signs can lead to costly repairs.',
-  },
-  {
-    id: '2',
-    title: 'How to Maintain Your Car Battery',
-    date: '22 May 2023',
-    content:
-      "Car battery maintenance tips: 1) Keep terminals clean and free of corrosion, 2) Ensure proper fluid levels, 3) Check voltage regularly, 4) Avoid short trips that don't allow full charging, 5) Disconnect battery if not using car for extended periods. A well-maintained battery can last 3-5 years.",
-  },
-  {
-    id: '3',
-    title: 'Choosing the Right Engine Oil',
-    date: '30 May 2023',
-    content:
-      'Selecting the correct engine oil: 1) Check manufacturer recommendations, 2) Consider viscosity grade (like 5W-30), 3) Synthetic vs conventional oils, 4) Climate considerations, 5) Driving conditions. Using the wrong oil can reduce engine life and performance.',
-  },
-  {
-    id: '4',
-    title: 'Tire Maintenance Guide',
-    date: '10 June 2023',
-    content:
-      "Proper tire care: 1) Check pressure monthly, 2) Rotate tires every 8,000 km, 3) Inspect for wear and damage, 4) Maintain proper alignment, 5) Don't overload your vehicle. Well-maintained tires improve safety and fuel efficiency.",
-  },
-  {
-    id: '5',
-    title: 'AC System Maintenance',
-    date: '18 June 2023',
-    content:
-      'Keep your car AC running smoothly: 1) Run AC regularly, 2) Replace cabin air filter, 3) Check for refrigerant leaks, 4) Clean condenser, 5) Service compressor as needed. Regular maintenance prevents costly repairs and ensures comfort.',
-  },
-];
-
-const contacts = [
-  { id: '1', name: 'John Doe', phone: '+91 9876543210' },
-  { id: '2', name: 'Jane Smith', phone: '+91 8765432109' },
-  { id: '3', name: 'Robert Johnson', phone: '+91 7654321098' },
-  { id: '4', name: 'Emily Davis', phone: '+91 6543210987' },
-  { id: '5', name: 'Michael Wilson', phone: '+91 9432109876' },
-];
+import { getAllSpareParts } from '~/features/spare-parts/service';
+import { getAllServiceCategories } from '~/features/services-page/service';
+import { getAllOffers } from '~/features/Offer/service';
 
 const chatMessages = [
   { id: '1', sender: 'admin', text: 'Hello! How can I help you today?', time: '10:30 AM' },
@@ -167,19 +56,13 @@ const chatMessages = [
 
 const carlogos = [
   icons.carlogo1,
-  // icons.carlogo2,
   icons.carlogo3,
   icons.carlogo4,
   icons.carlogo5,
   icons.carlogo6,
   icons.carlogo7,
-  // icons.carlogo8,
   icons.carlogo9,
   icons.carlogo10,
-  // icons.carlogo11,
-  // icons.carlogo12,
-  // icons.carlogo13,
-  // icons.carlogo14,
   icons.carlogo15,
 ];
 
@@ -196,9 +79,6 @@ const HomePage = () => {
     require('../../assets/sparepartsimage/category/ac.jpg'),
   ];
   const [showOfferApplied, setShowOfferApplied] = useState(false);
-  const [showAllBlogs, setShowAllBlogs] = useState(false);
-  const [selectedBlog, setSelectedBlog] = useState<any>(null);
-  const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [showChatModal, setShowChatModal] = useState(false);
   const [message, setMessage] = useState('');
@@ -207,6 +87,9 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const tokenSelector = useSelector(selectToken);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [spareParts, setSpareParts] = useState([]);
+  const [serviceCategories, setServiceCategories] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
 
   useEffect(() => {
     Animated.parallel([
@@ -247,41 +130,6 @@ const HomePage = () => {
       setShowOfferApplied(false);
     }, 3000);
     toast.success('Offer Applied', 'Your offer has been successfully applied!');
-  };
-
-  const handleViewAllBlogs = () => {
-    setShowAllBlogs(true);
-  };
-
-  const handleReadMore = (blog: any) => {
-    setSelectedBlog(blog);
-    setShowAllBlogs(false);
-  };
-
-  const handleCloseBlog = () => {
-    setSelectedBlog(null);
-  };
-
-  const handleInviteFriends = () => {
-    setShowInviteModal(true);
-  };
-
-  const toggleContactSelection = (contact: any) => {
-    setSelectedContacts((prev: any) => {
-      if (prev.some((c: any) => c.id === contact.id)) {
-        return prev.filter((c: any) => c.id !== contact.id);
-      } else {
-        return [...prev, contact];
-      }
-    });
-  };
-
-  const handleSendInvites = () => {
-    if (selectedContacts.length > 0) {
-      toast.success('Invites Sent', `${selectedContacts.length} invites sent successfully!`);
-      setShowInviteModal(false);
-      setSelectedContacts([]);
-    }
   };
 
   const handleChatNow = () => {
@@ -329,6 +177,46 @@ const HomePage = () => {
     }
   };
 
+  const getAllSparePartsDetails = async () => {
+    try {
+      const data = '';
+      const response = await getAllSpareParts(data);
+      if (response) {
+        setSpareParts(response);
+      }
+    } catch (error) {
+      console.error('Error fetching spare parts:', error);
+    }
+  };
+
+  const fetchAllServices = async () => {
+    try {
+      const categories = await getAllServiceCategories({});
+      if (categories) {
+        setServiceCategories(categories);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    }
+  };
+
+  const fetchAllOffers = async () => {
+    try {
+      const response = await getAllOffers();
+      if (response) {
+        setAnnouncements(response?.data);
+      }
+    } catch (error) {
+      console.log('API Error:', error);
+    }
+  };
+
+  useEffect(() => {
+    getAllSparePartsDetails();
+    fetchAllServices();
+    fetchAllOffers();
+  }, []);
+
   return (
     <>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
@@ -353,16 +241,6 @@ const HomePage = () => {
                   <HandShakeAnimation />
                 </View>
                 <Text style={styles.title}>Hi, Customer</Text>
-                {/* <TouchableOpacity
-                  onPress={() => {}}
-                  style={{
-                    flexDirection: 'row',
-                    gap: 5,
-                    justifyContent: 'flex-end',
-                  }}>
-                  <FontAwesome name="location-arrow" size={16} color={COLORS.grey} />
-                  <Text style={[styles.subtitle, { textAlign: 'right' }]}>Keelkattalai</Text>
-                </TouchableOpacity> */}
                 <TouchableOpacity
                   onPress={() => setLogoutModalVisible(true)}
                   style={{
@@ -389,45 +267,33 @@ const HomePage = () => {
               </>
             )}
           </View>
-          {/* {tokenSelector && (
-            <TouchableOpacity
-              onPress={() => {}}
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-                justifyContent: 'flex-end',
-              }}>
-              <FontAwesome name="location-arrow" size={16} color={COLORS.grey} />
-              <Text style={[styles.subtitle, { textAlign: 'right' }]}>Keelkattalai</Text>
-            </TouchableOpacity>
-          )} */}
 
           {/* Search Bar */}
           <AnimatedSearch />
         </View>
         <ScrollView>
           {/* Image Carousel */}
-          <View style={{ backgroundColor: COLORS.grey08, paddingVertical: 10 }}>
+          <View style={{ backgroundColor: COLORS.primary_04, paddingVertical: 10 }}>
             <ImageCarousel images={images} />
           </View>
 
           {/* Services */}
           <View style={styles.section}>
             <View style={styles.servicesGrid}>
-              {services.map((item: any) => (
+              {serviceCategories.map((item: any) => (
                 <TouchableOpacity
                   key={item.id}
                   style={styles.serviceItem1}
                   onPress={() => dispatch(setSelectedTab(screens.services))}>
-                  <MaterialIcons name={item.icon} size={28} color={COLORS.primary_02} />
-                  <Text style={styles.serviceText}>{item.name}</Text>
+                  <MaterialIcons name="directions-car" size={28} color={COLORS.primary_02} />
+                  <Text style={styles.serviceText}>{item?.category_name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
           {/* Available Spare Parts */}
-          <View style={[styles.section, { padding: 15, backgroundColor: COLORS.grey20 }]}>
+          <View style={[styles.section, { padding: 15, backgroundColor: COLORS.primary_03 }]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Available Spare Parts</Text>
               <TouchableOpacity onPress={() => dispatch(setSelectedTab(screens.spare_parts))}>
@@ -441,13 +307,16 @@ const HomePage = () => {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingRight: 20 }}>
-              {spareParts.map((item) => (
-                <View key={item.id} style={[styles.partCard1, { width: 120 }]}>
-                  <Image source={item.image} style={styles.partImage} />
+              {spareParts.map((item: any) => (
+                <View key={item?._id} style={[styles.partCard1, { width: 120 }]}>
+                  <Image source={item?.image} style={styles.partImage} />
                   <View style={styles.partDetails}>
-                    <Text style={styles.partName}>{item.name}</Text>
-                    <Text style={styles.partOem}>{item.oem}</Text>
-                    <Text style={styles.partPrice}>{item.price}</Text>
+                    <Text style={styles.partName}>{item?.productName?.substring(0, 15)}</Text>
+                    <Text style={styles.partOem}>{item?.brand}</Text>
+                    <Text style={styles.partPrice}>₹{item.price}</Text>
+                    <Text style={styles.stock}>
+                      {item.inStock === true ? 'In Stock' : 'Out of Stock'}({item?.stock})
+                    </Text>
                   </View>
                 </View>
               ))}
@@ -458,13 +327,34 @@ const HomePage = () => {
           <View style={[styles.section, { padding: 15, backgroundColor: COLORS.grey08 }]}>
             <Text style={[styles.sectionTitle, {}]}>Special Offers</Text>
             <View style={styles.offersContainer}>
-              {offers.map((offer) => (
-                <Animated.View key={offer.id} style={[styles.offerCard, { opacity: fadeAnim }]}>
+              {announcements?.map((offer: any) => (
+                <Animated.View key={offer?._id} style={[styles.offerCard, { opacity: fadeAnim }]}>
                   <View style={styles.offerBadge}>
                     <FontAwesome name="tag" size={14} color={COLORS.white} />
                   </View>
-                  <Text style={styles.offerTitle}>{offer.title}</Text>
-                  <Text style={styles.offerDiscount}>{offer.discount}</Text>
+                  <Image
+                    source={offer?.image}
+                    style={{
+                      width: '100%',
+                      height: 75,
+                      backgroundColor: COLORS.primary_04,
+                      borderRadius: 5,
+                      marginBottom: 5,
+                    }}
+                  />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}>
+                    <Text style={styles.offerTitle}>{offer?.title?.substring(0, 12)}</Text>
+                    <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
+                      {' '}
+                      Offer: ₹{offer?.offer}
+                    </Text>
+                  </View>
+                  <Text style={styles.offerDiscount}>{offer?.description?.substring(0, 15)}</Text>
                   <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
                     <Text style={styles.offerButtonText}>Claim Offer</Text>
                   </TouchableOpacity>
@@ -483,15 +373,15 @@ const HomePage = () => {
           {/* Guarantee Terms */}
           <View style={styles.guaranteeContainer}>
             <View style={styles.guaranteeItem}>
-              <MaterialIcons name="verified" size={28} color="#8B0000" />
+              <MaterialIcons name="verified" size={28} color={COLORS.primary_02} />
               <Text style={styles.guaranteeText}>100% Genuine Parts</Text>
             </View>
             <View style={styles.guaranteeItem}>
-              <MaterialIcons name="security" size={28} color="#8B0000" />
+              <MaterialIcons name="security" size={28} color={COLORS.primary_02} />
               <Text style={styles.guaranteeText}>6 Months Warranty</Text>
             </View>
             <View style={styles.guaranteeItem}>
-              <MaterialIcons name="money-off" size={28} color="#8B0000" />
+              <MaterialIcons name="money-off" size={28} color={COLORS.primary_02} />
               <Text style={styles.guaranteeText}>Price Match Guarantee</Text>
             </View>
           </View>
@@ -502,7 +392,7 @@ const HomePage = () => {
               <Text style={{ ...FONTS.h3, fontWeight: 500, color: COLORS.primary_text }}>
                 Authorized Spare Parts
               </Text>
-              <Text style={{ ...FONTS.body5, color: COLORS.grey, marginVertical: 5 }}>
+              <Text style={{ ...FONTS.body5, color: COLORS.black, marginVertical: 5 }}>
                 Beyond Standard Warranty - YesMechanic Assurance
               </Text>
             </View>
@@ -519,47 +409,6 @@ const HomePage = () => {
             </ScrollView>
           </View>
 
-          {/* Blog Posts */}
-          <View style={[styles.section, { padding: 15 }]}>
-            <View style={[styles.sectionHeader, { marginBottom: 5 }]}>
-              <Text style={styles.sectionTitle}>Blog & Articles</Text>
-              <TouchableOpacity onPress={handleViewAllBlogs}>
-                <Text style={styles.seeAll}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.blogsContainer}>
-              {blogs.slice(0, 3).map((blog, index) => (
-                <TouchableOpacity
-                  key={blog.id}
-                  style={styles.blogCard}
-                  onPress={() => handleReadMore(blog)}>
-                  <Image source={blogsImage[index]} style={styles.blogImage} />
-                  <View style={styles.blogContent}>
-                    <Text style={styles.blogTitle}>{blog.title}</Text>
-                    <Text style={styles.blogDate}>{blog.date}</Text>
-                    <Text style={styles.blogReadMore}>Read More →</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Refer & Earn */}
-          <View style={styles.referContainer}>
-            <Image
-              source={require('../../assets/service-images/generalservice.png')}
-              style={styles.referBg}
-            />
-            <View style={styles.referContent}>
-              <Text style={styles.referTitle}>Refer & Earn</Text>
-              <Text style={styles.referText}>Get ₹500 for every friend who books a service</Text>
-              <TouchableOpacity style={styles.referButton} onPress={handleInviteFriends}>
-                <Text style={styles.referButtonText}>Invite Friends</Text>
-                <Ionicons name="arrow-forward" size={18} color={COLORS.white} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Footer CTA */}
           <View style={styles.footerCta}>
             <Text style={styles.footerCtaText}>Need help? Chat with our experts</Text>
@@ -570,132 +419,6 @@ const HomePage = () => {
 
           <View style={{ marginTop: 65 }}></View>
         </ScrollView>
-
-        {/* All Blogs Modal */}
-        <View>
-          <Modal
-            visible={showAllBlogs}
-            animationType="slide"
-            transparent={false}
-            onRequestClose={() => setShowAllBlogs(false)}>
-            <SafeAreaView style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>All Blog Posts</Text>
-                <TouchableOpacity style={styles.closeButton} onPress={() => setShowAllBlogs(false)}>
-                  <Ionicons name="close" size={24} color={COLORS.primary} />
-                </TouchableOpacity>
-              </View>
-
-              <FlatList
-                data={blogs}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item, index }) => (
-                  <TouchableOpacity
-                    style={styles.blogCardModal}
-                    onPress={() => handleReadMore(item)}>
-                    <Image source={blogsImage[index]} style={styles.blogImageModal} />
-                    <View style={styles.blogContentModal}>
-                      <Text style={styles.blogTitleModal}>{item.title}</Text>
-                      <Text style={styles.blogDateModal}>{item.date}</Text>
-                      <Text style={[styles.blogReadMore, { marginTop: 2 }]}>Read More →</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-                contentContainerStyle={styles.modalContent}
-              />
-            </SafeAreaView>
-          </Modal>
-        </View>
-
-        {/* Single Blog Modal */}
-        <View>
-          <Modal
-            visible={!!selectedBlog}
-            animationType="slide"
-            transparent={false}
-            onRequestClose={handleCloseBlog}>
-            <SafeAreaView style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <TouchableOpacity style={styles.backButton} onPress={handleCloseBlog}>
-                  <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-                </TouchableOpacity>
-                <Text style={styles.modalTitle}>Blog Details</Text>
-                <View style={{ width: 24 }} />
-              </View>
-
-              {selectedBlog && (
-                <ScrollView style={styles.blogDetailContainer}>
-                  <Image
-                    source={blogsImage[blogs.findIndex((b) => b.id === selectedBlog.id)]}
-                    style={styles.blogDetailImage}
-                  />
-                  <Text style={styles.blogDetailTitle}>{selectedBlog.title}</Text>
-                  <Text style={styles.blogDetailDate}>{selectedBlog.date}</Text>
-                  <Text style={styles.blogDetailContent}>{selectedBlog.content}</Text>
-                </ScrollView>
-              )}
-            </SafeAreaView>
-          </Modal>
-        </View>
-
-        {/* Invite Friends Modal */}
-        <View>
-          <Modal
-            visible={showInviteModal}
-            animationType="slide"
-            transparent={false}
-            onRequestClose={() => setShowInviteModal(false)}>
-            <SafeAreaView style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Invite Friends</Text>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setShowInviteModal(false)}>
-                  <Ionicons name="close" size={24} color={COLORS.primary} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.inviteContent}>
-                <Text style={styles.inviteText}>Select contacts to invite:</Text>
-
-                <FlatList
-                  data={contacts}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.contactItem,
-                        selectedContacts.some((c: any) => c.id === item.id) &&
-                          styles.selectedContact,
-                      ]}
-                      onPress={() => toggleContactSelection(item)}>
-                      <View style={styles.contactInfo}>
-                        <Text style={styles.contactName}>{item.name}</Text>
-                        <Text style={styles.contactPhone}>{item.phone}</Text>
-                      </View>
-                      {selectedContacts.some((c: any) => c.id === item.id) && (
-                        <Ionicons name="checkmark" size={20} color={COLORS.primary_text} />
-                      )}
-                    </TouchableOpacity>
-                  )}
-                  contentContainerStyle={styles.contactList}
-                />
-
-                <TouchableOpacity
-                  style={[
-                    styles.sendInvitesButton,
-                    selectedContacts.length === 0 && styles.disabledButton,
-                  ]}
-                  onPress={handleSendInvites}
-                  disabled={selectedContacts.length === 0}>
-                  <Text style={styles.sendInvitesText}>
-                    Send Invites ({selectedContacts.length})
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </SafeAreaView>
-          </Modal>
-        </View>
 
         {/* Chat Modal */}
         <View>
@@ -798,7 +521,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.primary,
   },
   subtitle: {
     fontSize: 12,
@@ -879,7 +602,7 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     ...FONTS.body6,
-    color: COLORS.grey80,
+    color: COLORS.black,
     marginVertical: 5,
   },
   servicesContainer: {
@@ -937,7 +660,7 @@ const styles = StyleSheet.create({
   },
   offerCard: {
     width: '48%',
-    height: 100,
+    // height: 100,
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 15,
@@ -966,8 +689,7 @@ const styles = StyleSheet.create({
   },
   offerDiscount: {
     ...FONTS.body6,
-    color: COLORS.grey,
-    marginBottom: 10,
+    color: COLORS.black,
   },
   offerButton: {
     backgroundColor: COLORS.primary,
@@ -976,7 +698,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '50%',
     alignSelf: 'center',
-    marginTop: 5,
+    marginTop: 15,
   },
   offerButtonText: {
     color: COLORS.white,
@@ -1048,7 +770,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 5,
     resizeMode: 'cover',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.primary_04,
   },
   carLogoImage: {
     width: 55,
@@ -1076,6 +798,11 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '500',
   },
+  stock: {
+    ...FONTS.h6,
+    color: COLORS.success_lightgreen,
+    fontWeight: '500',
+  },
   partButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: 6,
@@ -1091,7 +818,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     marginBottom: 5,
-    backgroundColor: COLORS.grey20,
+    backgroundColor: COLORS.primary_04,
   },
   guaranteeItem: {
     alignItems: 'center',
@@ -1099,7 +826,7 @@ const styles = StyleSheet.create({
   },
   guaranteeText: {
     ...FONTS.body6,
-    color: '#333',
+    color: COLORS.primary_text,
     textAlign: 'center',
     marginTop: 8,
   },

@@ -5,20 +5,20 @@ import {
   Text,
   View,
   TouchableOpacity,
-  TextInput,
   FlatList,
   StatusBar,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { COLORS, FONTS, icons, screens, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import BookingCard from '~/components/Bookings/BookingCard';
 import { getAllBookingsCartItems } from '~/features/bookings/service';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign, Foundation, Ionicons } from '@expo/vector-icons';
-import { useDispatch } from 'react-redux';
-import { setSelectedTab } from '~/store/tab/tabSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectToken } from '~/features/token/redux/selectors';
+import { getToken } from '~/features/token/redux/thunks';
+import { AppDispatch } from '~/store';
 
 interface Product {
   _id: string;
@@ -69,24 +69,29 @@ interface BookingCardItem {
 const Bookings = () => {
   const navigate = useNavigation();
   const [tab, setTab] = useState<'All Orders' | 'Spare Parts' | 'Services'>('All Orders');
-  const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [Token, setToken] = useState<any>('');
-
-  const fetchToken = async () => {
-    const token = await AsyncStorage.getItem('authToken');
-    setToken(token);
-  };
+  const [isLoading, setIsLoading] = useState(false);
+  const tokenSelector = useSelector(selectToken);
+  const dispatch = useDispatch<AppDispatch>();
+  const navigation = useNavigation();
 
   useEffect(() => {
-    fetchToken();
-  }, []);
+    try {
+      setIsLoading(true);
+      dispatch(getToken());
+      setIsLoading(false);
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = Token && (await getAllBookingsCartItems({}));
+        const response = tokenSelector && (await getAllBookingsCartItems({}));
         if (response?.success) {
           const allOrders = [
             ...(response.productConfirm || []),
@@ -103,90 +108,17 @@ const Bookings = () => {
     fetchOrders();
   }, []);
 
-  const transformOrderData = (orders: Order[]): BookingCardItem[] => {
-    const result: BookingCardItem[] = [];
-
-    orders.forEach((order) => {
-      if (order.products && order.products.length > 0) {
-        order.products.forEach((product, index) => {
-          result.push({
-            id: `${order._id}-product-${index}`,
-            orderId: order._id,
-            name: product.productId?.productName || 'Unknown Product',
-            imageUrl: product.productId?.image || '',
-            description: product.productId?.description || 'No description available',
-            date: order.confirm_Date,
-            price: parseFloat(product.price) * product.quantity,
-            warranty: product.productId?.warrantyPeriod || 'No warranty',
-            quantity: product.quantity,
-            status: order.status,
-            type: 'spare',
-          });
-        });
-      }
-
-      if (order.services && order.services.length > 0) {
-        order.services.forEach((service, index) => {
-          result.push({
-            id: `${order._id}-service-${index}`,
-            orderId: order._id,
-            name: service.service_name || 'Unknown Service',
-            imageUrl: '',
-            description: service.description || 'No description available',
-            date: order.confirm_Date,
-            price: service.price || 0,
-            warranty: undefined,
-            quantity: 1,
-            status: order.status,
-            type: 'service',
-          });
-        });
-      }
-
-      if (
-        (!order.products || order.products.length === 0) &&
-        (!order.services || order.services.length === 0)
-      ) {
-        result.push({
-          id: `${order._id}-empty`,
-          orderId: order._id,
-          name: 'Product Order',
-          imageUrl: '',
-          description: 'No items in this order',
-          date: order.confirm_Date,
-          price: order.amount || 0,
-          warranty: undefined,
-          quantity: 1,
-          status: order.status,
-          type: 'spare',
-        });
-      }
-    });
-
-    return result;
-  };
-
-  const allOrderItems = transformOrderData(orders);
-
-  const filteredOrders = allOrderItems.filter((order) => {
+  const filteredOrders = orders?.filter((order: any) => {
     const matchesTab =
       tab === 'All Orders' ||
-      (tab === 'Spare Parts' && order.type === 'spare') ||
-      (tab === 'Services' && order.type === 'service');
-
-    const matchesSearch =
-      searchQuery === '' ||
-      order.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesTab && matchesSearch;
+      (tab === 'Spare Parts' && order?.products) ||
+      (tab === 'Services' && order?.services);
+    return matchesTab;
   });
 
-  const totalOrders = allOrderItems.length;
-  const completedOrders = allOrderItems.filter((order) => order.status === 'completed').length;
-  const pendingOrders = allOrderItems.filter((order) => order.status === 'pending').length;
-  const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const totalOrders = orders?.length;
+  const completedOrders = orders?.filter((order) => order?.status === 'completed')?.length;
+  const pendingOrders = orders?.filter((order) => order?.status === 'pending')?.length;
 
   return (
     <>
@@ -212,18 +144,6 @@ const Bookings = () => {
           <View style={{ flexDirection: 'row', gap: 15, marginRight: 8 }}>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              {/* <View
-                style={{
-                  width: 15,
-                  height: 15,
-                  backgroundColor: COLORS.primary,
-                  borderRadius: 25,
-                  position: 'absolute',
-                  right: -2,
-                  top: -6,
-                }}>
-                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>1</Text>
-              </View> */}
             </TouchableOpacity>
           </View>
         </View>
@@ -268,24 +188,13 @@ const Bookings = () => {
                 <Text style={styles.text}>Completed</Text>
               </View>
               <View style={styles.countCard}>
-                <Text style={{ ...FONTS.h4, color: COLORS.primary }}>{pendingOrders}</Text>
+                <Text style={{ ...FONTS.h4, color: COLORS.error }}>{pendingOrders}</Text>
                 <Text style={styles.text}>Pending</Text>
               </View>
             </View>
 
             {/* Search and Tabs */}
             <View style={styles.tabContainer}>
-              <View style={styles.searchContainer}>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search for your orders..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholderTextColor={COLORS.grey}
-                />
-                <Image source={icons.search} style={styles.searchIcon} tintColor={COLORS.grey} />
-              </View>
-
               <View style={styles.tabsContainer}>
                 <TouchableOpacity
                   style={[styles.tabButton, tab === 'All Orders' && styles.activeTabButton]}
@@ -316,19 +225,17 @@ const Bookings = () => {
               <View style={styles.loadingContainer}>
                 <Text style={{ ...FONTS.body3, color: COLORS.grey }}>Loading orders...</Text>
               </View>
-            ) : filteredOrders.length > 0 ? (
+            ) : filteredOrders?.length > 0 ? (
               <FlatList
                 data={filteredOrders}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item: any) => item._id}
                 renderItem={({ item }) => <BookingCard data={item} onPress={() => {}} />}
                 contentContainerStyle={styles.ordersList}
                 showsVerticalScrollIndicator={false}
               />
             ) : (
               <View style={styles.emptyContainer}>
-                <Text style={{ ...FONTS.body3, color: COLORS.grey }}>
-                  {searchQuery ? 'No matching orders found' : 'No orders found'}
-                </Text>
+                <Text style={{ ...FONTS.body3, color: COLORS.grey }}>No orders found</Text>
               </View>
             )}
           </View>
@@ -403,6 +310,8 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SIZES.small,
   },
   tabButton: {
     flex: 1,

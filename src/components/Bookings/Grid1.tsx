@@ -11,16 +11,23 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { COLORS, FONTS, icons } from '~/constants';
-import { addBookingCartItem } from '~/features/booking-cart/service.ts';
-import { addSparePartCartItems } from '~/features/bookings/service';
+import {
+  addBookingCartItem,
+  deleteBookingCartProduct,
+  deleteBookingCartService,
+} from '~/features/booking-cart/service.ts';
+import { addServiceCartItems, addSparePartCartItems } from '~/features/bookings/service';
 import toast from '~/utils/toast';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 type CartItem = {
   _id: string;
+  service_name: string;
+  description?: string;
   productId?: {
     _id: string;
     productName: string;
-    price: string;
+    price: any;
     image: string;
     stock: string;
     inStock: boolean;
@@ -32,6 +39,7 @@ type CartItem = {
     service_name: string;
     price: number;
     description: string;
+    image: string;
   };
   price: string;
   quantity: number;
@@ -48,11 +56,13 @@ type CartProps = {
 };
 
 const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
-  const [activeTab, setActiveTab] = useState<'All' | 'Products' | 'Services'>('All');
+  const [activeTab, setActiveTab] = useState<'Spare Parts' | 'Services'>('Spare Parts');
   const [cartItems, setCartItems] = useState<{
     products: CartItem[];
     services: CartItem[];
   }>({ products: [], services: [] });
+  const [cartId, setCartId] = useState<string | null>(null);
+  const [serviceId, setServiceId] = useState<string | null>(null);
 
   useEffect(() => {
     if (bookingCarts && bookingCarts.length > 0) {
@@ -62,9 +72,18 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
     }
   }, [bookingCarts]);
 
+  useEffect(() => {
+    if (bookingCarts && bookingCarts.length > 0) {
+      const filterSpareCartId = bookingCarts?.find((item: any) => item?.type === 'spare');
+      const filterServiceCartId = bookingCarts?.find((item: any) => item?.type === 'service');
+      setCartId(filterSpareCartId?._id ?? null);
+      setServiceId(filterServiceCartId?._id ?? null);
+    }
+  }, [bookingCarts]);
+
   const getFilteredItems = () => {
     switch (activeTab) {
-      case 'Products':
+      case 'Spare Parts':
         return cartItems.products;
       case 'Services':
         return cartItems.services;
@@ -84,34 +103,55 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
   const filteredItems = getFilteredItems();
 
   const handleConfirmOrder = async () => {
-    if (filteredItems.length === 0) {
-      Alert.alert('Empty Cart', 'Your cart is empty. Please add items to proceed.');
+    if (filteredItems?.length === 0) {
+      toast.error('Empty Cart', 'Your cart is empty. Please add items to proceed.');
       return;
     }
-
     try {
-      const data = { cartId: bookingCarts[0]?._id };
-      const response = await addSparePartCartItems(data);
-      console.log('Order confirmation response:', response);
-      if (response) {
-        toast.success('Success', response.message || 'Successfully placed your order!');
-      } else {
-        toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
+      if (activeTab === 'Spare Parts') {
+        const data = { cartId: bookingCarts[0]?._id };
+        const response = await addSparePartCartItems(data);
+        if (response) {
+          toast.success('Success', response.message || 'Successfully placed your order!');
+        } else {
+          toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
+        }
+      } else if (activeTab === 'Services') {
+        const data = { cartId: bookingCarts[0]?._id };
+        const response = await addServiceCartItems(data);
+        if (response) {
+          toast.success('Success', response.message || 'Successfully placed your order!');
+        } else {
+          toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Error confirming order:', error);
     }
   };
 
+  const handleDelete = async (id: any) => {
+    if (activeTab === 'Spare Parts') {
+      const response = await deleteBookingCartProduct({ cartId: cartId, productId: id });
+      if (response) {
+        toast.success('Product removed successfully', { autoClose: 2000 });
+      }
+    } else if (activeTab === 'Services') {
+      const response = await deleteBookingCartService({ cartId: serviceId, serviceId: id });
+      if (response) {
+        toast.success('Service removed successfully', { autoClose: 2000 });
+      }
+    }
+  };
+
   const renderItem = (item: CartItem, index?: any) => {
+    console.log('Rendering item:', item);
     const name = item?.productId?.productName || item?.service_name || 'Unknown Item';
     const price = parseInt(item?.price);
     const totalPrice = item?.productId ? item?.productId?.price * item?.quantity : price;
     const imageSource = item?.productId
-      ? item?.productId?.image
-        ? { uri: item?.productId?.image }
-        : require('../../assets/sparepartsimage/parts/battery.jpg')
-      : require('../../assets/service-images/generalservice.png');
+      ? { uri: item?.productId?.image }
+      : { uri: item?.serviceId?.image };
 
     return (
       <View key={index} style={styles.itemContainer}>
@@ -123,13 +163,13 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
 
           {item?.productId && (
             <>
-              <Text style={styles.itemInfo}>{item.productId.warrantyPeriod} warranty</Text>
+              <Text style={styles.itemInfo}>{item.productId?.warrantyPeriod} warranty</Text>
               <Text
                 style={[
                   styles.stockStatus,
-                  item.productId.inStock ? styles.inStock : styles.outOfStock,
+                  item.productId?.inStock ? styles.inStock : styles.outOfStock,
                 ]}>
-                {item.productId.inStock ? 'In Stock' : 'Out of Stock'}
+                {item.productId?.inStock ? 'In Stock' : 'Out of Stock'}
               </Text>
             </>
           )}
@@ -142,10 +182,15 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
         </View>
 
         <View style={styles.quantityContainer}>
-          <View style={styles.quantityBox}>
-            <Text style={styles.quantityText}>Qty: {item?.quantity || 1}</Text>
-          </View>
+          <TouchableOpacity onPress={() => handleDelete(item?._id)}>
+            <FontAwesome5 name="trash" size={20} color={COLORS.error80} />
+          </TouchableOpacity>
           <Text style={styles.totalPrice}>₹ {totalPrice}</Text>
+          {item?.productId && (
+            <View style={styles.quantityBox}>
+              <Text style={styles.quantityText}>Qty: {item?.quantity || 1}</Text>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -158,52 +203,48 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
           source={icons.booking_background}
           style={styles.backgroundImage}
           resizeMode="cover">
+          <View style={styles.tabContainer}>
+            {(['Spare Parts', 'Services'] as const).map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
+                onPress={() => setActiveTab(tab)}>
+                <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             showsVerticalScrollIndicator={false}>
-            <View style={styles.tabContainer}>
-              {(['All', 'Products', 'Services'] as const).map((tab) => (
-                <TouchableOpacity
-                  key={tab}
-                  style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
-                  onPress={() => setActiveTab(tab)}>
-                  <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-                    {tab}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {filteredItems.length > 0 ? (
+            {filteredItems?.length > 0 ? (
               <View style={styles.itemsContainer}>
-                {filteredItems.map((item, index) => renderItem(item, index))}
+                {filteredItems?.map((item, index) => renderItem(item, index))}
               </View>
             ) : (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>
-                  {activeTab === 'All'
-                    ? 'Your cart is empty'
-                    : activeTab === 'Products'
-                      ? 'No products in your cart'
-                      : 'No services in your cart'}
+                  {activeTab === 'Spare Parts'
+                    ? 'No products in your cart'
+                    : 'No services in your cart'}
                 </Text>
               </View>
             )}
-
-            <View style={styles.footer}>
-              <View style={styles.totalContainer}>
-                <Text style={styles.totalLabel}>Total:</Text>
-                <Text style={styles.totalAmount}>₹{totalAmount}</Text>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.confirmButton, filteredItems.length === 0 && styles.disabledButton]}
-                onPress={handleConfirmOrder}
-                disabled={filteredItems.length === 0}>
-                <Text style={styles.confirmButtonText}>Confirm Order</Text>
-              </TouchableOpacity>
-            </View>
           </ScrollView>
+          <View style={styles.footer}>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalAmount}>₹{totalAmount}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.confirmButton, filteredItems.length === 0 && styles.disabledButton]}
+              onPress={handleConfirmOrder}
+              disabled={filteredItems.length === 0}>
+              <Text style={styles.confirmButtonText}>Confirm Order</Text>
+            </TouchableOpacity>
+          </View>
         </ImageBackground>
       </View>
     </GestureHandlerRootView>
@@ -213,7 +254,6 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
   },
   backgroundImage: {
     flex: 1,
@@ -244,21 +284,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 10,
-    backgroundColor: COLORS.lightGrey,
-    marginHorizontal: 15,
-    borderRadius: 10,
+    backgroundColor: COLORS.primary_04,
   },
   tabButton: {
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 20,
+    borderColor: COLORS.primary_03,
+    borderWidth: 1,
   },
   activeTabButton: {
     backgroundColor: COLORS.primary,
   },
   tabText: {
     ...FONTS.h4,
-    color: COLORS.dark60,
+    color: COLORS.black,
     fontWeight: 500,
   },
   activeTabText: {
@@ -288,6 +328,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8,
     marginRight: 15,
+    backgroundColor: COLORS.primary_04
   },
   itemDetails: {
     flex: 1,
@@ -319,15 +360,15 @@ const styles = StyleSheet.create({
   },
   quantityContainer: {
     justifyContent: 'center',
-    alignItems: 'flex-end',
-    minWidth: 80,
+    alignItems: 'center',
+    minWidth: 60,
+    gap: 10,
   },
   quantityBox: {
     backgroundColor: COLORS.lightGrey,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    marginBottom: 8,
   },
   quantityText: {
     ...FONTS.h5,

@@ -84,6 +84,8 @@ const SparePartsCard = ({ part }: Props) => {
         };
         const response = await addBookingCartItem(data);
         if (response) {
+          setModalVisible(false);
+          setQuantity(1);
           toast.success('Added', `${part?.productName} is added to cart`);
           setAdded(true);
         }
@@ -146,7 +148,7 @@ const SparePartsCard = ({ part }: Props) => {
       <Pressable style={styles.card} onPress={() => setModalVisible(true)}>
         {/* Image at the top */}
         <Image
-          source={require('../../assets/sparepartsimage/parts/suspension.jpg')}
+          source={{uri: part?.image}}
           style={styles.cardImage}
           resizeMode="cover"
           onError={() => setError(true)}
@@ -186,7 +188,7 @@ const SparePartsCard = ({ part }: Props) => {
           {/* Image with back button */}
           <View style={styles.modalImageContainer}>
             <Image
-              source={require('../../assets/sparepartsimage/parts/suspension.jpg')}
+              source={{uri: part?.image}}
               style={styles.modalImage}
               resizeMode="cover"
             />
@@ -292,11 +294,11 @@ const SparePartsCard = ({ part }: Props) => {
       <View>
         <CustomLogoutModal
           visible={signUpConfirmModalVisible}
-          onConfirm={() => navigation.navigate('RegisterScreen' as never)}
+          onConfirm={() => navigation.navigate('LoginScreen' as never)}
           onCancel={() => setSignUpConfirmModalVisible(false)}
-          title="Please SignUp"
-          message="You need to sign up to book a service."
-          confirmText="Sign Up"
+          title="Please Login"
+          message="You need to login to book a spare parts."
+          confirmText="Login"
           cancelText="Cancel"
           confirmButtonColor={COLORS.primary}
           cancelButtonColor={COLORS.transparent}
@@ -325,6 +327,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: 120,
+    backgroundColor: COLORS.primary_04,
   },
   cardContent: {
     padding: 12,
@@ -382,6 +385,7 @@ const styles = StyleSheet.create({
   modalImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: COLORS.primary_04,
   },
   backButton: {
     position: 'absolute',

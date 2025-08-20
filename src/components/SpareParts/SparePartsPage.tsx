@@ -55,7 +55,8 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (item: any) =>
-          item?.productName.toLowerCase().includes(query) || item?.brand.toLowerCase().includes(query)
+          item?.productName.toLowerCase().includes(query) ||
+          item?.brand.toLowerCase().includes(query)
       );
     }
 
@@ -95,7 +96,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalNavContent1}>
-          {categories.map((item, index) => {
+          {categories.map((item: any, index) => {
             const isSelected = selectedCategory === item;
             return (
               <TouchableOpacity
@@ -105,7 +106,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
                 activeOpacity={0.7}>
                 <View style={styles.horizontalNavIcon}>
                   <Image
-                    source={require('../../assets/sparepartsimage/parts/brakepads.jpg')}
+                    source={{ uri: item?.image }}
                     style={styles.image}
                     onError={() => setError(true)}
                   />
@@ -148,27 +149,28 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
       {/* Main Content - Grid Layout */}
       <View style={styles.cardContainer}>
         {/* {filteredParts.length > 0 ? ( */}
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            data={((filteredParts?.length > 0) || (searchQuery.trim() !== ''))
-                && filteredParts}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item, index }) => (
-              <View style={styles.cardWrapper} key={index}>
-                <SparePartsCard part={item} />
-              </View>
-            )}
-            numColumns={2}
-            columnWrapperStyle={styles.columnWrapper}
-            contentContainerStyle={styles.cardsList}
-            ListEmptyComponent={<View style={styles.noResultsContainer}>
-            <Text style={styles.noResultsText}>
-              {searchQuery.trim() !== ''
-                ? 'No products found matching your search'
-                : 'No products available in this category'}
-            </Text>
-          </View>}
-          />
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          data={(filteredParts?.length > 0 || searchQuery.trim() !== '') && filteredParts}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item, index }) => (
+            <View style={styles.cardWrapper} key={index}>
+              <SparePartsCard part={item} />
+            </View>
+          )}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          contentContainerStyle={styles.cardsList}
+          ListEmptyComponent={
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText}>
+                {searchQuery.trim() !== ''
+                  ? 'No products found matching your search'
+                  : 'No products available in this category'}
+              </Text>
+            </View>
+          }
+        />
         {/* ) : (
           <View style={styles.noResultsContainer}>
             <Text style={styles.noResultsText}>
@@ -226,6 +228,7 @@ const styles = StyleSheet.create({
     height: 65,
     borderRadius: 50,
     marginBottom: 5,
+    backgroundColor: COLORS.primary_04,
   },
   cardContainer: {
     flex: 1,

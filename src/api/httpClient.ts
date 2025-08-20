@@ -2,7 +2,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
-const backEndUrl: string = 'https://sms-node-backend-17xb.onrender.com';
+// const backEndUrl: string = 'https://sms-node-backend-17xb.onrender.com';
+const backEndUrl: string = 'http://192.168.1.10:3000';
 
 const Axios = axios.create({
   baseURL: backEndUrl,
@@ -42,7 +43,7 @@ Axios.interceptors.response.use(
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('HTTP Error:', error);
+      console.log('HTTP Error:', error?.response);
     }
     // if (
     //   (error?.response?.data?.status && error?.response?.data?.message === 'Password not match') ||

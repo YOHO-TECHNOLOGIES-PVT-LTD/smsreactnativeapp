@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   searchText: {
-    color: '#000',
+    color: COLORS.primary,
     fontSize: 14,
     padding: 0,
     paddingTop: 0,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   placeholderText: {
-    color: '#666',
+    color: COLORS.primary_03,
     fontSize: 14,
     lineHeight: 20,
     textAlignVertical: 'center',

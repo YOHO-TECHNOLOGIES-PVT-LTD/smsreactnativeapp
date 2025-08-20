@@ -23,7 +23,6 @@ const ForgotPasswordScreen = () => {
   } = useForm<{ emailOrPhone: string }>();
 
   const onSubmit = async (data: { emailOrPhone: string }) => {
-    console.log('Verify Email/Phone:', data);
     const response = await ForgotPassword({ email: data.emailOrPhone });
     console.log('Forgot Password Response:', response);
     if (response) {

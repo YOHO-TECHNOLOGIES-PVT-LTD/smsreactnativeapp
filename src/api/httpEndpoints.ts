@@ -44,6 +44,8 @@ export const API_END_POINTS = {
     getById: '/api/customer/cart/:id',
     put: '/api/customer/cart/:id',
     delete: '/api/customer/:cartId/product/:productId',
+    deleteProduct: '/api/customer/cart/:cartId/product/:productId',
+    deleteService: '/api/customer/cart/:cartId/service/:serviceId',
   },
 
   service_bookings: {

@@ -6,7 +6,7 @@ const AnimatedUserDummy = () => {
   return (
     <View style={styles.container}>
       <LottieView
-        source={require('../../assets/animated-avatar.json')} 
+        source={require('../../assets/animated-avatar.json')}
         autoPlay
         loop
         style={styles.animation}

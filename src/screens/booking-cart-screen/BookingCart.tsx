@@ -7,25 +7,34 @@ import Grid1 from '../../components/Bookings/Grid1';
 import { COLORS, FONTS, icons } from '~/constants';
 import { getAllBookingCartItems } from '~/features/booking-cart/service.ts';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '~/store';
+import { selectToken } from '~/features/token/redux/selectors';
+import { getToken } from '~/features/token/redux/thunks';
 
 const Settings = () => {
   const navigation = useNavigation();
   const [bookingCarts, setBookingCarts] = useState([]);
-  const [Token, setToken] = useState<any>('');
-
-  const fetchToken = async () => {
-    const token = await AsyncStorage.getItem('authToken');
-    setToken(token);
-  };
+  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const tokenSelector = useSelector(selectToken);
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    fetchToken();
-  }, []);
+    try {
+      setIsLoading(true);
+      dispatch(getToken());
+      setIsLoading(false);
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
 
-  const fetchAllBookungCarts = async () => {
-    const response = Token && (await getAllBookingCartItems({}));
+  const fetchAllBookingCarts = async () => {
+    const response = tokenSelector && (await getAllBookingCartItems({}));
     setBookingCarts(response || []);
     try {
     } catch (error) {
@@ -34,7 +43,7 @@ const Settings = () => {
   };
 
   useEffect(() => {
-    fetchAllBookungCarts();
+    fetchAllBookingCarts();
   }, []);
 
   return (
@@ -76,9 +85,9 @@ const Settings = () => {
             <Text style={styles.title}>Booking Cart</Text>
           </View>
 
-          <ScrollView contentContainerStyle={styles.container}>
+          <View style={{ flex: 1 }}>
             <Grid1 bookingCarts={bookingCarts} />
-          </ScrollView>
+          </View>
         </GestureHandlerRootView>
       </SafeAreaView>
     </>
@@ -90,7 +99,7 @@ export default Settings;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 10,
+    paddingTop: 10,
     backgroundColor: COLORS.white,
   },
   header: {
