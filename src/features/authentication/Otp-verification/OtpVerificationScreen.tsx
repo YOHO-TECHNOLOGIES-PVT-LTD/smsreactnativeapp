@@ -59,7 +59,8 @@ const OtpVerificationScreen = ({ route }: { route: OtpVerificationScreenRoutePro
             data: response,
           });
         } else {
-          await AsyncStorage.setItem('authToken', response);
+          await AsyncStorage.setItem('authToken', response?.token);
+          // await AsyncStorage.setItem('userId', response?.userId);
           navigation.reset({
             index: 0,
             routes: [{ name: 'MainStack' }],

@@ -35,6 +35,8 @@ import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllSpareParts } from '~/features/spare-parts/service';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserProfileDetails } from '~/features/profile/service';
 
 const chatMessages = [
   { id: '1', sender: 'admin', text: 'Hello! How can I help you today?', time: '10:30 AM' },
@@ -79,10 +81,7 @@ const HomePage = () => {
     require('../../assets/sparepartsimage/category/ac.jpg'),
   ];
   const [showOfferApplied, setShowOfferApplied] = useState(false);
-  const [selectedContacts, setSelectedContacts] = useState([]);
   const [showChatModal, setShowChatModal] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(chatMessages);
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
   const tokenSelector = useSelector(selectToken);
@@ -90,6 +89,23 @@ const HomePage = () => {
   const [spareParts, setSpareParts] = useState([]);
   const [serviceCategories, setServiceCategories] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [profileData, setProfileData] = useState<{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    contact_info: {
+      phoneNumber: string;
+    };
+    vehicleInfo: string;
+  }>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    contact_info: {
+      phoneNumber: '',
+    },
+    vehicleInfo: '',
+  });
 
   useEffect(() => {
     Animated.parallel([
@@ -136,29 +152,6 @@ const HomePage = () => {
     setShowChatModal(true);
   };
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      const newMessage = {
-        id: String(messages.length + 1),
-        sender: 'user',
-        text: message,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages([...messages, newMessage]);
-      setMessage('');
-      Keyboard.dismiss();
-      setTimeout(() => {
-        const replyMessage = {
-          id: String(messages.length + 2),
-          sender: 'admin',
-          text: 'Thanks for your message. Our team will get back to you shortly.',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, replyMessage]);
-      }, 1000);
-    }
-  };
-
   const images = [icons.promo1, icons.promo2, icons.promo3, icons.promo4, icons.promo5];
 
   const handleLogout = async () => {
@@ -170,10 +163,21 @@ const HomePage = () => {
       setLogoutModalVisible(false);
     } catch (error) {
       toast.error('Logout failed', 'Could not complete logout. Please try again.');
-      console.error('Logout error:', error);
+      console.log('Logout error:', error);
     } finally {
       setIsLoading(false);
       setLogoutModalVisible(false);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const response: any = await getUserProfileDetails({});
+      if (response) {
+        setProfileData(response);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -185,7 +189,7 @@ const HomePage = () => {
         setSpareParts(response);
       }
     } catch (error) {
-      console.error('Error fetching spare parts:', error);
+      console.log('Error fetching spare parts:', error);
     }
   };
 
@@ -196,7 +200,7 @@ const HomePage = () => {
         setServiceCategories(categories);
       }
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.log('Error fetching services:', error);
     }
   };
 
@@ -215,7 +219,18 @@ const HomePage = () => {
     getAllSparePartsDetails();
     fetchAllServices();
     fetchAllOffers();
-  }, []);
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (tokenSelector) {
+      fetchUserProfile();
+    }
+  }, [tokenSelector]);
+
+  const handleSubmitEnquiry = () => {
+    setShowChatModal(false);
+    toast.success('Success', 'Your enquiry submitted successfully!');
+  };
 
   return (
     <>
@@ -236,11 +251,13 @@ const HomePage = () => {
               style={{ width: 145, height: 25, position: 'relative', top: tokenSelector ? 0 : 0 }}
             />
             {tokenSelector ? (
-              <View style={{ position: 'relative' }}>
-                <View style={{ position: 'absolute', right: 90 }}>
+              <View style={{}}>
+                <View style={{ flexDirection: 'row' }}>
                   <HandShakeAnimation />
+                  <Text style={styles.title}>
+                    Hi, {tokenSelector ? profileData?.firstName : 'Customer'}
+                  </Text>
                 </View>
-                <Text style={styles.title}>Hi, Customer</Text>
                 <TouchableOpacity
                   onPress={() => setLogoutModalVisible(true)}
                   style={{
@@ -279,16 +296,31 @@ const HomePage = () => {
 
           {/* Services */}
           <View style={styles.section}>
+            <View style={[styles.sectionHeader, { padding: 15 }]}>
+              <Text style={styles.sectionTitle}>Available Services</Text>
+            </View>
             <View style={styles.servicesGrid}>
-              {serviceCategories.map((item: any) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.serviceItem1}
-                  onPress={() => dispatch(setSelectedTab(screens.services))}>
-                  <MaterialIcons name="directions-car" size={28} color={COLORS.primary_02} />
-                  <Text style={styles.serviceText}>{item?.category_name}</Text>
-                </TouchableOpacity>
-              ))}
+              {serviceCategories?.length ? (
+                serviceCategories?.slice(0, 12)?.map((item: any) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.serviceItem1}
+                    onPress={() => dispatch(setSelectedTab(screens.services))}>
+                    <MaterialIcons name="directions-car" size={28} color={COLORS.primary_02} />
+                    <Text style={styles.serviceText}>{item?.category_name}</Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginTop: -15,
+                  }}>
+                  <Text style={{ ...FONTS.body5 }}>No Services available</Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -302,64 +334,87 @@ const HomePage = () => {
             </View>
             <Text style={styles.sectionSubtitle}>Original OEM parts with warranty</Text>
 
-            <ScrollView
-              style={styles.partsContainer1}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingRight: 20 }}>
-              {spareParts.map((item: any) => (
-                <View key={item?._id} style={[styles.partCard1, { width: 120 }]}>
-                  <Image source={item?.image} style={styles.partImage} />
-                  <View style={styles.partDetails}>
-                    <Text style={styles.partName}>{item?.productName?.substring(0, 15)}</Text>
-                    <Text style={styles.partOem}>{item?.brand}</Text>
-                    <Text style={styles.partPrice}>₹{item.price}</Text>
-                    <Text style={styles.stock}>
-                      {item.inStock === true ? 'In Stock' : 'Out of Stock'}({item?.stock})
-                    </Text>
+            {spareParts?.length ? (
+              <ScrollView
+                style={styles.partsContainer1}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 20 }}>
+                {spareParts?.slice(0, 10)?.map((item: any) => (
+                  <View key={item?._id} style={[styles.partCard1, { width: 120 }]}>
+                    <Image source={item?.image} style={styles.partImage} />
+                    <View style={styles.partDetails}>
+                      <Text style={styles.partName}>{item?.productName?.substring(0, 15)}</Text>
+                      <Text style={styles.partOem}>{item?.brand}</Text>
+                      <Text style={styles.partPrice}>₹{item.price}</Text>
+                      <Text style={styles.stock}>
+                        {item.inStock === true ? 'In Stock' : 'Out of Stock'}({item?.stock})
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              ))}
-            </ScrollView>
+                ))}
+              </ScrollView>
+            ) : (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 10,
+                }}>
+                <Text style={{ ...FONTS.body5 }}>No spare parts available</Text>
+              </View>
+            )}
           </View>
 
           {/* Special Offers */}
           <View style={[styles.section, { padding: 15, backgroundColor: COLORS.grey08 }]}>
             <Text style={[styles.sectionTitle, {}]}>Special Offers</Text>
             <View style={styles.offersContainer}>
-              {announcements?.map((offer: any) => (
-                <Animated.View key={offer?._id} style={[styles.offerCard, { opacity: fadeAnim }]}>
-                  <View style={styles.offerBadge}>
-                    <FontAwesome name="tag" size={14} color={COLORS.white} />
-                  </View>
-                  <Image
-                    source={offer?.image}
-                    style={{
-                      width: '100%',
-                      height: 75,
-                      backgroundColor: COLORS.primary_04,
-                      borderRadius: 5,
-                      marginBottom: 5,
-                    }}
-                  />
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}>
-                    <Text style={styles.offerTitle}>{offer?.title?.substring(0, 12)}</Text>
-                    <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
-                      {' '}
-                      Offer: ₹{offer?.offer}
-                    </Text>
-                  </View>
-                  <Text style={styles.offerDiscount}>{offer?.description?.substring(0, 15)}</Text>
-                  <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
-                    <Text style={styles.offerButtonText}>Claim Offer</Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              ))}
+              {announcements?.length ? (
+                announcements?.map((offer: any) => (
+                  <Animated.View key={offer?._id} style={[styles.offerCard, { opacity: fadeAnim }]}>
+                    <View style={styles.offerBadge}>
+                      <FontAwesome name="tag" size={14} color={COLORS.white} />
+                    </View>
+                    <Image
+                      source={offer?.image}
+                      style={{
+                        width: '100%',
+                        height: 75,
+                        backgroundColor: COLORS.primary_04,
+                        borderRadius: 5,
+                        marginBottom: 5,
+                      }}
+                    />
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}>
+                      <Text style={styles.offerTitle}>{offer?.title?.substring(0, 12)}</Text>
+                      <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
+                        {' '}
+                        Offer: ₹{offer?.offer}
+                      </Text>
+                    </View>
+                    <Text style={styles.offerDiscount}>{offer?.description?.substring(0, 15)}</Text>
+                    <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
+                      <Text style={styles.offerButtonText}>Claim Offer</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                ))
+              ) : (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Text style={{ ...FONTS.body5 }}>No offers available</Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -411,9 +466,12 @@ const HomePage = () => {
 
           {/* Footer CTA */}
           <View style={styles.footerCta}>
-            <Text style={styles.footerCtaText}>Need help? Chat with our experts</Text>
+            <Text style={styles.footerCtaText}>Have Questions About Our Services?</Text>
+            <Text style={{ ...FONTS.body5, textAlign: 'justify', marginBottom: 10 }}>
+              Click Enquiry
+            </Text>
             <TouchableOpacity style={styles.footerCtaButton} onPress={handleChatNow}>
-              <Text style={styles.footerCtaButtonText}>Chat Now</Text>
+              <Text style={styles.footerCtaButtonText}>Enquiry</Text>
             </TouchableOpacity>
           </View>
 
@@ -432,55 +490,138 @@ const HomePage = () => {
                 <TouchableOpacity style={styles.backButton} onPress={() => setShowChatModal(false)}>
                   <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
                 </TouchableOpacity>
-                <Text style={styles.modalTitle}>Customer Support</Text>
-                <View style={{ width: 24 }} />
+                <Text style={styles.modalTitle}>Enquiry Form</Text>
+                <TouchableOpacity style={{}}>
+                  <Image
+                    source={icons.menu_dots}
+                    style={{ width: 25, height: 25 }}
+                    tintColor={COLORS.primary}
+                  />
+                </TouchableOpacity>
               </View>
 
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.chatContainer}
                 keyboardVerticalOffset={80}>
-                <FlatList
-                  data={[...messages].reverse()}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <View
-                      style={[
-                        styles.messageBubble,
-                        item.sender === 'admin' ? styles.adminMessage : styles.userMessage,
-                      ]}>
+                <View style={{ padding: 15 }}>
+                  <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
+                    <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Full Name *</Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderColor: COLORS.primary_04,
+                        paddingHorizontal: 10,
+                        color: COLORS.primary,
+                        ...FONTS.body4,
+                      }}
+                      value={profileData?.firstName + " " + profileData?.lastName}
+                    />
+                  </View>
+                  <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
+                    <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Email *</Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderColor: COLORS.primary_04,
+                        paddingHorizontal: 10,
+                        color: COLORS.primary,
+                        ...FONTS.body4,
+                      }}
+                      value={profileData?.email}
+                    />
+                  </View>
+                  <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
+                    <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Phone Number *</Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderColor: COLORS.primary_04,
+                        paddingHorizontal: 10,
+                        color: COLORS.primary,
+                        ...FONTS.body4,
+                      }}
+                      value={profileData?.contact_info?.phoneNumber}
+                    />
+                  </View>
+                  <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
+                    <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Car Details *</Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderColor: COLORS.primary_04,
+                        paddingHorizontal: 10,
+                        color: COLORS.primary,
+                        ...FONTS.body4,
+                      }}
+                    />
+                  </View>
+                  <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
+                    <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Service Type *</Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderColor: COLORS.primary_04,
+                        paddingHorizontal: 10,
+                        color: COLORS.primary,
+                        ...FONTS.body4,
+                      }}
+                    />
+                  </View>
+                  <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
+                    <Text style={{ ...FONTS.body4, color: COLORS.primary }}>
+                      Preferred Service Date *
+                    </Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderColor: COLORS.primary_04,
+                        paddingHorizontal: 10,
+                        color: COLORS.primary,
+                        ...FONTS.body4,
+                      }}
+                    />
+                  </View>
+                  <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
+                    <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Your Enquiry *</Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderColor: COLORS.primary_04,
+                        paddingHorizontal: 10,
+                        color: COLORS.primary,
+                        ...FONTS.body4,
+                      }}
+                    />
+                  </View>
+                  <View
+                    style={{ marginVertical: 12, justifyContent: 'center', alignItems: 'center' }}>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: COLORS.primary,
+                        borderRadius: 12,
+                        width: '30%',
+                        padding: 10,
+                      }}
+                      onPress={handleSubmitEnquiry}>
                       <Text
-                        style={[
-                          styles.messageText,
-                          item.sender === 'user' && styles.userMessageText,
-                        ]}>
-                        {item.text}
+                        style={{
+                          ...FONTS.body4,
+                          color: COLORS.white,
+                          textAlign: 'center',
+                          fontWeight: 500,
+                        }}>
+                        Submit
                       </Text>
-                      <Text
-                        style={[
-                          styles.messageTime,
-                          item.sender === 'user' && styles.userMessageTime,
-                        ]}>
-                        {item.time}
-                      </Text>
-                    </View>
-                  )}
-                  contentContainerStyle={styles.chatMessages}
-                  inverted={false}
-                />
-
-                <View style={styles.messageInputContainer}>
-                  <TextInput
-                    style={styles.messageInput}
-                    placeholder="Type your message..."
-                    value={message}
-                    onChangeText={setMessage}
-                    multiline
-                    onSubmitEditing={handleSendMessage}
-                  />
-                  <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-                    <Ionicons name="send" size={24} color={COLORS.white} />
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </KeyboardAvoidingView>
             </SafeAreaView>
@@ -522,6 +663,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.primary,
+    textAlign: 'right',
   },
   subtitle: {
     fontSize: 12,

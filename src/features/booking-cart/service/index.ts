@@ -6,10 +6,8 @@ export const getAllBookingCartItems = async (data: any) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
-    console.error('Error fetching booking cart items:', error);
-    return null;
+    console.log('Error fetching booking cart items:', error);
   }
 };
 
@@ -19,10 +17,8 @@ export const addBookingCartItem = async (data: any) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
-    console.error('Error adding booking cart item:', error);
-    return null;
+    console.log('Error adding booking cart item:', error);
   }
 };
 
@@ -32,10 +28,8 @@ export const deleteBookingCartItem = async (id: any) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
-    console.error('Error deleting booking cart item:', error);
-    return null;
+    console.log('Error deleting booking cart item:', error);
   }
 };
 
@@ -45,10 +39,8 @@ export const updateBookingCartItem = async (id: any, data: string) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
-    console.error('Error updating booking cart item:', error);
-    return null;
+    console.log('Error updating booking cart item:', error);
   }
 };
 
@@ -58,10 +50,8 @@ export const getBookingCartItemById = async (id: any) => {
     if (response) {
       return response?.data;
     }
-    return null;
   } catch (error) {
-    console.error('Error fetching booking cart item by ID:', error);
-    return null;
+    console.log('Error fetching booking cart item by ID:', error);
   }
 };
 
@@ -72,8 +62,7 @@ export const deleteBookingCartProduct = async (params: any) => {
       return response;
     }
   } catch (error) {
-    console.error('Error in deleteBookingProduct:', error);
-    throw null;
+    console.log('Error in deleteBookingProduct:', error);
   }
 };
 
@@ -84,7 +73,6 @@ export const deleteBookingCartService = async (params: any) => {
       return response;
     }
   } catch (error) {
-    console.error('Error in deleteBookingService:', error);
-    throw null;
+    console.log('Error in deleteBookingService:', error);
   }
 };

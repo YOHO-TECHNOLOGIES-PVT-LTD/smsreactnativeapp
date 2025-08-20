@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,7 +15,7 @@ import {
   addBookingCartItem,
   deleteBookingCartProduct,
   deleteBookingCartService,
-} from '~/features/booking-cart/service.ts';
+} from '~/features/booking-cart/service';
 import { addServiceCartItems, addSparePartCartItems } from '~/features/bookings/service';
 import toast from '~/utils/toast';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -53,9 +53,11 @@ type CartProps = {
     totalAmount: number;
     _id: string;
   }[];
+  onChangeCart: () => void;
+  token: string;
 };
 
-const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
+const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, token }) => {
   const [activeTab, setActiveTab] = useState<'Spare Parts' | 'Services'>('Spare Parts');
   const [cartItems, setCartItems] = useState<{
     products: CartItem[];
@@ -65,15 +67,15 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
   const [serviceId, setServiceId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (bookingCarts && bookingCarts.length > 0) {
-      const products = bookingCarts.flatMap((cart) => cart.products || []);
-      const services = bookingCarts.flatMap((cart) => cart.services || []);
+    if (bookingCarts && bookingCarts?.length > 0) {
+      const products = bookingCarts?.flatMap((cart) => cart.products || []);
+      const services = bookingCarts?.flatMap((cart) => cart.services || []);
       setCartItems({ products, services });
     }
   }, [bookingCarts]);
 
   useEffect(() => {
-    if (bookingCarts && bookingCarts.length > 0) {
+    if (bookingCarts && bookingCarts?.length > 0) {
       const filterSpareCartId = bookingCarts?.find((item: any) => item?.type === 'spare');
       const filterServiceCartId = bookingCarts?.find((item: any) => item?.type === 'service');
       setCartId(filterSpareCartId?._id ?? null);
@@ -102,7 +104,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
   const totalAmount = calculateTotal(getFilteredItems());
   const filteredItems = getFilteredItems();
 
-  const handleConfirmOrder = async () => {
+  const handleConfirmOrder = useCallback(async () => {
     if (filteredItems?.length === 0) {
       toast.error('Empty Cart', 'Your cart is empty. Please add items to proceed.');
       return;
@@ -112,6 +114,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
         const data = { cartId: bookingCarts[0]?._id };
         const response = await addSparePartCartItems(data);
         if (response) {
+          token && onChangeCart();
           toast.success('Success', response.message || 'Successfully placed your order!');
         } else {
           toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
@@ -120,6 +123,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
         const data = { cartId: bookingCarts[0]?._id };
         const response = await addServiceCartItems(data);
         if (response) {
+          token && onChangeCart();
           toast.success('Success', response.message || 'Successfully placed your order!');
         } else {
           toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
@@ -128,24 +132,28 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts }) => {
     } catch (error) {
       console.error('Error confirming order:', error);
     }
-  };
+  }, [activeTab, bookingCarts, token, onChangeCart]);
 
-  const handleDelete = async (id: any) => {
-    if (activeTab === 'Spare Parts') {
-      const response = await deleteBookingCartProduct({ cartId: cartId, productId: id });
-      if (response) {
-        toast.success('Product removed successfully', { autoClose: 2000 });
+  const handleDelete = useCallback(
+    async (id: any) => {
+      if (activeTab === 'Spare Parts') {
+        const response = await deleteBookingCartProduct({ cartId: cartId, productId: id });
+        if (response) {
+          token && onChangeCart();
+          toast.success('Product removed from the cart', { autoClose: 2000 });
+        }
+      } else if (activeTab === 'Services') {
+        const response = await deleteBookingCartService({ cartId: serviceId, serviceId: id });
+        if (response) {
+          token && onChangeCart();
+          toast.success('Service removed from the cart', { autoClose: 2000 });
+        }
       }
-    } else if (activeTab === 'Services') {
-      const response = await deleteBookingCartService({ cartId: serviceId, serviceId: id });
-      if (response) {
-        toast.success('Service removed successfully', { autoClose: 2000 });
-      }
-    }
-  };
+    },
+    [activeTab, cartId, serviceId, token, onChangeCart]
+  );
 
   const renderItem = (item: CartItem, index?: any) => {
-    console.log('Rendering item:', item);
     const name = item?.productId?.productName || item?.service_name || 'Unknown Item';
     const price = parseInt(item?.price);
     const totalPrice = item?.productId ? item?.productId?.price * item?.quantity : price;
@@ -328,7 +336,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8,
     marginRight: 15,
-    backgroundColor: COLORS.primary_04
+    backgroundColor: COLORS.primary_04,
   },
   itemDetails: {
     flex: 1,

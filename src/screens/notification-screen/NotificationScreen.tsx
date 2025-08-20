@@ -1,11 +1,12 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Image } from 'react-native';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, icons, SIZES } from '~/constants';
-import { getAllNotifications } from '~/features/notification/service';
-import { formatTime } from '~/utils/formatDate';
+import { getNotificationById } from '~/features/notification/service';
+import { formatDateandTime, formatTime } from '~/utils/formatDate';
 
 type Notification = {
   uuid: string;
@@ -25,14 +26,14 @@ const NotificationScreen: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const fetchAllNotifications = async () => {
+    const userId = await AsyncStorage.getItem('userId');
     try {
-      const response = await getAllNotifications({});
+      const response = await getNotificationById({ userId });
       if (response) {
-        const userNotifications = response.filter((n: Notification) => n.recipient_type === 'user');
-        setNotifications(userNotifications);
+        setNotifications(response?.data?.notifications);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.log('Error fetching notifications:', error);
     }
   };
 
@@ -59,7 +60,7 @@ const NotificationScreen: React.FC = () => {
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.message}>{item.message}</Text>
       <View style={styles.timeWrapper}>
-        <Text style={styles.timeText}>{formatTime(item?.updated_at, true)}</Text>
+        <Text style={styles.timeText}>{formatDateandTime(item?.updated_at)}</Text>
       </View>
     </View>
   );
@@ -68,7 +69,7 @@ const NotificationScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={{ paddingHorizontal: 10, flexDirection: 'row', gap: 15, marginVertical: 10 }}>
         <TouchableOpacity style={{}} onPress={() => navigate.goBack()}>
-          <Image source={icons.back} style={{ width: 25, height: 25 }} />
+          <Image source={icons.back} style={{ width: 25, height: 25 }} tintColor={COLORS.primary} />
         </TouchableOpacity>
         <View style={{}}>
           <Text style={{ ...FONTS.h2, color: COLORS.primary_text, fontWeight: 500 }}>
@@ -78,7 +79,7 @@ const NotificationScreen: React.FC = () => {
       </View>
       {/* Tabs */}
       <View style={styles.filterContainer}>
-        {FILTERS.map((type) => (
+        {FILTERS?.map((type) => (
           <TouchableOpacity
             key={type}
             style={[styles.filterButton, filter === type && styles.filterButtonActive]}
@@ -146,10 +147,11 @@ const styles = StyleSheet.create({
   title: {
     ...FONTS.h3,
     fontWeight: 500,
+    color: COLORS.primary
   },
   message: {
     marginTop: 4,
-    color: COLORS.grey,
+    color: COLORS.black,
     ...FONTS.body5,
   },
   emptyText: {
@@ -163,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   timeText: {
-    color: COLORS.grey,
+    color: COLORS.grey80,
     ...FONTS.body6,
   },
 });

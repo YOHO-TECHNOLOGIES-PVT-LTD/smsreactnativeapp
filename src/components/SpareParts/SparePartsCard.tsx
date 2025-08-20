@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { COLORS, FONTS } from '~/constants';
-import { addBookingCartItem } from '~/features/booking-cart/service.ts';
+import { addBookingCartItem } from '~/features/booking-cart/service';
 import toast from '~/utils/toast';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -72,7 +72,6 @@ const SparePartsCard = ({ part }: Props) => {
         return;
       }
       try {
-        setIsLoading(true);
         const data = {
           uuid: part?.uuid,
           products: {
@@ -92,8 +91,6 @@ const SparePartsCard = ({ part }: Props) => {
         setIsLoading(false);
       } catch (error) {
         console.error('Error adding to cart:', error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -148,7 +145,7 @@ const SparePartsCard = ({ part }: Props) => {
       <Pressable style={styles.card} onPress={() => setModalVisible(true)}>
         {/* Image at the top */}
         <Image
-          source={{uri: part?.image}}
+          source={{ uri: part?.image }}
           style={styles.cardImage}
           resizeMode="cover"
           onError={() => setError(true)}
@@ -187,11 +184,7 @@ const SparePartsCard = ({ part }: Props) => {
         <ScrollView style={styles.modalContainer}>
           {/* Image with back button */}
           <View style={styles.modalImageContainer}>
-            <Image
-              source={{uri: part?.image}}
-              style={styles.modalImage}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: part?.image }} style={styles.modalImage} resizeMode="cover" />
             <TouchableOpacity style={styles.backButton} onPress={() => setModalVisible(false)}>
               <MaterialIcons name="arrow-back" size={24} color={COLORS.white} />
             </TouchableOpacity>
@@ -262,14 +255,14 @@ const SparePartsCard = ({ part }: Props) => {
                 <TouchableOpacity
                   onPress={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
                   style={styles.quantityButton}
-                  disabled={added}>
+                  disabled={!part?.inStock}>
                   <Text style={styles.quantityButtonText}>−</Text>
                 </TouchableOpacity>
                 <Text style={styles.quantityValue}>{quantity}</Text>
                 <TouchableOpacity
                   onPress={() => setQuantity((q) => q + 1)}
                   style={styles.quantityButton}
-                  disabled={added}>
+                  disabled={!part?.inStock}>
                   <Text style={styles.quantityButtonText}>+</Text>
                 </TouchableOpacity>
               </View>
@@ -277,14 +270,17 @@ const SparePartsCard = ({ part }: Props) => {
 
             {/* Add to Cart Button */}
             <TouchableOpacity
-              style={[styles.modalAddButton, added && styles.addedButton]}
+              style={[styles.modalAddButton]}
               onPress={() => {
-                if (!added)
-                  TokenSelector ? handleAddtoCart(part) : () => setSignUpConfirmModalVisible(true);
+                if (TokenSelector) {
+                  handleAddtoCart(part);
+                } else {
+                  setSignUpConfirmModalVisible(true);
+                }
               }}
-              disabled={added || !part?.inStock}>
+              disabled={!part?.inStock}>
               <Text style={styles.modalAddButtonText}>
-                {added ? 'ADDED' : part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
+                {part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
               </Text>
             </TouchableOpacity>
           </View>

@@ -2,8 +2,10 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
+const backEndUrl: string = 'https://sms-node-backend.onrender.com';
+// const backEndUrl: string = 'http://192.168.1.11:3000';
 // const backEndUrl: string = 'https://sms-node-backend-17xb.onrender.com';
-const backEndUrl: string = 'http://192.168.1.10:3000';
+// const backEndUrl: string = 'http://192.168.1.10:3000';
 
 const Axios = axios.create({
   baseURL: backEndUrl,
@@ -40,6 +42,8 @@ Axios.interceptors.response.use(
       if (logoutCallback) {
         logoutCallback();
       }
+    } else if (error?.response && error?.response?.status === 403) {
+      Alert.alert('Profile Details', 'Please complete your profile details.');
     }
 
     if (process.env.NODE_ENV === 'development') {
@@ -68,7 +72,7 @@ class HttpClient {
     return response.data;
   }
 
-  async update<T = any>(url: string, params: Record<string, any>, data: any) {
+  async update<T = any>(url: string, data: any, params?: Record<string, any>) {
     const response = await Axios.put<T>(url, data, { params });
     return response.data;
   }
@@ -83,11 +87,12 @@ class HttpClient {
     return response.data;
   }
 
-  async fileGet(url: string) {
+  async fileGet(url: string, params?: any) {
     const response = await Axios.get(url, {
-      responseType: 'blob', // On RN, this may be a base64 string or binary
+      params,
+      responseType: 'blob',
     });
-    return response.data;
+    return response;
   }
 
   async uploadFile<T = any>(url: string, data: FormData) {

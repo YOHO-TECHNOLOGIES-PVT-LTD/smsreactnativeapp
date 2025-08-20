@@ -75,17 +75,30 @@ class Client {
       verify_otp: (data: any) => httpClient.post(API_END_POINTS.auth.post_verify_otp, data),
       resend_otp: (data: any) => httpClient.post(API_END_POINTS.auth.post_resend_otp, data),
       getUserProfile: (params: any) => httpClient.get(API_END_POINTS.auth.get, params),
-      updateUserProfile: (params: any, data: any) =>
-        httpClient.update(API_END_POINTS.auth.put, data, params),
+      updateUserProfile: (data: any) => httpClient.update(API_END_POINTS.auth.put, data),
     },
     notification: {
       getAll: (params: any) => httpClient.get(API_END_POINTS.notification.getAll, params),
-      getById: (params: any) => httpClient.get(API_END_POINTS.notification.getById, params),
+      getById: (params: any) =>
+        httpClient.get(
+          API_END_POINTS.notification.getById.replace(':userId', params?.userId),
+          params
+        ),
     },
     bookings: {
       getAll: (params: any) => httpClient.get(API_END_POINTS.bookings.getAll, params),
       postProduct: (params: any) => httpClient.post(API_END_POINTS.bookings.postProduct, params),
       postService: (params: any) => httpClient.post(API_END_POINTS.bookings.postService, params),
+      getServiceInvoice: (params: any) =>
+        httpClient.fileGet(
+          API_END_POINTS.bookings.getServiceInvoice.replace(':uuid', params?.uuid),
+          params
+        ),
+      getProductInvoice: (params: any) =>
+        httpClient.fileGet(
+          API_END_POINTS.bookings.getProductInvoice.replace(':uuid', params?.uuid),
+          params
+        ),
     },
     sos: {
       post: (data: any) => httpClient.post(API_END_POINTS.sos.Post, data),

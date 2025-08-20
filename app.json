@@ -3,9 +3,9 @@
     "name": "YES MECHANIC",
     "slug": "smsreactnativeapp",
     "version": "1.0.0",
-    "icon": "./src/assets/app_icon.png",
+    "icon": "./src/assets/app_icon2.png",
     "web": {
-      "favicon": "./src/assets/app_icon.png"
+      "favicon": "./src/assets/app_icon2.png"
     },
     "experiments": {
       "tsconfigPaths": true
@@ -25,9 +25,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "y",
@@ -40,16 +38,14 @@
         "foregroundImage": "./src/assets/app_icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ],
+      "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.suryas_1805.smsreactnativeapp"
     },
     "extra": {
       "eas": {
-        "projectId": "2f8a8144-6755-45f9-9377-e80fad5484e5"
+        "projectId": "780079e4-e585-4c61-9a76-58f396c7d6c6"
       }
     },
-    "owner": "kamal_yoho"
+    "owner": "wikki_3108"
   }
 }

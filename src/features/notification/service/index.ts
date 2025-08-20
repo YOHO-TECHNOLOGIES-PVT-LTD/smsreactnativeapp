@@ -13,11 +13,11 @@ export const getAllNotifications = async (params: any) => {
   }
 };
 
-export const getNotificationById = async (id: any) => {
+export const getNotificationById = async (params: any) => {
   try {
-    const response = await new Client().user.notification.getById(id);
+    const response = await new Client().user.notification.getById(params);
     if (response) {
-      return response?.data;
+      return response;
     }
     return null;
   } catch (error) {
