@@ -108,7 +108,7 @@ export default function RoadsideAssistanceScreen() {
     const fetchUser = async () => {
       try {
         const userResponse = await getUserProfileDetails();
-        console.log('User details:', userResponse);
+        // console.log('User details:', userResponse);
 
         setUser(userResponse);
 
