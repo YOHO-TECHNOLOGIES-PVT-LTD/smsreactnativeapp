@@ -42,10 +42,10 @@
       "package": "com.suryas_1805.smsreactnativeapp"
     },
     "extra": {
-      "eas": {
-        "projectId": "780079e4-e585-4c61-9a76-58f396c7d6c6"
-      }
-    },
-    "owner": "wikki_3108"
+      // "eas": {
+      //   "projectId": "780079e4-e585-4c61-9a76-58f396c7d6c6"
+      // }
+    }
+    // "owner": "wikki_3108"
   }
 }

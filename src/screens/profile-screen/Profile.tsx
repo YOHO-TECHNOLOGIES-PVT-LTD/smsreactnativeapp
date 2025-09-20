@@ -83,6 +83,8 @@ import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllBookingsCartItems } from '~/features/bookings/service';
 import { formatDateandmonth, formatDateMonthandYear } from '../../utils/formatDate';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Linking from 'expo-linking';
+import { Feather } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -150,12 +152,13 @@ const COLORS1 = {
 
 // Enhanced Type Definitions
 interface Vehicle {
-  id: string;
+  id: string | number;
   registerNumber: string;
   model: string;
   year: string;
   fuleType: string;
   company: string;
+  make?: string;
 }
 
 interface Service {
@@ -244,7 +247,7 @@ interface FormData {
   };
   [key: string]: any;
 }
-
+const phoneNumber = '+91-9876543210';
 const Profile = () => {
   const TokenSelector = useSelector(selectToken);
   const dispatch = useDispatch<AppDispatch>();
@@ -813,6 +816,16 @@ const Profile = () => {
       setLogoutModalVisible(false);
     }
   };
+  const handleEmailPress = () => {
+    const email = 'support@example.com';
+    const subject = 'Support Request';
+    const body = 'Hello, I need help with...';
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+
+    Linking.openURL(mailtoUrl).catch((err) => console.error('Failed to open email app:', err));
+  };
 
   const MenuItem: React.FC<MenuItemProps> = ({
     title,
@@ -1058,7 +1071,7 @@ const Profile = () => {
 
       {isExpanded && <View style={styles.dropdownSectionContent}>{children}</View>}
     </View>
-  )
+  );
 
   // Side Menu Content Render Functions
   const renderVehiclesContent = () => (
@@ -1185,7 +1198,7 @@ const Profile = () => {
 
   const renderSettingsContent = () => (
     <>
-      <View style={styles.section}>
+      {/* <View style={styles.section}>
         <View style={styles.sectionTitleContainer}>
           <View style={styles.sectionIconContainer}>
             <Bell size={20} color={COLORS.primary} />
@@ -1265,9 +1278,9 @@ const Profile = () => {
             }}
           />
         </View>
-      </View>
+      </View> */}
 
-      <View style={styles.section}>
+      {/* <View style={styles.section}>
         <View style={styles.sectionTitleContainer}>
           <View style={styles.sectionIconContainer}>
             <Settings size={20} color={COLORS.primary} />
@@ -1297,7 +1310,7 @@ const Profile = () => {
             }}
           />
         </View>
-      </View>
+      </View> */}
 
       <View style={styles.section}>
         <View style={styles.sectionTitleContainer}>
@@ -1327,7 +1340,7 @@ const Profile = () => {
             icon={<Lock size={20} color={COLORS1.primary} />}
             onPress={() => setPrivacyPolicyModal(true)}
           />
-          <View style={styles.separator} />
+          {/* <View style={styles.separator} />
           <MenuItem
             title="Rate Our App"
             subtitle="Share your feedback"
@@ -1335,7 +1348,7 @@ const Profile = () => {
             onPress={() => {
               toast.info('No updates', 'Features not available right now');
             }}
-          />
+          /> */}
         </View>
       </View>
 
@@ -2457,15 +2470,18 @@ const Profile = () => {
 
                 <View style={styles.helpSection}>
                   <Text style={styles.helpSectionTitle}>Contact Support</Text>
-                  <TouchableOpacity style={styles.contactButton}>
+                  {/* <TouchableOpacity style={styles.contactButton}>
                     <MessageCircle size={22} color={COLORS.primary} />
                     <Text style={styles.contactButtonText}>Live Chat</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.contactButton}>
-                    <PhoneDialerButton />
+                  </TouchableOpacity> */}
+                  <TouchableOpacity
+                    style={styles.contactButton}
+                    onPress={() => Linking.openURL(`tel:${phoneNumber}`)}>
+                    <Feather name="phone-call" size={22} color={COLORS.primary} />
                     <Text style={styles.contactButtonText}>Call Support</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.contactButton}>
+
+                  <TouchableOpacity style={styles.contactButton} onPress={handleEmailPress}>
                     <Mail size={22} color={COLORS.primary} />
                     <Text style={styles.contactButtonText}>Email Us</Text>
                   </TouchableOpacity>
@@ -3616,4 +3632,4 @@ const styles = StyleSheet.create({
   fullWidthButton: {},
 });
 
-export default Profile
+export default Profile;

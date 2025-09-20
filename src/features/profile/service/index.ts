@@ -1,6 +1,6 @@
 import Client from '~/api';
 
-export const getUserProfileDetails = async (params: any) => {
+export const getUserProfileDetails = async (params?: any) => {
   try {
     const response = await new Client().user.auth.getUserProfile(params);
     if (response) {

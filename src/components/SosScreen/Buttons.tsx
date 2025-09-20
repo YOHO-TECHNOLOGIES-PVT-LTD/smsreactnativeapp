@@ -10,6 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
 import { COLORS, FONTS } from '~/constants';
 import * as ImagePicker from 'expo-image-picker';
 import { postSOSData } from '~/features/sos/service';
@@ -17,14 +18,16 @@ import toast from '~/utils/toast';
 import CustomLogoutModal from '../CustomLogoutModal';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
+import * as Location from 'expo-location';
 import { AppDispatch } from '~/store';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
+import { getUserProfileDetails } from '~/features/profile/service';
 
-interface Issues{
-  id: String,
-  label: String,
-  icon: any
+interface Issues {
+  id: String;
+  label: String;
+  icon: any;
 }
 
 const issues = [
@@ -76,14 +79,6 @@ const issues = [
   },
 ];
 
-const userDetails = {
-  name: 'Customer',
-  phone: '+91 9876543210',
-  bloodGroup: 'A1+',
-  carModel: 'Toyota Camry 2020',
-  licensePlate: 'AP L1234',
-};
-
 export default function RoadsideAssistanceScreen() {
   const [selectedIssues, setSelectedIssues] = useState<Issues[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -102,6 +97,32 @@ export default function RoadsideAssistanceScreen() {
   const TokenSelector = useSelector(selectToken);
   const [isLoading, setIsLoading] = useState(false);
   const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [vehicleList, setVehicleList] = useState<any[]>([]);
+  const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
+
+  const [locationText, setLocationText] = useState('Fetching location...');
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userResponse = await getUserProfileDetails();
+        console.log('User details:', userResponse);
+
+        setUser(userResponse);
+
+        if (userResponse?.vehicleInfo?.length > 0) {
+          setVehicleList(userResponse.vehicleInfo);
+          setSelectedVehicle(userResponse.vehicleInfo[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     try {
@@ -114,6 +135,57 @@ export default function RoadsideAssistanceScreen() {
       setIsLoading(false);
     }
   }, [dispatch]);
+
+  useEffect(() => {
+    if (modalVisible) {
+      fetchLocation();
+    }
+  }, [modalVisible]);
+  useEffect(() => {
+    if (modalVisible) {
+      setOtherDetails({
+        name: '',
+        phone: '',
+        relationship: '',
+        location: '',
+        additionalNotes: '',
+      });
+      setImages([]);
+      setActiveTab('own');
+      setLocationText('Fetching location...');
+      setCoords(null);
+    }
+  }, [modalVisible]);
+
+  const fetchLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationText('Location permission denied');
+        return;
+      }
+
+      let currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      setCoords({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+      });
+
+      const [address] = await Location.reverseGeocodeAsync({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+      });
+
+      let formatted = `${address.name || ''}, ${address.street || ''}, ${address.city || ''}, ${address.region || ''}`;
+      setLocationText(formatted);
+    } catch (err) {
+      console.error('Error fetching location', err);
+      setLocationText('Unable to fetch location');
+    }
+  };
 
   const handleSelect = (id: any) => {
     setSelectedIssue(id);
@@ -130,11 +202,26 @@ export default function RoadsideAssistanceScreen() {
     });
 
     if (!result.canceled) {
-      setImages(result.assets.map((asset: any) => asset.uri));
+      let newImages = result.assets.map((asset: any) => asset.uri);
+
+      // Combine old + new
+      let combined = [...images, ...newImages];
+
+      if (combined.length > 3) {
+        alert(`You selected ${combined.length} images, but only 3 are allowed.`);
+        combined = combined.slice(0, 3);
+      }
+
+      setImages(combined);
     }
   };
 
   const takePhoto = async () => {
+    if (images.length >= 3) {
+      alert(`You already have ${images.length} images. Maximum allowed is 3.`);
+      return;
+    }
+
     let result: any = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
@@ -142,7 +229,17 @@ export default function RoadsideAssistanceScreen() {
     });
 
     if (!result.canceled) {
-      setImages([...images, result.assets[0].uri]);
+      setImages((prev) => {
+        const updated = [...prev, result.assets[0].uri];
+        if (updated.length > 3) {
+          toast.error(
+            'Upload Limit',
+            `You selected ${updated.length} images, but only 3 are allowed.`
+          );
+          return updated.slice(0, 3);
+        }
+        return updated;
+      });
     }
   };
 
@@ -159,28 +256,98 @@ export default function RoadsideAssistanceScreen() {
     }));
   };
 
+  // const handleSubmit = async () => {
+  //   const requestData = {
+  //     issue: selectedIssue,
+  //     type: activeTab,
+  //     ...(activeTab === 'own' ? userDetails : otherDetails),
+  //   };
+  //   setModalVisible(false);
+  //   setOtherDetails({
+  //     name: '',
+  //     phone: '',
+  //     relationship: '',
+  //     location: '',
+  //     additionalNotes: '',
+  //   });
+
+  //   try {
+  //     const response = await postSOSData({});
+  //     if (response) {
+  //       toast.success('Success', response?.message || 'SOS details created successfully!');
+  //     }
+  //   } catch (error: any) {
+  //     console.log(error.message);
+  //   }
+  // };
+
   const handleSubmit = async () => {
-    const requestData = {
-      issue: selectedIssue,
+    if (!selectedIssue) {
+      toast.error('Error', 'Please select an issue.');
+      return;
+    }
+
+    if (activeTab === 'own' && (!user || !selectedVehicle)) {
+      toast.error('Error', 'User or vehicle details not available.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    const payload: any = {
+      problem: selectedIssue,
       type: activeTab,
-      ...(activeTab === 'own' ? userDetails : otherDetails),
+      images: images,
     };
-    setModalVisible(false);
-    setOtherDetails({
-      name: '',
-      phone: '',
-      relationship: '',
-      location: '',
-      additionalNotes: '',
-    });
+
+    if (activeTab === 'own') {
+      payload.name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+      payload.phone = user.contact_info?.phoneNumber || '';
+      payload.bloodGroup = user.bloodGroup || '';
+      payload.carModel = selectedVehicle
+        ? `${selectedVehicle.company || ''} - ${selectedVehicle.model || ''}`
+        : '';
+      payload.licensePlate = selectedVehicle?.registerNumber || '';
+      payload.vehicleId = selectedVehicle?._id || ''; // include vehicle _id
+      payload.location = locationText || '';
+    } else {
+      payload.name = otherDetails.name;
+      payload.phone = otherDetails.phone;
+      payload.relationship = otherDetails.relationship;
+      payload.additionalNotes = otherDetails.additionalNotes;
+      payload.location = otherDetails.location;
+    }
+
+    // Log payload in console for debugging
+    console.log('--- Payload ---');
+    console.log(JSON.stringify(payload, null, 2));
+    console.log('---------------');
 
     try {
-      const response = await postSOSData({});
+      const response = await postSOSData(payload);
+      console.log('response', response);
+
       if (response) {
-        toast.success('Success', response?.message || 'SOS details created successfully!');
+        toast.success('Success', response?.message || 'SOS details sent successfully!');
+        setModalVisible(false);
+
+        // Reset form
+        setOtherDetails({
+          name: '',
+          phone: '',
+          relationship: '',
+          location: '',
+          additionalNotes: '',
+        });
+        setImages([]);
+        setSelectedIssue(null);
+        setSelectedVehicle(null);
       }
     } catch (error: any) {
-      console.log(error.message);
+      console.error(error.message);
+      toast.error('Error', error.message || 'Something went wrong!');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -239,35 +406,60 @@ export default function RoadsideAssistanceScreen() {
           </View>
 
           {/* Own Tab Content */}
-          {activeTab === 'own' && (
+          {activeTab === 'own' && user && (
             <View style={styles.tabContent}>
               <Text style={styles.sectionTitle}>Your Details</Text>
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Name:</Text>
-                <Text style={styles.detailValue}>{userDetails.name}</Text>
+                <Text style={styles.detailValue}>
+                  {`${user.firstName || ''} ${user.lastName || ''}`.trim()}
+                </Text>
               </View>
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Phone:</Text>
-                <Text style={styles.detailValue}>{userDetails.phone}</Text>
+                <Text style={styles.detailValue}>{user.contact_info?.phoneNumber || 'N/A'}</Text>
               </View>
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Blood Group:</Text>
-                <Text style={styles.detailValue}>{userDetails.bloodGroup}</Text>
+                <Text style={styles.detailValue}>{user.bloodGroup || 'N/A'}</Text>
               </View>
 
               <Text style={styles.sectionTitle}>Vehicle Details</Text>
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Car Model:</Text>
-                <Text style={styles.detailValue}>{userDetails.carModel}</Text>
+                <Text style={styles.detailValue}>
+                  {selectedVehicle
+                    ? `${selectedVehicle.company || 'N/A'} - ${selectedVehicle.model || 'N/A'}`
+                    : 'N/A'}
+                </Text>
               </View>
 
-              <View style={styles.detailRow}>
+              <View
+                style={[
+                  styles.detailRow,
+                  { justifyContent: 'space-between', alignItems: 'center' },
+                ]}>
                 <Text style={styles.detailLabel}>License Plate:</Text>
-                <Text style={styles.detailValue}>{userDetails.licensePlate}</Text>
+                <View style={{ width: 220 }}>
+                  <Picker
+                    selectedValue={selectedVehicle?._id}
+                    onValueChange={(value) => {
+                      const vehicle = vehicleList.find((v) => v._id === value);
+                      setSelectedVehicle(vehicle);
+                    }}>
+                    {vehicleList.map((vehicle) => (
+                      <Picker.Item
+                        key={vehicle._id}
+                        label={`${vehicle.registerNumber} (${vehicle.model})`}
+                        value={vehicle._id}
+                      />
+                    ))}
+                  </Picker>
+                </View>
               </View>
 
               <Text style={styles.sectionTitle}>Vehicle Problem</Text>
@@ -276,11 +468,14 @@ export default function RoadsideAssistanceScreen() {
               </Text>
 
               <Text style={styles.sectionTitle}>Location</Text>
-              <Text style={styles.locationText}>Using your current location...</Text>
               <View style={styles.locationBox}>
                 <Ionicons name="location" size={24} color={COLORS.primary} />
-                <Text style={styles.locationValue}>Fetching location...</Text>
+                <Text style={styles.locationValue}>{locationText}</Text>
               </View>
+              <TouchableOpacity onPress={fetchLocation}>
+                <Text style={{ color: COLORS.primary, marginTop: 10 }}>Refresh Location</Text>
+              </TouchableOpacity>
+
               <Text style={styles.sectionTitle}>Upload Photos</Text>
               <Text style={styles.uploadSubtitle}>Add photos of the problem (max 3)</Text>
 
@@ -295,6 +490,7 @@ export default function RoadsideAssistanceScreen() {
                   <Text style={styles.uploadButtonText}>Take Photo</Text>
                 </TouchableOpacity>
               </View>
+
               <View style={styles.imagePreviewContainer}>
                 {images.map((uri, index) => (
                   <View key={index} style={styles.imageWrapper}>
@@ -313,8 +509,7 @@ export default function RoadsideAssistanceScreen() {
           {/* Others Tab Content */}
           {activeTab === 'others' && (
             <View style={styles.tabContent}>
-              <Text style={styles.sectionTitle}>Person Details</Text>
-
+              {/* Person Details */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Full Name</Text>
                 <TextInput
@@ -362,17 +557,64 @@ export default function RoadsideAssistanceScreen() {
                   multiline
                 />
               </View>
-
+              {/* Location with button */}
               <Text style={styles.sectionTitle}>Location</Text>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Where is the vehicle?</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 15 }}>
+                {/* Location input */}
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { flex: 1 }]}
                   value={otherDetails.location}
                   onChangeText={(text) => handleOtherDetailsChange('location', text)}
                   placeholder="Enter location or address"
                 />
+
+                {/* Button with text on top */}
+                <View style={{ alignItems: 'center', marginLeft: 10 }}>
+                  <Text style={{ ...FONTS.body5, marginBottom: 4, color: COLORS.primary }}>
+                    Current
+                  </Text>
+                  <TouchableOpacity
+                    style={{
+                      paddingVertical: 12,
+                      paddingHorizontal: 15,
+                      backgroundColor: COLORS.primary,
+                      borderRadius: 8,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                    onPress={async () => {
+                      try {
+                        let { status } = await Location.requestForegroundPermissionsAsync();
+                        if (status !== 'granted') {
+                          toast.error('Permission Denied', 'Location permission denied');
+                          return;
+                        }
+
+                        let currentLocation = await Location.getCurrentPositionAsync({
+                          accuracy: Location.Accuracy.High,
+                        });
+
+                        const [address] = await Location.reverseGeocodeAsync({
+                          latitude: currentLocation.coords.latitude,
+                          longitude: currentLocation.coords.longitude,
+                        });
+
+                        let formatted = `${address.name || ''}${address.street ? ', ' + address.street : ''}${
+                          address.city ? ', ' + address.city : ''
+                        }${address.region ? ', ' + address.region : ''}`;
+
+                        handleOtherDetailsChange('location', formatted);
+                      } catch (err) {
+                        console.error(err);
+                        toast.error('Error', 'Unable to fetch location');
+                      }
+                    }}>
+                    <Ionicons name="location" size={20} color={COLORS.white} />
+                  </TouchableOpacity>
+                </View>
               </View>
+
+              {/* Upload Photos */}
               <Text style={styles.sectionTitle}>Upload Photos</Text>
               <Text style={styles.uploadSubtitle}>Add photos of the problem (max 3)</Text>
 

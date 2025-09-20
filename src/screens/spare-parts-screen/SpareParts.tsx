@@ -47,7 +47,7 @@ const SpareParts = () => {
           Number(cartItems[1]?.products?.length) +
           Number(cartItems[1]?.services?.length)
         );
-      } else {
+      } else {  
         return 0;
       }
     };
