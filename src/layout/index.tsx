@@ -17,14 +17,12 @@ import Animated, {
   withRepeat,
   interpolateColor,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useDrawerProgress } from '@react-navigation/drawer';
 import { useSelector, useDispatch } from 'react-redux';
 import { setSelectedTab } from '../store/tab/tabSlice';
-import { COLORS, FONTS, SIZES, icons, screens, bottom_tabs, SPACING } from '../constants';
+import { COLORS, FONTS, SIZES, screens, bottom_tabs, SPACING } from '../constants';
 import { HomeScreen, ServicesScreen, SosScreen, SparePartsScreen, ProfileScreen } from '~/screens';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { widthPercentageToDP } from 'react-native-responsive-screen';
 
 type TabButtonProps = {
   label: string;
