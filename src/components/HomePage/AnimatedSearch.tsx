@@ -134,6 +134,8 @@ const AnimatedSearch = () => {
     }
   };
 
+  const handleBlur = () => {setIsFocused(false)}
+
 
  const handleSuggestionPress = (item: any) => {
   setInputText(item.category_name);
