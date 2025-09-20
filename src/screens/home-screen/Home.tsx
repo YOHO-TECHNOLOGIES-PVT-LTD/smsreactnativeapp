@@ -11,10 +11,8 @@ import {
   Easing,
   Modal,
   TextInput,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, icons, screens } from '~/constants';
@@ -35,26 +33,7 @@ import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllSpareParts } from '~/features/spare-parts/service';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserProfileDetails } from '~/features/profile/service';
-
-const chatMessages = [
-  { id: '1', sender: 'admin', text: 'Hello! How can I help you today?', time: '10:30 AM' },
-  { id: '2', sender: 'user', text: 'I need help with my car AC service', time: '10:32 AM' },
-  {
-    id: '3',
-    sender: 'admin',
-    text: 'Sure, we can help with that. What model is your car?',
-    time: '10:33 AM',
-  },
-  {
-    id: '4',
-    sender: 'admin',
-    text: 'We have special offers on AC service this week',
-    time: '10:34 AM',
-  },
-  { id: '5', sender: 'user', text: "It's a Honda City 2018 model", time: '10:36 AM' },
-];
 
 const carlogos = [
   icons.carlogo1,
@@ -73,13 +52,6 @@ const HomePage = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const translateYAnim = useRef(new Animated.Value(30)).current;
-  const blogsImage = [
-    require('../../assets/sparepartsimage/category/lighting.jpg'),
-    require('../../assets/sparepartsimage/category/battery.jpg'),
-    require('../../assets/sparepartsimage/category/engine.jpg'),
-    require('../../assets/sparepartsimage/category/tyres.jpg'),
-    require('../../assets/sparepartsimage/category/ac.jpg'),
-  ];
   const [showOfferApplied, setShowOfferApplied] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const navigation = useNavigation();
