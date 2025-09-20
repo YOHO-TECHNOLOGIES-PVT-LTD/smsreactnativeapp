@@ -37,6 +37,7 @@ import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserProfileDetails } from '~/features/profile/service';
+import { createEnquiry } from '../../screens/home-screen/service/index'; // Import your enquiry service
 
 const chatMessages = [
   { id: '1', sender: 'admin', text: 'Hello! How can I help you today?', time: '10:30 AM' },
@@ -107,6 +108,34 @@ const HomePage = () => {
     vehicleInfo: '',
   });
 
+  // Form state
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    carModel: '',
+    serviceType: 'general',
+    yourEnquiry: '',
+    date: '',
+  });
+
+  const [errors, setErrors] = useState({
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    carModel: '',
+    serviceType: '',
+    yourEnquiry: '',
+    date: '',
+  });
+
+  const [showServiceTypeDropdown, setShowServiceTypeDropdown] = useState(false);
+
+  const serviceTypeOptions = [
+    { label: 'General', value: 'general' },
+    { label: 'Preferred Service', value: 'preferred' },
+  ];
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -150,6 +179,15 @@ const HomePage = () => {
 
   const handleChatNow = () => {
     setShowChatModal(true);
+    // Pre-fill form with user data if available
+    if (profileData) {
+      setFormData({
+        ...formData,
+        fullName: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
+        email: profileData.email || '',
+        phoneNumber: profileData.contact_info?.phoneNumber || '',
+      });
+    }
   };
 
   const images = [icons.promo1, icons.promo2, icons.promo3, icons.promo4, icons.promo5];
@@ -227,9 +265,128 @@ const HomePage = () => {
     }
   }, [tokenSelector]);
 
-  const handleSubmitEnquiry = () => {
-    setShowChatModal(false);
-    toast.success('Success', 'Your enquiry submitted successfully!');
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {
+      fullName: '',
+      email: '',
+      phoneNumber: '',
+      carModel: '',
+      serviceType: '',
+      yourEnquiry: '',
+      date: '',
+    };
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+      isValid = false;
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+      isValid = false;
+    }
+
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = 'Phone number is required';
+      isValid = false;
+    } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = 'Phone number must be 10 digits';
+      isValid = false;
+    }
+
+    if (!formData.carModel.trim()) {
+      newErrors.carModel = 'Car details are required';
+      isValid = false;
+    }
+
+    if (!formData.serviceType) {
+      newErrors.serviceType = 'Service type is required';
+      isValid = false;
+    }
+
+    if (!formData.yourEnquiry.trim()) {
+      newErrors.yourEnquiry = 'Enquiry is required';
+      isValid = false;
+    }
+
+    if (!formData.date.trim()) {
+      newErrors.date = 'Preferred service date is required';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+
+    // Clear error when user starts typing
+    if (errors[field as keyof typeof errors]) {
+      setErrors({
+        ...errors,
+        [field]: '',
+      });
+    }
+  };
+
+  const handleSelectServiceType = (value: string) => {
+    handleInputChange('serviceType', value);
+    setShowServiceTypeDropdown(false);
+  };
+
+  const handleSubmitEnquiry = async () => {
+    if (!validateForm()) {
+      toast.error('Validation Error', 'Please fill all required fields correctly');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+    
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        carModel: formData.carModel,
+        serviceType: formData.serviceType,
+        yourEnquiry: formData.yourEnquiry,
+        date: formData.date,
+        subject:  formData.serviceType,
+        description: formData.yourEnquiry,
+      };
+
+     
+     const response =  await createEnquiry(payload);
+
+     console.log(response, "enquiry response")
+      
+      setShowChatModal(false);
+   
+      
+      setFormData({
+        fullName: '',
+        email: '',
+        phoneNumber: '',
+        carModel: '',
+        serviceType: 'general',
+        yourEnquiry: '',
+        date: '',
+      });
+    } catch (error) {
+      console.error('Error submitting enquiry:', error);
+      toast.error('Error', 'Failed to submit enquiry. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -504,125 +661,162 @@ const HomePage = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.chatContainer}
                 keyboardVerticalOffset={80}>
-                <View style={{ padding: 15 }}>
+                <ScrollView style={{ padding: 15 }}>
+                  {/* Full Name */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Full Name *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
-                      value={profileData?.firstName + " " + profileData?.lastName}
+                      style={[
+                        styles.input,
+                        errors.fullName ? styles.inputError : null,
+                      ]}
+                      value={formData.fullName}
+                      onChangeText={(text) => handleInputChange('fullName', text)}
                     />
+                    {errors.fullName ? (
+                      <Text style={styles.errorText}>{errors.fullName}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Email */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Email *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
-                      value={profileData?.email}
+                      style={[
+                        styles.input,
+                        errors.email ? styles.inputError : null,
+                      ]}
+                      value={formData.email}
+                      onChangeText={(text) => handleInputChange('email', text)}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
                     />
+                    {errors.email ? (
+                      <Text style={styles.errorText}>{errors.email}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Phone Number */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Phone Number *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
-                      value={profileData?.contact_info?.phoneNumber}
+                      style={[
+                        styles.input,
+                        errors.phoneNumber ? styles.inputError : null,
+                      ]}
+                      value={formData.phoneNumber}
+                      onChangeText={(text) => handleInputChange('phoneNumber', text)}
+                      keyboardType="phone-pad"
+                      maxLength={10}
                     />
+                    {errors.phoneNumber ? (
+                      <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Car Details */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Car Details *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
+                      style={[
+                        styles.input,
+                        errors.carModel ? styles.inputError : null,
+                      ]}
+                      value={formData.carModel}
+                      onChangeText={(text) => handleInputChange('carModel', text)}
                     />
+                    {errors.carModel ? (
+                      <Text style={styles.errorText}>{errors.carModel}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Service Type Dropdown */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Service Type *</Text>
-                    <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
-                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.input,
+                        styles.dropdownTrigger,
+                        errors.serviceType ? styles.inputError : null,
+                      ]}
+                      onPress={() => setShowServiceTypeDropdown(!showServiceTypeDropdown)}>
+                      <Text style={styles.dropdownText}>
+                        {formData.serviceType === 'general' ? 'General' : 'Preferred Service'}
+                      </Text>
+                      <Ionicons
+                        name={showServiceTypeDropdown ? 'chevron-up' : 'chevron-down'}
+                        size={20}
+                        color={COLORS.primary}
+                      />
+                    </TouchableOpacity>
+                    {errors.serviceType ? (
+                      <Text style={styles.errorText}>{errors.serviceType}</Text>
+                    ) : null}
+
+                    {showServiceTypeDropdown && (
+                      <View style={styles.dropdown}>
+                        {serviceTypeOptions.map((option) => (
+                          <TouchableOpacity
+                            key={option.value}
+                            style={styles.dropdownOption}
+                            onPress={() => handleSelectServiceType(option.value)}>
+                            <Text style={styles.dropdownOptionText}>{option.label}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
                   </View>
+
+                  {/* Preferred Service Date */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>
                       Preferred Service Date *
                     </Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
+                      style={[
+                        styles.input,
+                        errors.date ? styles.inputError : null,
+                      ]}
+                      value={formData.date}
+                      onChangeText={(text) => handleInputChange('date', text)}
+                      placeholder="DD/MM/YYYY"
                     />
+                    {errors.date ? (
+                      <Text style={styles.errorText}>{errors.date}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Your Enquiry */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Your Enquiry *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
+                      style={[
+                        styles.input,
+                        styles.textArea,
+                        errors.yourEnquiry ? styles.inputError : null,
+                      ]}
+                      value={formData.yourEnquiry}
+                      onChangeText={(text) => handleInputChange('yourEnquiry', text)}
+                      multiline
+                      numberOfLines={4}
                     />
+                    {errors.yourEnquiry ? (
+                      <Text style={styles.errorText}>{errors.yourEnquiry}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Submit Button */}
                   <View
                     style={{ marginVertical: 12, justifyContent: 'center', alignItems: 'center' }}>
                     <TouchableOpacity
-                      style={{
-                        backgroundColor: COLORS.primary,
-                        borderRadius: 12,
-                        width: '30%',
-                        padding: 10,
-                      }}
+                      style={styles.submitButton}
                       onPress={handleSubmitEnquiry}>
-                      <Text
-                        style={{
-                          ...FONTS.body4,
-                          color: COLORS.white,
-                          textAlign: 'center',
-                          fontWeight: 500,
-                        }}>
+                      <Text style={styles.submitButtonText}>
                         Submit
                       </Text>
                     </TouchableOpacity>
                   </View>
-                </View>
+                </ScrollView>
               </KeyboardAvoidingView>
             </SafeAreaView>
           </Modal>
@@ -1276,6 +1470,69 @@ const styles = StyleSheet.create({
   spareparnterConatiner: {
     paddingVertical: 15,
     paddingHorizontal: 15,
+  },
+
+  // Form styles
+  input: {
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: COLORS.primary_04,
+    paddingHorizontal: 10,
+    color: COLORS.primary,
+    ...FONTS.body4,
+    height: 40,
+  },
+  inputError: {
+    borderColor: COLORS.error,
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: 12,
+    marginTop: 3,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+    paddingTop: 10,
+  },
+  dropdownTrigger: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingRight: 10,
+  },
+  dropdownText: {
+    color: COLORS.primary,
+    ...FONTS.body4,
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: COLORS.primary_04,
+    borderRadius: 5,
+    marginTop: 5,
+    backgroundColor: COLORS.white,
+    elevation: 2,
+  },
+  dropdownOption: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.grey20,
+  },
+  dropdownOptionText: {
+    color: COLORS.primary,
+    ...FONTS.body4,
+  },
+  submitButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    width: '30%',
+    padding: 10,
+  },
+  submitButtonText: {
+    ...FONTS.body4,
+    color: COLORS.white,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
 
