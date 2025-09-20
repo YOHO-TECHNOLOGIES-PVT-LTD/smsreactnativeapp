@@ -14,6 +14,7 @@ import { RootStackParamList } from '~/routes';
 import { COLORS, FONTS, icons } from '~/constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -39,11 +40,20 @@ const OnboardingScreen: React.FC = () => {
     }
   };
 
-  const handleGetStarted = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'MainStack' }],
-    });
+  // const handleGetStarted = () => {
+  //   navigation.reset({
+  //     index: 0,
+  //     routes: [{ name: 'MainStack' }],
+  //   });
+  // };
+
+  const completeOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+      navigation.navigate('MainStack');
+    } catch (error) {
+      console.error('Error saving onboarding status:', error);
+    }
   };
 
   return (
@@ -73,7 +83,7 @@ const OnboardingScreen: React.FC = () => {
               </View>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.getStartedButton} onPress={handleGetStarted}>
+            <TouchableOpacity style={styles.getStartedButton} onPress={completeOnboarding}>
               <Text style={styles.getStartedText}>Get Started</Text>
             </TouchableOpacity>
           )}
@@ -128,7 +138,7 @@ const styles = StyleSheet.create({
   },
   getStartedText: {
     color: COLORS.white,
-    fontWeight: 500
+    fontWeight: 500,
   },
 });
 

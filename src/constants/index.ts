@@ -116,6 +116,8 @@ export const icons = {
   carlogo14: require('../assets/home/car logo/carlogo14.png'),
   carlogo15: require('../assets/home/car logo/carlogo15.png'),
   clock: require('../assets/icons/clock.png'),
+  carservice1: require('../assets/loading1.png'),
+  carservice2: require('../assets/loading2.png'),
 };
 
 export const Styles = {
