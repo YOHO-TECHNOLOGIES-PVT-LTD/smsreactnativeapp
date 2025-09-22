@@ -26,12 +26,12 @@ type CustomDrawerItemProps = {
   isDivider?: boolean;
 };
 
-const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({ 
-  label, 
-  icon, 
-  isFocused, 
+const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({
+  label,
+  icon,
+  isFocused,
   onPress,
-  isDivider = false 
+  isDivider = false,
 }) => {
   return (
     <>
@@ -153,8 +153,8 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
   };
 
   return (
-    <DrawerContentScrollView 
-      scrollEnabled 
+    <DrawerContentScrollView
+      scrollEnabled
       contentContainerStyle={{ flex: 1 }}
       showsVerticalScrollIndicator={false}>
       <View style={{ flex: 1 }}>
@@ -193,8 +193,8 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
 
           {/* Profile Section */}
           <TouchableOpacity
-            style={{ 
-              flexDirection: 'row', 
+            style={{
+              flexDirection: 'row',
               alignItems: 'center',
               backgroundColor: COLORS.light,
               borderRadius: SIZES.radius,
@@ -232,21 +232,21 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
               />
             </View>
             <View style={{ marginLeft: SIZES.radius, flex: 1 }}>
-              <Text 
-                style={{ 
-                  color: COLORS.primary_text, 
-                  ...FONTS.h3, 
+              <Text
+                style={{
+                  color: COLORS.primary_text,
+                  ...FONTS.h3,
                   fontWeight: '600',
                   marginBottom: 2,
                 }}
                 numberOfLines={1}>
-                {profileData?.firstName && profileData?.lastName 
+                {profileData?.firstName && profileData?.lastName
                   ? `${profileData.firstName} ${profileData.lastName}`
                   : 'User Name'}
               </Text>
-              <Text 
-                style={{ 
-                  color: COLORS.grey60, 
+              <Text
+                style={{
+                  color: COLORS.grey60,
                   ...FONTS.h6,
                   textTransform: 'capitalize',
                 }}
@@ -313,14 +313,23 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
           />
           <CustomDrawerItem
             label="Bookings"
-            icon={icons.booking_outlined}
-            onPress={() => navigation.navigate('BookingsScreen')}
+            icon={selectedTab === 'Bookings' ? icons.booking_filled : icons.booking_outlined}
+            isFocused={selectedTab === 'Bookings'}
+            onPress={() => {
+              dispatch(setSelectedTab('Bookings'));
+              navigation.navigate('BookingsScreen');
+            }}
           />
+
           <CustomDrawerItem
             label="Booking Cart"
-            icon={icons.cart_outlined}
-            onPress={() => navigation.navigate('BookingCartScreen')}
+            icon={selectedTab === 'BookingCart' ? icons.cart_filled : icons.cart_outlined}
+            isFocused={selectedTab === 'BookingCart'}
             isDivider={true}
+            onPress={() => {
+              dispatch(setSelectedTab('BookingCart'));
+              navigation.navigate('BookingCartScreen');
+            }}
           />
 
           {/* Logout Section */}
