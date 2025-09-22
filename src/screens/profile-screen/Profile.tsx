@@ -1767,7 +1767,7 @@ const pickImage = async () => {
               <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
                 <TouchableOpacity onPress={() => {
                   setEditProfileModal(false);
-                 
+                  setFormData({...formData, image: profileImageLogo});
                 }}>
                   <X size={24} color={COLORS1.white} />
                 </TouchableOpacity>
