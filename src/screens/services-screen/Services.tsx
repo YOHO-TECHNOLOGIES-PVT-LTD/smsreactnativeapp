@@ -34,6 +34,7 @@ import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 import { selectCartItems } from '~/features/booking-cart/redux/selectors';
 import { getUserProfileDetails } from '~/features/profile/service';
+import { getImageUrl } from '~/utils/imageUtils';
 
 type ServiceCategory = {
   uuid: string;
@@ -73,6 +74,7 @@ const Services = () => {
   const [error, setError] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState<string>('');
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
+  console.log("serviceCategories",serviceCategories); 
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
@@ -553,7 +555,7 @@ const Services = () => {
                   setSearchQuery('');
                 }}>
                 <Image
-                  source={{ uri: category?.image }}
+                  source={{ uri:getImageUrl(category?.image) }}
                   style={styles.categoryImage}
                   alt="Category Image"
                 />
@@ -611,7 +613,7 @@ const Services = () => {
                   setModalVisible(true);
                 }}>
                 <ImageBackground
-                  source={{ uri: item?.image }}
+                  source={{ uri: getImageUrl(item?.image) }}
                   style={styles.serviceImage}
                   resizeMode="cover">
                   <View style={styles.serviceDuration}>
@@ -667,7 +669,7 @@ const Services = () => {
             </View>
 
             <Image
-              source={{ uri: selectedService?.image }}
+              source={{ uri: getImageUrl(selectedService?.image) }}
               style={styles.modalImage}
               resizeMode="cover"
             />
