@@ -255,6 +255,7 @@ const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [profileData, setProfileData] = useState<any>({});
+  const [profileImageLogo,setProfileImageLogo] = useState<any>('');
   const [bookingOrders, setBookingOrders] = useState<{
     serviceConfirm?: any[];
     productConfirm?: any[];
@@ -301,6 +302,7 @@ const Profile = () => {
       console.log(response, 'get response')
       if (response) {
         await AsyncStorage.setItem('userId', response?._id);
+        setProfileImageLogo(response?.image);
         setFormData({
           firstName: response?.firstName,
           lastName: response?.lastName,
@@ -690,6 +692,7 @@ const Profile = () => {
         fetchUserProfile();
         toast.success('Success', 'Profile updated successfully!');
       }
+      fetchUserProfile();
     } catch (error) {
       console.log(error);
     }
@@ -1447,7 +1450,7 @@ const pickImage = async () => {
                   <View style={styles.profileImageContainer}>
                     {formData?.image ? (
                       <Image
-                        source={{ uri: getImageUrl(formData?.image) }}
+                        source={{ uri: getImageUrl(profileImageLogo) }}
                         accessibilityLabel={`${formData?.firstName + ' ' + formData?.lastName || 'Customer'}`}
                         style={{
                           width: 100,
