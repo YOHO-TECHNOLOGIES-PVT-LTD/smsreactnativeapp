@@ -34,6 +34,10 @@ const LoginScreen = () => {
   } = useForm<LoginFormData>();
 
   const onSubmit = async (data: LoginFormData) => {
+    if (!/^[0-9]{10}$/.test(data.phone)) {
+    toast.error('Invalid Number','Phone number must be exactly 10 digits');
+    return;
+  }
     try {
       const response: any = await SignUpAuthentication({ phoneNumber: data?.phone });
       if (response?.success === true) {
