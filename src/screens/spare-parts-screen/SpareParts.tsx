@@ -47,7 +47,7 @@ const SpareParts = () => {
           Number(cartItems[1]?.products?.length) +
           Number(cartItems[1]?.services?.length)
         );
-      } else {  
+      } else {
         return 0;
       }
     };
@@ -97,7 +97,10 @@ const SpareParts = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <SparePartsPage spareParts={spareParts} />
+        <SparePartsPage
+          spareParts={spareParts}
+          onRefresh={getAllSparePartsDetails} 
+        />
       </SafeAreaView>
     </>
   );

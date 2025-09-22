@@ -8,6 +8,7 @@ import {
   Image,
   TextInput,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
@@ -103,6 +104,7 @@ export default function RoadsideAssistanceScreen() {
 
   const [locationText, setLocationText] = useState('Fetching location...');
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -350,6 +352,31 @@ export default function RoadsideAssistanceScreen() {
       setIsLoading(false);
     }
   };
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      // 🔄 Re-fetch user profile and reset state
+      const userResponse = await getUserProfileDetails();
+      setUser(userResponse);
+
+      if (userResponse?.vehicleInfo?.length > 0) {
+        setVehicleList(userResponse.vehicleInfo);
+        setSelectedVehicle(userResponse.vehicleInfo[0]);
+      } else {
+        setVehicleList([]);
+        setSelectedVehicle(null);
+      }
+
+      // Re-fetch location if modal is open
+      if (modalVisible) {
+        await fetchLocation();
+      }
+    } catch (error) {
+      console.error('Error refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -380,7 +407,11 @@ export default function RoadsideAssistanceScreen() {
         transparent={false}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}>
-        <ScrollView style={styles.modalContainer}>
+        <ScrollView
+          contentContainerStyle={styles.modalContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Ionicons name="arrow-back" size={24} color={COLORS.primary} />

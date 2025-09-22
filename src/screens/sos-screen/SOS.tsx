@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from 'react-native';
 import { COLORS, FONTS } from '~/constants/index';
 import MarinaMap from '~/components/SosScreen/MarinaMap';
@@ -15,6 +16,7 @@ import SosButtons from '~/components/SosScreen/Buttons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign } from '@expo/vector-icons';
 import PhoneDialerButton from '~/components/PhoneDialerButton';
+import { getUserProfileDetails } from '~/features/profile/service';
 
 const issuesList = [
   'Battery Discharged',
@@ -25,7 +27,7 @@ const issuesList = [
   'Engine Overtheating',
   'Coolant Leakage',
   'Brake Problem',
-  'Clutch Problem'
+  'Clutch Problem',
 ];
 
 const SOS = () => {
@@ -34,6 +36,23 @@ const SOS = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [filteredIssues, setFilteredIssues] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchUser = async () => {
+    try {
+      const userResponse = await getUserProfileDetails();
+      // console.log('userResponse', userResponse);
+      if (userResponse) {
+        const mobileNumber = userResponse?.contact_info?.phoneNumber || '';
+        setValue(mobileNumber);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   const handleChange = (text: any) => {
     if (/^\d*$/.test(text)) {
@@ -60,6 +79,26 @@ const SOS = () => {
       setFilteredIssues(filtered);
     }
   };
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      // Reset form state
+      setValue('');
+      setError(false);
+      setSearchText('');
+      setFilteredIssues([]);
+      setShowSearchBar(false);
+
+      await fetchUser();
+      // Optionally re-fetch data if you have API calls for issues or location
+      // await fetchIssues();
+      // await fetchLocation();
+    } catch (error) {
+      console.error('Error during refresh:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <>
@@ -79,7 +118,10 @@ const SOS = () => {
             shadowRadius: 4,
             elevation: 3,
           }}>
-          <Image source={require('../../assets/home/LOGO.png')} style={{ width: 145, height: 25 }} />
+          <Image
+            source={require('../../assets/home/LOGO.png')}
+            style={{ width: 145, height: 25 }}
+          />
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity onPress={() => setShowSearchBar((prev) => !prev)}>
               <AntDesign name="search1" size={24} color={COLORS.primary} />
@@ -100,38 +142,38 @@ const SOS = () => {
               onChangeText={handleSearchTextChange}
               autoFocus
             />
-            <TouchableOpacity onPress={() => {
-              setShowSearchBar(false);
-              setSearchText('');
-              setFilteredIssues([]);
-            }}>
+            <TouchableOpacity
+              onPress={() => {
+                setShowSearchBar(false);
+                setSearchText('');
+                setFilteredIssues([]);
+              }}>
               <AntDesign name="close" size={20} color={COLORS.primary} style={{ marginLeft: 10 }} />
             </TouchableOpacity>
           </View>
         )}
-          
-{showSearchBar && (
-  <View style={styles.filteredList}>
-    {filteredIssues.length > 0 ? (
-      filteredIssues.map((item, index) => (
-        <Text key={index} style={styles.issueText}>
-          {item}
-        </Text>
-      ))
-    ) : (
-      <Text style={styles.noServiceText}>No service available</Text>
-    )}
-  </View>
-)}
 
+        {showSearchBar && (
+          <View style={styles.filteredList}>
+            {filteredIssues.length > 0 ? (
+              filteredIssues.map((item, index) => (
+                <Text key={index} style={styles.issueText}>
+                  {item}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.noServiceText}>No service available</Text>
+            )}
+          </View>
+        )}
 
         {/* Main Content */}
-        <ScrollView style={[styles.container, { position: 'relative' }]}>
+        <ScrollView
+          style={[styles.container, { position: 'relative' }]}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           <View style={styles.mapContainer}>
             <MarinaMap />
           </View>
-
-        
 
           <View>
             <Text style={{ ...FONTS.body4, paddingTop: 20, paddingLeft: 10 }}>Mobile Number:</Text>
@@ -207,10 +249,9 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.grey,
   },
   noServiceText: {
-  paddingVertical: 8,
-  fontSize: 14,
-  color: 'gray',
-  textAlign: 'center',
-},
-
+    paddingVertical: 8,
+    fontSize: 14,
+    color: 'gray',
+    textAlign: 'center',
+  },
 });

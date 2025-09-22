@@ -13,6 +13,7 @@ import {
   TextInput,
   ImageBackground,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
@@ -92,6 +93,7 @@ const Services = () => {
   const [cartCount, setCartCount] = useState(0);
   const [profileData, setprofileData] = useState<ProfileData>();
   const [selectedVehicleIndex, setSelectedVehicleIndex] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     try {
@@ -487,6 +489,20 @@ const Services = () => {
       </ScrollView>
     </Modal>
   );
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchAllServices();
+      if (TokenSelector) {
+        await fetchUserProfile();
+      }
+      dispatch(getBookingCartItems());
+    } catch (error) {
+      console.error('Error refreshing services:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <>
@@ -630,6 +646,9 @@ const Services = () => {
                     : 'No services available in this category'}
                 </Text>
               </View>
+            }
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
           />
         </View>

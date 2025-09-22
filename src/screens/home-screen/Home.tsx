@@ -35,6 +35,7 @@ import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
 import { getUserProfileDetails } from '~/features/profile/service';
 import { createEnquiry } from '../../screens/home-screen/service/index'; // Import your enquiry service
+import { RefreshControl } from 'react-native';
 
 const carlogos = [
   icons.carlogo1,
@@ -57,6 +58,7 @@ const HomePage = () => {
   const [showChatModal, setShowChatModal] = useState(false);
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const tokenSelector = useSelector(selectToken);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [spareParts, setSpareParts] = useState([]);
@@ -322,8 +324,7 @@ const HomePage = () => {
 
     try {
       setIsLoading(true);
-      
-    
+
       const payload = {
         fullName: formData.fullName,
         email: formData.email,
@@ -332,18 +333,16 @@ const HomePage = () => {
         serviceType: formData.serviceType,
         yourEnquiry: formData.yourEnquiry,
         date: formData.date,
-        subject:  formData.serviceType,
+        subject: formData.serviceType,
         description: formData.yourEnquiry,
       };
 
-     
-     const response =  await createEnquiry(payload);
+      const response = await createEnquiry(payload);
 
-     console.log(response, "enquiry response")
-      
+      console.log(response, 'enquiry response');
+
       setShowChatModal(false);
-   
-      
+
       setFormData({
         fullName: '',
         email: '',
@@ -358,6 +357,21 @@ const HomePage = () => {
       toast.error('Error', 'Failed to submit enquiry. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await getAllSparePartsDetails();
+      await fetchAllServices();
+      await fetchAllOffers();
+      if (tokenSelector) {
+        await fetchUserProfile();
+      }
+    } catch (error) {
+      console.log('Error while refreshing:', error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -417,7 +431,8 @@ const HomePage = () => {
           {/* Search Bar */}
           <AnimatedSearch />
         </View>
-        <ScrollView>
+        <ScrollView
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           {/* Image Carousel */}
           <View style={{ backgroundColor: COLORS.primary_04, paddingVertical: 10 }}>
             <ImageCarousel images={images} />
@@ -638,10 +653,7 @@ const HomePage = () => {
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Full Name *</Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.fullName ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.fullName ? styles.inputError : null]}
                       value={formData.fullName}
                       onChangeText={(text) => handleInputChange('fullName', text)}
                     />
@@ -654,28 +666,20 @@ const HomePage = () => {
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Email *</Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.email ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.email ? styles.inputError : null]}
                       value={formData.email}
                       onChangeText={(text) => handleInputChange('email', text)}
                       keyboardType="email-address"
                       autoCapitalize="none"
                     />
-                    {errors.email ? (
-                      <Text style={styles.errorText}>{errors.email}</Text>
-                    ) : null}
+                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
                   </View>
 
                   {/* Phone Number */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Phone Number *</Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.phoneNumber ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.phoneNumber ? styles.inputError : null]}
                       value={formData.phoneNumber}
                       onChangeText={(text) => handleInputChange('phoneNumber', text)}
                       keyboardType="phone-pad"
@@ -690,10 +694,7 @@ const HomePage = () => {
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Car Details *</Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.carModel ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.carModel ? styles.inputError : null]}
                       value={formData.carModel}
                       onChangeText={(text) => handleInputChange('carModel', text)}
                     />
@@ -745,17 +746,12 @@ const HomePage = () => {
                       Preferred Service Date *
                     </Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.date ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.date ? styles.inputError : null]}
                       value={formData.date}
                       onChangeText={(text) => handleInputChange('date', text)}
                       placeholder="DD/MM/YYYY"
                     />
-                    {errors.date ? (
-                      <Text style={styles.errorText}>{errors.date}</Text>
-                    ) : null}
+                    {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
                   </View>
 
                   {/* Your Enquiry */}
@@ -780,12 +776,8 @@ const HomePage = () => {
                   {/* Submit Button */}
                   <View
                     style={{ marginVertical: 12, justifyContent: 'center', alignItems: 'center' }}>
-                    <TouchableOpacity
-                      style={styles.submitButton}
-                      onPress={handleSubmitEnquiry}>
-                      <Text style={styles.submitButtonText}>
-                        Submit
-                      </Text>
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmitEnquiry}>
+                      <Text style={styles.submitButtonText}>Submit</Text>
                     </TouchableOpacity>
                   </View>
                 </ScrollView>

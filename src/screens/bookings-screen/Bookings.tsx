@@ -20,6 +20,7 @@ import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import { selectCartItems } from '~/features/booking-cart/redux/selectors';
+import { RefreshControl } from 'react-native';
 
 interface Product {
   _id: string;
@@ -77,6 +78,7 @@ const Bookings = () => {
   const navigation = useNavigation();
   const cartItems = useSelector(selectCartItems);
   const [cartCount, setCartCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     try {
@@ -134,6 +136,22 @@ const Bookings = () => {
   const totalOrders = orders?.length;
   const completedOrders = orders?.filter((order) => order?.status === 'completed')?.length;
   const pendingOrders = orders?.filter((order) => order?.status === 'pending')?.length;
+
+  const handleRefresh = async () => {
+    if (!tokenSelector) return;
+    setRefreshing(true);
+    try {
+      const response = await getAllBookingsCartItems({});
+      if (response?.success) {
+        const allOrders = [...(response.productConfirm || []), ...(response.serviceConfirm || [])];
+        setOrders(allOrders);
+      }
+    } catch (error) {
+      console.log('Error refreshing orders:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <>
@@ -257,6 +275,14 @@ const Bookings = () => {
                 renderItem={({ item }) => <BookingCard data={item} />}
                 contentContainerStyle={styles.ordersList}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    colors={[COLORS.primary]} 
+                    tintColor={COLORS.primary} 
+                  />
+                }
               />
             ) : (
               <View style={styles.emptyContainer}>

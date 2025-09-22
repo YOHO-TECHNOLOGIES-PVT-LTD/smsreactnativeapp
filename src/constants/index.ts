@@ -446,6 +446,7 @@ export const SPACING = {
   xl_03: wp('22%'), // Responsive extra large spacing
   xxl: wp('24%'), // Responsive extra extra large spacing
   xxxl: wp('32%'), // Responsive extra extra extra large spacing
+  huge: hp('90%'), // Responsive huge spacing
 };
 
 // Elevation
