@@ -387,14 +387,17 @@ export default function RoadsideAssistanceScreen() {
           <TouchableOpacity
             key={issue.id}
             style={[styles.issueButton, selectedIssues.includes(issue.id) && styles.selectedButton]}
-            onPress={() =>
-              TokenSelector ? handleSelect(issue.id) : () => setSignUpConfirmModalVisible(true)
-            }
+            onPress={() => {
+              if (TokenSelector) {
+                handleSelect(issue.id);
+              } else {
+                setSignUpConfirmModalVisible(true);
+              }
+            }}
             activeOpacity={0.8}>
             {selectedIssues.includes(issue.id) && (
               <Ionicons name="checkmark-circle" size={20} color="green" style={styles.checkIcon} />
             )}
-
             <Image source={issue.icon} style={styles.issueIcon} />
             <Text style={styles.label}>{issue.label}</Text>
           </TouchableOpacity>
@@ -409,9 +412,7 @@ export default function RoadsideAssistanceScreen() {
         onRequestClose={() => setModalVisible(false)}>
         <ScrollView
           contentContainerStyle={styles.modalContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }>
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
@@ -690,11 +691,11 @@ export default function RoadsideAssistanceScreen() {
       <View>
         <CustomLogoutModal
           visible={signUpConfirmModalVisible}
-          onConfirm={() => navigation.navigate('RegisterScreen' as never)}
+          onConfirm={() => navigation.navigate('LoginScreen' as never)} 
           onCancel={() => setSignUpConfirmModalVisible(false)}
-          title="Please SignUp"
-          message="You need to sign up to book a service."
-          confirmText="Sign Up"
+          title="Please Login" 
+          message="You need to login to request assistance." 
+          confirmText="Login" 
           cancelText="Cancel"
           confirmButtonColor={COLORS.primary}
           cancelButtonColor={COLORS.transparent}
