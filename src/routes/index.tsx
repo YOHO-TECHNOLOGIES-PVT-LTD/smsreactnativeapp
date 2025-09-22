@@ -93,7 +93,9 @@ const Routes: React.FC = () => {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={{ color: COLORS.primary, ...FONTS.h4, fontWeight: 500 }}>Loading...</Text>
+        <Text style={{ color: COLORS.primary, ...FONTS.h3, fontWeight: 500, marginTop: 5 }}>
+          Loading...
+        </Text>
       </View>
     );
   }
