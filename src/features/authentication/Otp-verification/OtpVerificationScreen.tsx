@@ -58,7 +58,7 @@ const OtpVerificationScreen = ({ route }: { route: OtpVerificationScreenRoutePro
           navigation.navigate('SetNewPasswordScreen' as never, {
             data: response,
           });
-        } else {
+        } else{
           await AsyncStorage.setItem('authToken', response?.token);
           // await AsyncStorage.setItem('userId', response?.userId);
           navigation.reset({
@@ -67,6 +67,8 @@ const OtpVerificationScreen = ({ route }: { route: OtpVerificationScreenRoutePro
           });
           toast.success('OTP Verified', 'You have successfully verified your OTP.');
         }
+      }else{
+        toast.error('Error', 'Enter valid otp');
       }
     } else {
       toast.error('Error', 'Enter all 6 digits');
