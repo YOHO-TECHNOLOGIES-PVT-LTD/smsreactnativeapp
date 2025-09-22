@@ -7,15 +7,16 @@ import {
 } from '@react-navigation/drawer';
 import MainLayout from '../layout';
 import { COLORS, FONTS, SIZES, screens, icons } from '../constants';
-import { useSharedValue } from 'react-native-reanimated';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedTab } from '../store/tab/tabSlice';
 import { useNavigation } from '@react-navigation/native';
 import toast from '../utils/toast';
 import { RootState } from '../store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserProfileDetails } from '~/features/profile/service';
 import { getImageUrl } from '~/utils/imageUtils';
+import CustomLogoutModal from '~/components/CustomLogoutModal';
+import { logout } from '~/features/token/redux/thunks';
+import { AppDispatch } from '~/store';
 
 type CustomDrawerItemProps = {
   label: string;
@@ -114,10 +115,12 @@ type DrawerContentProps = {
 };
 
 const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const selectedTab = useSelector((state: RootState) => state.tabReducer.selectedTab);
   const [error, setError] = useState(false);
   const [profileData, setProfileData] = useState<any>({});
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -132,31 +135,21 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
     fetchProfile();
   }, [dispatch]);
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Confirm Logout',
-      'Are you sure you want to log out?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('authToken');
-              toast.success('', 'Logout Successfully.');
-              navigation.reset({ index: 0, routes: [{ name: 'AuthStack' }] });
-            } catch (error) {
-              toast.error('Error', 'An error occurred during logout. Please try again later.');
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+  const handleLogout = async () => {
+    try {
+      setIsLoading(true);
+      await dispatch(logout());
+      toast.success('Logged out', 'You have been successfully logged out');
+      setIsLoading(false);
+      setLogoutModalVisible(false);
+      navigation.reset({ index: 0, routes: [{ name: 'AuthStack' }] });
+    } catch (error) {
+      toast.error('Logout failed', 'Could not complete logout. Please try again.');
+      console.log('Logout error:', error);
+    } finally {
+      setIsLoading(false);
+      setLogoutModalVisible(false);
+    }
   };
 
   return (
@@ -345,7 +338,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
                 borderWidth: 1,
                 borderColor: COLORS.error20,
               }}
-              onPress={handleLogout}
+              onPress={() => setLogoutModalVisible(true)}
               activeOpacity={0.8}>
               <View
                 style={{
@@ -378,6 +371,21 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Custom Logout Modal */}
+        <CustomLogoutModal
+          visible={logoutModalVisible}
+          onConfirm={handleLogout}
+          onCancel={() => setLogoutModalVisible(false)}
+          title="Confirm Logout"
+          message="Are you sure, you want to log out?"
+          confirmText="Yes, Logout"
+          cancelText="No, Stay"
+          confirmButtonColor={COLORS.primary}
+          cancelButtonColor={COLORS.transparent}
+          titleTextColor={COLORS.primary}
+          messageTextColor={COLORS.grey}
+        />
 
         {/* Footer */}
         <View
