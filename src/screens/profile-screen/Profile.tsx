@@ -220,49 +220,19 @@ interface CarStatusProps {
   icon: React.ReactNode;
 }
 
-interface FormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  image?: string;
-  contact_info: {
-    city: string;
-    state: string;
-    phoneNumber: string;
-    address1: string;
-    address2: string;
-    [key: string]: string;
-  };
-  vehicleInfo: Array<{
-    registerNumber: string;
-    model: string;
-    year: string;
-    company: string;
-    fuleType: string;
-    [key: string]: string;
-  }>;
-  newVehicle?: {
-    registerNumber: string;
-    model: string;
-    year: string;
-    company: string;
-    fuleType: string;
-  };
-  [key: string]: any;
-}
-const phoneNumber = '+91-9876543210';
 const Profile = () => {
   const TokenSelector = useSelector(selectToken);
   const dispatch = useDispatch<AppDispatch>();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [profileData, setProfileData] = useState<any>({});
   const [profileImageLogo, setProfileImageLogo] = useState<any>('');
+  const phoneNumber = '+91-9876543210';
   const [bookingOrders, setBookingOrders] = useState<{
     serviceConfirm?: any[];
     productConfirm?: any[];
     success?: boolean;
   } | null>(null);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<any>({
     firstName: '',
     lastName: '',
     email: '',
@@ -361,120 +331,26 @@ const Profile = () => {
     notifications: '',
   });
 
-  const [notifications, setNotifications] = useState({
-    serviceReminders: true,
-    promotions: false,
-    orderUpdates: true,
-    appUpdates: true,
-    specialOffers: false,
-  });
-
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
-    {
-      id: 1,
-      make: 'Toyota',
-      model: 'Camry',
-      year: '2020',
-      plate: 'ABC-123',
-      color: 'Silver',
-      mileage: '45,000',
-      image360: 'https://images.unsplash.com/photo-1549924231-f129b911e442?w=400',
-      services: [
-        {
-          id: 1,
-          type: 'Oil Change',
-          date: '2024-01-15',
-          cost: '$45',
-          description: 'Regular oil change and filter replacement',
-          status: 'completed',
-          technician: 'Mike Johnson',
-          location: 'Downtown Auto Service',
-          duration: '45 min',
-        },
-        {
-          id: 2,
-          type: 'Brake Service',
-          date: '2024-02-20',
-          cost: '$180',
-          description: 'Brake pad replacement and fluid check',
-          status: 'completed',
-          technician: 'Sarah Williams',
-          location: 'Downtown Auto Service',
-          duration: '2 hours',
-        },
-        {
-          id: 3,
-          type: 'Tire Rotation',
-          date: '2024-06-01',
-          cost: '$35',
-          description: 'Scheduled tire rotation service',
-          status: 'scheduled',
-          technician: 'David Miller',
-          location: 'Downtown Auto Service',
-          duration: '30 min',
-        },
-      ],
-      lastService: '2024-02-20',
-      nextService: '2024-06-01',
-      healthScore: 92,
-      fuelLevel: 75,
-      batteryHealth: 95,
-      tireHealth: 88,
-      engineStatus: 'excellent',
-    },
-    {
-      id: 2,
-      make: 'Honda',
-      model: 'Civic',
-      year: '2019',
-      plate: 'XYZ-789',
-      color: 'Blue',
-      mileage: '32,000',
-      image360: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400',
-      services: [
-        {
-          id: 4,
-          type: 'Engine Tune-up',
-          date: '2024-01-10',
-          cost: '$200',
-          description: 'Complete engine diagnostic and tune-up',
-          status: 'completed',
-          technician: 'Robert Chen',
-          location: 'Eastside Auto Care',
-          duration: '3 hours',
-        },
-      ],
-      lastService: '2024-01-10',
-      nextService: '2024-07-10',
-      healthScore: 87,
-      fuelLevel: 45,
-      batteryHealth: 82,
-      tireHealth: 90,
-      engineStatus: 'good',
-    },
-  ]);
-
   const [orders, setOrders] = useState<Order[]>([]);
   const [editProfileModal, setEditProfileModal] = useState(false);
   const [addVehicleModal, setAddVehicleModal] = useState(false);
   const [vehicleDetailModal, setVehicleDetailModal] = useState(false);
   const [orderDetailModal, setOrderDetailModal] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [photoUploadModal, setPhotoUploadModal] = useState(false);
   const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false);
   const [helpCentreModal, setHelpCentreModal] = useState(false);
   const [termsModal, setTermsModal] = useState(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<any>('');
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
+  const [editForm, setEditForm] = useState({ ...userInfo });
   const [expandedSections, setExpandedSections] = useState({
     vehicles: false,
     orders: false,
     settings: false,
   });
-  const [editForm, setEditForm] = useState({ ...userInfo });
 
   const slideAnims = useRef(
     Array(8)
@@ -714,7 +590,7 @@ const Profile = () => {
       });
       if (response) {
         setAddVehicleModal(false);
-        setFormData((prev) => ({
+        setFormData((prev: any) => ({
           ...prev,
           newVehicle: undefined,
         }));
@@ -733,7 +609,7 @@ const Profile = () => {
     setVehicleDetailModal(true);
   };
 
-  const handleDeleteVehicle = (vehicleId: number) => {
+  const handleDeleteVehicle = (vehicleId: any) => {
     Alert.alert('Delete Vehicle', 'Are you sure you want to delete this vehicle?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -774,7 +650,7 @@ const Profile = () => {
         if (uploadResponse?.data.image) {
           const uploadedUrl = uploadResponse.data.image;
 
-          setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+          setFormData((prev: any) => ({ ...prev, image: uploadedUrl }));
           saveUserProfileImage(uploadedUrl);
         } else {
           Alert.alert('Upload Failed', 'Could not upload image.');
@@ -858,7 +734,7 @@ const Profile = () => {
     );
   };
 
-  const VehicleItem: React.FC<VehicleItemProps> = ({ vehicle, onPress }) => {
+  const VehicleItem = ({ vehicle, onPress }: any) => {
     if (!vehicle || !Array.isArray(vehicle)) {
       return null;
     }
@@ -941,7 +817,7 @@ const Profile = () => {
           return COLORS1.gray500;
       }
     };
-   
+
     return (
       <View style={styles.serviceItem}>
         <View style={styles.serviceHeader}>
@@ -981,21 +857,6 @@ const Profile = () => {
       </View>
     );
   };
-
-  const Switch = ({
-    checked,
-    onChange,
-  }: {
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-  }) => (
-    <TouchableOpacity
-      style={[styles.switch, { backgroundColor: checked ? COLORS1.primary : COLORS1.gray300 }]}
-      onPress={() => onChange(!checked)}
-      activeOpacity={0.8}>
-      <View style={[styles.switchThumb, { transform: [{ translateX: checked ? 20 : 2 }] }]} />
-    </TouchableOpacity>
-  );
 
   const TermsItem = ({
     term,
@@ -1119,7 +980,7 @@ const Profile = () => {
       </View>
 
       {/* Enhanced Vehicle Tips Section */}
-      {vehicles.length > 0 && (
+      {formData?.vehicleInfo?.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <View style={styles.sectionIconContainer}>
@@ -1403,30 +1264,29 @@ const Profile = () => {
     </>
   );
 
-   // Add this state variable near your other useState declarations
-    const [refreshing, setRefreshing] = useState(false);
+  // Add this state variable near your other useState declarations
+  const [refreshing, setRefreshing] = useState(false);
 
-    // Add this refresh function after your existing functions
-    const onRefresh = async () => {
-      try {
-        setRefreshing(true);
+  // Add this refresh function after your existing functions
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
 
-        // Refresh user profile data
-        if (TokenSelector) {
-          await fetchUserProfile();
-          await fetchOrders();
-        }
-
-        // Optional: Add a small delay for better UX
-        setTimeout(() => {
-          setRefreshing(false);
-        }, 500);
-      } catch (error) {
-        console.error('Error refreshing profile:', error);
-        setRefreshing(false);
+      // Refresh user profile data
+      if (TokenSelector) {
+        await fetchUserProfile();
+        await fetchOrders();
       }
-    };
 
+      // Optional: Add a small delay for better UX
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 500);
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      setRefreshing(false);
+    }
+  };
 
   return (
     <>
@@ -1437,10 +1297,12 @@ const Profile = () => {
           <LoadingAnimation visible={isLoading} />
           {/* Enhanced Header with Professional Gradient */}
           <View style={styles.header}>
-            <Image
-              source={require('../../assets/home/LOGO.png')}
-              style={{ width: 145, height: 25 }}
-            />
+            <TouchableOpacity onPress={() => navigation.openDrawer()}>
+              <Image
+                source={require('../../assets/home/LOGO.png')}
+                style={{ width: 145, height: 25 }}
+              />
+            </TouchableOpacity>
           </View>
           <Animated.View style={{ opacity: headerOpacity, marginTop: 10, paddingHorizontal: 15 }}>
             <LinearGradient
@@ -1610,7 +1472,7 @@ const Profile = () => {
                   {Array.isArray(formData?.vehicleInfo) && formData?.vehicleInfo?.length > 0 ? (
                     <VehicleItem
                       vehicle={formData?.vehicleInfo}
-                      onPress={(vehicle) => {
+                      onPress={(vehicle: any) => {
                         setSelectedVehicle(vehicle);
                         setVehicleDetailModal(true);
                       }}
@@ -1918,7 +1780,7 @@ const Profile = () => {
                   />
                 </View>
                 {Array.isArray(formData?.vehicleInfo) &&
-                  formData?.vehicleInfo?.map((vehicle, index) => (
+                  formData?.vehicleInfo?.map((vehicle: any, index: any) => (
                     <View key={index}>
                       <View
                         style={{
@@ -2291,7 +2153,7 @@ const Profile = () => {
                   <View style={styles.serviceHistorySection}>
                     <Text style={[styles.sectionTitle, { marginBottom: 10 }]}>Service History</Text>
                     {selectedVehicle.services.length > 0 ? (
-                      selectedVehicle.services.map((service) => (
+                      selectedVehicle.services.map((service: any) => (
                         <ServiceItem key={service.id} service={service} />
                       ))
                     ) : (
@@ -2378,7 +2240,7 @@ const Profile = () => {
                   {/* Order Items */}
                   <View style={styles.orderItemsSection}>
                     <Text style={[styles.sectionTitle, { marginBottom: 10 }]}>Items Ordered</Text>
-                    {selectedOrder.items.map((item) => (
+                    {selectedOrder.items.map((item: any) => (
                       <View key={item.id} style={styles.orderItemCard}>
                         <Image source={{ uri: item.image }} style={styles.orderItemImage} />
                         <View style={styles.orderItemDetails}>

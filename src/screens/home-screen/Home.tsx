@@ -57,7 +57,7 @@ const HomePage = () => {
   const translateYAnim = useRef(new Animated.Value(30)).current;
   const [showOfferApplied, setShowOfferApplied] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const tokenSelector = useSelector(selectToken);
@@ -388,10 +388,12 @@ const HomePage = () => {
               alignItems: 'center',
               marginBottom: 1,
             }}>
-            <Image
-              source={require('../../assets/home/LOGO.png')}
-              style={{ width: 145, height: 25, position: 'relative', top: tokenSelector ? 0 : 0 }}
-            />
+            <TouchableOpacity onPress={() => navigation.openDrawer()}>
+              <Image
+                source={require('../../assets/home/LOGO.png')}
+                style={{ width: 145, height: 25, position: 'relative', top: tokenSelector ? 0 : 0 }}
+              />
+            </TouchableOpacity>
             {tokenSelector ? (
               <View style={{}}>
                 <View style={{ flexDirection: 'row' }}>

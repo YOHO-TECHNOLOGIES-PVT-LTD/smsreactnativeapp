@@ -68,7 +68,7 @@ interface ProfileData {
 }
 
 const Services = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const dispatch = useDispatch<AppDispatch>();
   const [error, setError] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState<string>('');
@@ -176,7 +176,6 @@ const Services = () => {
   }, [dispatch, TokenSelector]);
 
   const handleAddtoCart = async (vehicleIndex: number | null) => {
-   
     if (!selectedService?.uuid) {
       console.log('Error: No service selected');
       toast.error('Error', 'Please select a service.');
@@ -520,10 +519,12 @@ const Services = () => {
       <SafeAreaView edges={['top']} style={[styles.container, { paddingVertical: 10 }]}>
         <LoadingAnimation visible={isLoading} />
         <View style={styles.header}>
-          <Image
-            source={require('../../assets/home/LOGO.png')}
-            style={{ width: 145, height: 25 }}
-          />
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Image
+              source={require('../../assets/home/LOGO.png')}
+              style={{ width: 145, height: 25 }}
+            />
+          </TouchableOpacity>
           <View style={styles.headerIcons}>
             <TouchableOpacity onPress={() => navigation.navigate('BookingsScreen' as never)}>
               <Image

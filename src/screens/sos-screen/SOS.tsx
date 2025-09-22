@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign } from '@expo/vector-icons';
 import PhoneDialerButton from '~/components/PhoneDialerButton';
 import { getUserProfileDetails } from '~/features/profile/service';
+import { useNavigation } from '@react-navigation/native';
 
 const issuesList = [
   'Battery Discharged',
@@ -37,6 +38,7 @@ const SOS = () => {
   const [searchText, setSearchText] = useState('');
   const [filteredIssues, setFilteredIssues] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation<any>();
 
   const fetchUser = async () => {
     try {
@@ -118,10 +120,12 @@ const SOS = () => {
             shadowRadius: 4,
             elevation: 3,
           }}>
-          <Image
-            source={require('../../assets/home/LOGO.png')}
-            style={{ width: 145, height: 25 }}
-          />
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Image
+              source={require('../../assets/home/LOGO.png')}
+              style={{ width: 145, height: 25 }}
+            />
+          </TouchableOpacity>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity onPress={() => setShowSearchBar((prev) => !prev)}>
               <AntDesign name="search1" size={24} color={COLORS.primary} />

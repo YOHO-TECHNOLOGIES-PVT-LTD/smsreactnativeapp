@@ -13,7 +13,7 @@ import { selectCartItems } from '~/features/booking-cart/redux/selectors';
 import { selectToken } from '~/features/token/redux/selectors';
 
 const SpareParts = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [spareParts, setSpareParts] = useState([]);
   const dispatch = useDispatch<AppDispatch>();
   const cartItems = useSelector(selectCartItems);
@@ -21,7 +21,7 @@ const SpareParts = () => {
   const [cartCount, setCartCount] = useState(0);
 
   const getAllSparePartsDetails = async () => {
-    try { 
+    try {
       const data = '';
       const response = await getAllSpareParts(data);
       if (response) {
@@ -66,10 +66,12 @@ const SpareParts = () => {
             paddingHorizontal: 15,
             marginBottom: 10,
           }}>
-          <Image
-            source={require('../../assets/home/LOGO.png')}
-            style={{ width: 145, height: 25 }}
-          />
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Image
+              source={require('../../assets/home/LOGO.png')}
+              style={{ width: 145, height: 25 }}
+            />
+          </TouchableOpacity>
           <View style={{ flexDirection: 'row', gap: 20, marginRight: 5 }}>
             <TouchableOpacity onPress={() => navigation.navigate('BookingsScreen' as never)}>
               <Image
