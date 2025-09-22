@@ -299,7 +299,6 @@ const Profile = () => {
   const fetchUserProfile = async () => {
     try {
       const response: any = await getUserProfileDetails({});
-      console.log(response, 'get response')
       if (response) {
         await AsyncStorage.setItem('userId', response?._id);
         setProfileImageLogo(response?.image);
@@ -638,7 +637,6 @@ const Profile = () => {
 
   // Utility Functions
   const saveUserProfileImage = (imageUri: string) => {
-    // console.log('Saving profile image to local storage:', imageUri);
   };
 
   const getUserProfileImage = () => {
@@ -687,7 +685,6 @@ const Profile = () => {
     try {
       const response: any = await updateUserProfileDetails(formData);
       if (response) {
-        console.log(response, 'update res')
         setEditProfileModal(false);
         fetchUserProfile();
         toast.success('Success', 'Profile updated successfully!');
@@ -766,7 +763,6 @@ const pickImage = async () => {
 
     if (!result.canceled) {
       const localUri = result.assets[0].uri;
-      console.log(localUri, 'local uri')
       // prepare FormData
       const formData = new FormData();
       formData.append("file", {
@@ -774,22 +770,17 @@ const pickImage = async () => {
         type: "image/jpeg",
         name: "profile.jpg",
       } as any);
-
-      console.log('payload before update',formData)
      
       const uploadResponse = await uploadSingleFileorImage(
         {userId: OBJECT_ID},
         formData
       );
-      console.log('uploaded image url',uploadResponse)
       if (uploadResponse?.data.image) {
         const uploadedUrl = uploadResponse.data.image;
 
         setFormData((prev) => ({ ...prev, image: uploadedUrl }));
         saveUserProfileImage(uploadedUrl);
 
-
-        console.log('payload updated',formData);
        
       } else {
         Alert.alert("Upload Failed", "Could not upload image.");
@@ -814,7 +805,6 @@ const pickImage = async () => {
       ]);
       // const response = uploadSingleFileorImage(currentImage,'ewkfmo')
       // setUploadedImage(response)
-      // console.log('uploaded image response',response)
 
     } else {
       setLogoutModalVisible(true);
@@ -1388,7 +1378,7 @@ const pickImage = async () => {
               onPress={handleEditProfile}
             />
             <View style={styles.separator} />
-            <MenuItem
+            {/* <MenuItem
               title="Delete Account"
               subtitle="Permanently delete your account"
               icon={<Trash2 size={20} color={COLORS1.primary} />}
@@ -1408,7 +1398,7 @@ const pickImage = async () => {
                   ]
                 );
               }}
-            />
+            /> */}
             <View style={styles.separator} />
             <MenuItem
               title="Logout"
@@ -1422,8 +1412,6 @@ const pickImage = async () => {
       <View style={{ marginTop: 45 }}></View>
     </>
   );
-
-  console.log(formData, 'formadata')
 
   return (
     <>
