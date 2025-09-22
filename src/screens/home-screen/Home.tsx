@@ -34,9 +34,9 @@ import { getAllSpareParts } from '~/features/spare-parts/service';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
 import { getUserProfileDetails } from '~/features/profile/service';
-import { createEnquiry } from '../../screens/home-screen/service/index'; // Import your enquiry service
 import { getImageUrl } from '~/utils/imageUtils';
 import { RefreshControl } from 'react-native';
+import { createEnquiry } from '~/features/home/service';
 
 const carlogos = [
   icons.carlogo1,
@@ -144,17 +144,16 @@ const HomePage = () => {
     }
   }, [dispatch]);
 
-  const handleClaimOffer = () => {
-    setShowOfferApplied(true);
-    setTimeout(() => {
-      setShowOfferApplied(false);
-    }, 3000);
-    toast.success('Offer Applied', 'Your offer has been successfully applied!');
-  };
+  // const handleClaimOffer = () => {
+  //   setShowOfferApplied(true);
+  //   setTimeout(() => {
+  //     setShowOfferApplied(false);
+  //   }, 3000);
+  //   toast.success('Offer Applied', 'Your offer has been successfully applied!');
+  // };
 
   const handleChatNow = () => {
     setShowChatModal(true);
-    // Pre-fill form with user data if available
     if (profileData) {
       setFormData({
         ...formData,
