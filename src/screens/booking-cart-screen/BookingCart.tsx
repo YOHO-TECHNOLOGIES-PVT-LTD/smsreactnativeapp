@@ -13,7 +13,7 @@ import { AppDispatch } from '~/store';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 
-const Settings = () => {
+const Settings = () => { 
   const navigation = useNavigation();
   const [bookingCarts, setBookingCarts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);

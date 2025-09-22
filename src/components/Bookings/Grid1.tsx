@@ -52,6 +52,7 @@ type CartProps = {
     services: CartItem[];
     totalAmount: number;
     _id: string;
+    type?: 'spare' | 'service'; // Added type property
   }[];
   onChangeCart: () => void;
   token: string;
@@ -66,107 +67,211 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
   const [cartId, setCartId] = useState<string | null>(null);
   const [serviceId, setServiceId] = useState<string | null>(null);
 
+  // Fix: Proper cart items extraction
   useEffect(() => {
     if (bookingCarts && bookingCarts?.length > 0) {
-      const products = bookingCarts?.flatMap((cart) => cart.products || []);
-      const services = bookingCarts?.flatMap((cart) => cart.services || []);
-      setCartItems({ products, services });
+      // Get all products and services from all carts
+      const allProducts = bookingCarts.reduce((acc, cart) => {
+        if (cart.products && cart.products.length > 0) {
+          return [...acc, ...cart.products];
+        }
+        return acc;
+      }, [] as CartItem[]);
+
+      const allServices = bookingCarts.reduce((acc, cart) => {
+        if (cart.services && cart.services.length > 0) {
+          return [...acc, ...cart.services];
+        }
+        return acc;
+      }, [] as CartItem[]);
+
+      setCartItems({ 
+        products: allProducts, 
+        services: allServices 
+      });
+
+      console.log('Cart items updated:', { 
+        products: allProducts.length, 
+        services: allServices.length 
+      });
+    } else {
+      // Reset cart items if no booking carts
+      setCartItems({ products: [], services: [] });
     }
   }, [bookingCarts]);
 
+  // Fix: Proper cart ID extraction
   useEffect(() => {
     if (bookingCarts && bookingCarts?.length > 0) {
-      const filterSpareCartId = bookingCarts?.find((item: any) => item?.type === 'spare');
-      const filterServiceCartId = bookingCarts?.find((item: any) => item?.type === 'service');
-      setCartId(filterSpareCartId?._id ?? null);
-      setServiceId(filterServiceCartId?._id ?? null);
+      // Find spare parts cart
+      const spareCart = bookingCarts.find((cart) => 
+        cart.type === 'spare' || (cart.products && cart.products.length > 0)
+      );
+      
+      // Find services cart
+      const serviceCart = bookingCarts.find((cart) => 
+        cart.type === 'service' || (cart.services && cart.services.length > 0)
+      );
+
+      setCartId(spareCart?._id ?? null);
+      setServiceId(serviceCart?._id ?? null);
+
+      console.log('Cart IDs updated:', { 
+        spareCartId: spareCart?._id, 
+        serviceCartId: serviceCart?._id 
+      });
     }
   }, [bookingCarts]);
 
   const getFilteredItems = () => {
     switch (activeTab) {
       case 'Spare Parts':
-        return cartItems.products;
+        return cartItems.products || [];
       case 'Services':
-        return cartItems.services;
+        return cartItems.services || [];
       default:
-        return [...cartItems.products, ...cartItems.services];
+        return [...(cartItems.products || []), ...(cartItems.services || [])];
     }
   };
 
   const calculateTotal = (items: CartItem[]) => {
-    return items.reduce(
-      (sum, item) => sum + parseInt(item?.price) * (item?.quantity ? item?.quantity : 1),
-      0
-    );
+    return items.reduce((sum, item) => {
+      const itemPrice = parseInt(item?.price) || 0;
+      const quantity = item?.quantity || 1;
+      return sum + (itemPrice * quantity);
+    }, 0);
   };
 
-  const totalAmount = calculateTotal(getFilteredItems());
   const filteredItems = getFilteredItems();
+  const totalAmount = calculateTotal(filteredItems);
 
   const handleConfirmOrder = useCallback(async () => {
+    console.log('Confirm order called for tab:', activeTab);
+    console.log('Filtered items:', filteredItems);
+    console.log('Booking carts:', bookingCarts);
+
     if (filteredItems?.length === 0) {
       toast.error('Empty Cart', 'Your cart is empty. Please add items to proceed.');
       return;
     }
+
     try {
       if (activeTab === 'Spare Parts') {
-        const data = { cartId: bookingCarts[0]?._id };
+        // Find the cart that has products
+        const spareCart = bookingCarts.find((cart) => 
+          cart.products && cart.products.length > 0
+        );
+        
+        if (!spareCart) {
+          toast.error('Error', 'No spare parts cart found.');
+          return;
+        }
+
+        console.log('Confirming spare parts order with cart ID:', spareCart._id);
+        
+        const data = { cartId: spareCart._id };
         const response = await addSparePartCartItems(data);
+        
         if (response) {
           token && onChangeCart();
-          toast.success('Success', response.message || 'Successfully placed your order!');
+          toast.success('Success', response.message || 'Successfully placed your spare parts order!');
         } else {
           toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
         }
+        
       } else if (activeTab === 'Services') {
-        const data = { cartId: bookingCarts[0]?._id };
+        // Find the cart that has services
+        const serviceCart = bookingCarts.find((cart) => 
+          cart.services && cart.services.length > 0
+        );
+        
+        if (!serviceCart) {
+          toast.error('Error', 'No services cart found.');
+          return;
+        }
+
+        console.log('Confirming services order with cart ID:', serviceCart._id);
+        
+        const data = { cartId: serviceCart._id };
         const response = await addServiceCartItems(data);
+        
         if (response) {
           token && onChangeCart();
-          toast.success('Success', response.message || 'Successfully placed your order!');
+          toast.success('Success', response.message || 'Successfully placed your services order!');
         } else {
           toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
         }
       }
     } catch (error) {
       console.error('Error confirming order:', error);
+      toast.error('Error', 'An error occurred while placing your order.');
     }
-  }, [activeTab, bookingCarts, token, onChangeCart]);
+  }, [activeTab, bookingCarts, filteredItems, token, onChangeCart]);
 
   const handleDelete = useCallback(
-    async (id: any) => {
-      if (activeTab === 'Spare Parts') {
-        const response = await deleteBookingCartProduct({ cartId: cartId, productId: id });
-        if (response) {
-          token && onChangeCart();
-          toast.success('Product removed from the cart', { autoClose: 2000 });
+    async (itemId: string) => {
+      console.log('Deleting item:', itemId, 'from tab:', activeTab);
+      
+      try {
+        if (activeTab === 'Spare Parts') {
+          if (!cartId) {
+            toast.error('Error', 'Cart ID not found for spare parts.');
+            return;
+          }
+          
+          const response = await deleteBookingCartProduct({ 
+            cartId: cartId, 
+            productId: itemId 
+          });
+          
+          if (response) {
+            token && onChangeCart();
+            toast.success('Success', 'Product removed from the cart');
+          }
+          
+        } else if (activeTab === 'Services') {
+          if (!serviceId) {
+            toast.error('Error', 'Cart ID not found for services.');
+            return;
+          }
+          
+          const response = await deleteBookingCartService({ 
+            cartId: serviceId, 
+            serviceId: itemId 
+          });
+          
+          if (response) {
+            token && onChangeCart();
+            toast.success('Success', 'Service removed from the cart');
+          }
         }
-      } else if (activeTab === 'Services') {
-        const response = await deleteBookingCartService({ cartId: serviceId, serviceId: id });
-        if (response) {
-          token && onChangeCart();
-          toast.success('Service removed from the cart', { autoClose: 2000 });
-        }
+      } catch (error) {
+        console.error('Error deleting item:', error);
+        toast.error('Error', 'Failed to remove item from cart.');
       }
     },
     [activeTab, cartId, serviceId, token, onChangeCart]
   );
 
-  const renderItem = (item: CartItem, index?: any) => {
-    const name = item?.productId?.productName || item?.service_name || 'Unknown Item';
-    const price = parseInt(item?.price);
-    const totalPrice = item?.productId ? item?.productId?.price * item?.quantity : price;
-    const imageSource = item?.productId
-      ? { uri: item?.productId?.image }
-      : { uri: item?.serviceId?.image };
+  const renderItem = (item: CartItem, index: number) => {
+    const name = item?.productId?.productName || item?.service_name || item?.serviceId?.service_name || 'Unknown Item';
+    const price = parseInt(item?.price) || 0;
+    const quantity = item?.quantity || 1;
+    const totalPrice = price * quantity;
+    
+    // Fix: Better image source handling
+    const imageSource = item?.productId?.image 
+      ? { uri: item.productId.image }
+      : item?.serviceId?.image 
+        ? { uri: item.serviceId.image }
+        : { uri: 'https://via.placeholder.com/80x80?text=No+Image' }; // Fallback image
 
     return (
-      <View key={index} style={styles.itemContainer}>
+      <View key={`${item._id}-${index}`} style={styles.itemContainer}>
         <Image source={imageSource} style={styles.itemImage} resizeMode="cover" />
 
         <View style={styles.itemDetails}>
-          <Text style={styles.itemName}>{name}</Text>
+          <Text style={styles.itemName} numberOfLines={2}>{name}</Text>
           <Text style={styles.itemPrice}>₹ {price} each</Text>
 
           {item?.productId && (
@@ -182,23 +287,21 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
             </>
           )}
 
-          {item?.description && (
+          {(item?.description || item?.serviceId?.description) && (
             <Text style={styles.itemInfo} numberOfLines={2}>
-              {item?.description}
+              {item?.description || item?.serviceId?.description}
             </Text>
           )}
         </View>
 
         <View style={styles.quantityContainer}>
-          <TouchableOpacity onPress={() => handleDelete(item?._id)}>
+          <TouchableOpacity onPress={() => handleDelete(item._id)}>
             <FontAwesome5 name="trash" size={20} color={COLORS.error80} />
           </TouchableOpacity>
           <Text style={styles.totalPrice}>₹ {totalPrice}</Text>
-          {item?.productId && (
-            <View style={styles.quantityBox}>
-              <Text style={styles.quantityText}>Qty: {item?.quantity || 1}</Text>
-            </View>
-          )}
+          <View style={styles.quantityBox}>
+            <Text style={styles.quantityText}>Qty: {quantity}</Text>
+          </View>
         </View>
       </View>
     );
@@ -219,16 +322,24 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
                 onPress={() => setActiveTab(tab)}>
                 <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
                   {tab}
+                  {/* Add item count indicator */}
+                  {tab === 'Spare Parts' && cartItems.products?.length > 0 && 
+                    ` (${cartItems.products.length})`
+                  }
+                  {tab === 'Services' && cartItems.services?.length > 0 && 
+                    ` (${cartItems.services.length})`
+                  }
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
+          
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             showsVerticalScrollIndicator={false}>
             {filteredItems?.length > 0 ? (
               <View style={styles.itemsContainer}>
-                {filteredItems?.map((item, index) => renderItem(item, index))}
+                {filteredItems.map((item, index) => renderItem(item, index))}
               </View>
             ) : (
               <View style={styles.emptyContainer}>
@@ -237,20 +348,29 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
                     ? 'No products in your cart'
                     : 'No services in your cart'}
                 </Text>
+                <Text style={styles.emptySubText}>
+                  Add some items to get started!
+                </Text>
               </View>
             )}
           </ScrollView>
+          
           <View style={styles.footer}>
             <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalAmount}>₹{totalAmount}</Text>
+              <Text style={styles.totalLabel}>Total ({filteredItems.length} items):</Text>
+              <Text style={styles.totalAmount}>₹{totalAmount.toLocaleString('en-IN')}</Text>
             </View>
 
             <TouchableOpacity
               style={[styles.confirmButton, filteredItems.length === 0 && styles.disabledButton]}
               onPress={handleConfirmOrder}
               disabled={filteredItems.length === 0}>
-              <Text style={styles.confirmButtonText}>Confirm Order</Text>
+              <Text style={styles.confirmButtonText}>
+                {filteredItems.length === 0 
+                  ? 'Cart is Empty' 
+                  : `Confirm Order (${filteredItems.length} items)`
+                }
+              </Text>
             </TouchableOpacity>
           </View>
         </ImageBackground>
@@ -307,7 +427,7 @@ const styles = StyleSheet.create({
   tabText: {
     ...FONTS.h4,
     color: COLORS.black,
-    fontWeight: 500,
+    fontWeight: '500',
   },
   activeTabText: {
     color: COLORS.white,
@@ -327,7 +447,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    height: 120,
+    minHeight: 120,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -344,7 +464,7 @@ const styles = StyleSheet.create({
   },
   itemName: {
     ...FONTS.h4,
-    fontWeight: 500,
+    fontWeight: '500',
     color: COLORS.primary_text,
     marginBottom: 5,
   },
@@ -356,6 +476,7 @@ const styles = StyleSheet.create({
   itemInfo: {
     ...FONTS.body5,
     color: COLORS.grey,
+    marginBottom: 2,
   },
   stockStatus: {
     ...FONTS.h5,
@@ -385,7 +506,7 @@ const styles = StyleSheet.create({
   totalPrice: {
     ...FONTS.h4,
     color: COLORS.primary,
-    fontWeight: 500,
+    fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,
@@ -395,6 +516,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...FONTS.h3,
+    color: COLORS.grey,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    ...FONTS.body4,
     color: COLORS.grey,
     textAlign: 'center',
   },
@@ -413,6 +540,7 @@ const styles = StyleSheet.create({
   totalContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 15,
   },
   totalLabel: {
@@ -422,6 +550,7 @@ const styles = StyleSheet.create({
   totalAmount: {
     ...FONTS.h3,
     color: COLORS.primary,
+    fontWeight: 'bold',
   },
   confirmButton: {
     backgroundColor: COLORS.primary,
@@ -435,6 +564,7 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     ...FONTS.h4,
     color: COLORS.white,
+    fontWeight: 'bold',
   },
 });
 

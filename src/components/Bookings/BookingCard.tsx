@@ -410,13 +410,12 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   useEffect(() => {
     translateY.value = withTiming(0, {
       duration: 1000,
-      delay,
       easing: Easing.out(Easing.exp),
     });
-    opacity.value = withTiming(1, { duration: 1500, delay });
+    opacity.value = withTiming(1, { duration: 1500 });
   }, [delay, opacity, translateY]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
+  const animatedStyle = useAnimatedStyle(() => ({ 
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
