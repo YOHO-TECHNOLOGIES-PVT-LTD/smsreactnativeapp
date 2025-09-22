@@ -57,7 +57,6 @@ type Service = {
 };
 
 interface ProfileData {
-  // ... other profile fields ...
   vehicleInfo: Array<{
     _id: string;
     registerNumber: string;
@@ -74,7 +73,6 @@ const Services = () => {
   const [error, setError] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState<string>('');
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
-  console.log("serviceCategories",serviceCategories); 
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
@@ -178,51 +176,61 @@ const Services = () => {
   }, [dispatch, TokenSelector]);
 
   const handleAddtoCart = async (vehicleIndex: number | null) => {
-    if (TokenSelector) {
-      if (!selectedService?.uuid) {
-        console.log('Missing required service data');
+   
+    if (!selectedService?.uuid) {
+      console.log('Error: No service selected');
+      toast.error('Error', 'Please select a service.');
+      return;
+    }
+
+    if (selectedVehicleIndex === null) {
+      console.log('Error: No vehicle selected');
+      toast.error('Error', 'Please select a vehicle.');
+      return;
+    }
+
+    if (selectedBookingType === 'schedule') {
+      if (!selectedDate || !startTime || !endTime) {
+        console.log('Error: Schedule details missing');
+        toast.error('Error', 'Please fill all schedule details.');
         return;
       }
-      if (selectedVehicleIndex === null) {
-        toast.error('Select Car', 'Please select a car');
-        return;
+    }
+
+    try {
+      const data = {
+        service: selectedService._id,
+        type: 'service',
+        requestType: selectedBookingType,
+        schedule_date:
+          selectedBookingType === 'schedule'
+            ? selectedDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            : null,
+        preferredTime: selectedBookingType === 'schedule' ? { startTime, endTime } : null,
+        vehicle: selectedVehicleIndex,
+      };
+
+      const response = await addBookingCartItem(data);
+
+      if (response) {
+        toast.success('Booked', `${selectedService?.service_name} has been booked`);
+        setAdded(true);
+        setBookingModalVisible(false);
+        setModalVisible(false);
+        setSelectedDate(new Date());
+        setSelectedVehicleIndex(null);
+      } else {
+        console.log('Error: Booking failed');
+        toast.error('Error', 'Something went wrong. Try again.');
       }
-      try {
-        const data = {
-          service: selectedService?._id,
-          type: 'service',
-          requestType: selectedBookingType,
-          schedule_date:
-            selectedDate.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            }) || null,
-          preferredTime: {
-            startTime,
-            endTime,
-          },
-          vehicle: selectedVehicleIndex,
-        };
-        const response = await addBookingCartItem(data);
-        if (response) {
-          toast.success('Booked', `${selectedService?.service_name} has been booked`);
-          setAdded(true);
-          setBookingModalVisible(false);
-          setModalVisible(false);
-          setSelectedDate(new Date());
-          setSelectedVehicleIndex(null);
-        } else {
-          setBookingModalVisible(false);
-          setModalVisible(false);
-          setSelectedDate(new Date());
-          setSelectedVehicleIndex(null);
-          toast.error('Error', 'Something went wrong, try again.');
-        }
-      } catch (error) {
-        console.log('Error adding to cart:', error);
-      }
+    } catch (error) {
+      console.log('Error adding to cart:', error);
+      toast.error('Error', 'Failed to add service to cart.');
     }
   };
 
@@ -555,7 +563,7 @@ const Services = () => {
                   setSearchQuery('');
                 }}>
                 <Image
-                  source={{ uri:getImageUrl(category?.image) }}
+                  source={{ uri: getImageUrl(category?.image) }}
                   style={styles.categoryImage}
                   alt="Category Image"
                 />
@@ -649,9 +657,7 @@ const Services = () => {
                 </Text>
               </View>
             }
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           />
         </View>
 
@@ -727,8 +733,12 @@ const Services = () => {
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => {
-                  setModalVisible(false);
-                  setBookingModalVisible(true);
+                  if (TokenSelector) {
+                    setModalVisible(false);
+                    setBookingModalVisible(true);
+                  } else {
+                    setSignUpConfirmModalVisible(true);
+                  }
                 }}>
                 <Text style={styles.addButtonText}>BOOK SERVICE</Text>
               </TouchableOpacity>

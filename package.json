@@ -47,6 +47,7 @@
     "react-native": "0.79.5",
     "react-native-calendars": "^1.1312.1",
     "react-native-emoji-picker": "^0.2.2",
+    "react-native-geolocation-service": "^5.3.1",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-html-to-pdf": "^0.12.0",
     "react-native-reanimated": "~3.17.4",
