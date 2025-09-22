@@ -35,6 +35,7 @@ import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
 import { getUserProfileDetails } from '~/features/profile/service';
 import { createEnquiry } from '../../screens/home-screen/service/index'; // Import your enquiry service
+import { getImageUrl } from '~/utils/imageUtils';
 
 const carlogos = [
   icons.carlogo1,
@@ -322,8 +323,7 @@ const HomePage = () => {
 
     try {
       setIsLoading(true);
-      
-    
+
       const payload = {
         fullName: formData.fullName,
         email: formData.email,
@@ -332,27 +332,24 @@ const HomePage = () => {
         serviceType: formData.serviceType,
         yourEnquiry: formData.yourEnquiry,
         date: formData.date,
-        subject:  formData.serviceType,
+        subject: formData.serviceType,
         description: formData.yourEnquiry,
       };
 
-     
-     const response =  await createEnquiry(payload);
-
-     console.log(response, "enquiry response")
-      
-      setShowChatModal(false);
-   
-      
-      setFormData({
-        fullName: '',
-        email: '',
-        phoneNumber: '',
-        carModel: '',
-        serviceType: 'general',
-        yourEnquiry: '',
-        date: '',
-      });
+      const response = await createEnquiry(payload);
+      if (response) {
+        setShowChatModal(false);
+        toast.success('Success', 'Your enquiry submitted successfully');
+        setFormData({
+          fullName: '',
+          email: '',
+          phoneNumber: '',
+          carModel: '',
+          serviceType: 'general',
+          yourEnquiry: '',
+          date: '',
+        });
+      }
     } catch (error) {
       console.error('Error submitting enquiry:', error);
       toast.error('Error', 'Failed to submit enquiry. Please try again.');
@@ -397,7 +394,7 @@ const HomePage = () => {
                     marginVertical: 3,
                   }}>
                   <Ionicons name="log-out-outline" size={20} color={COLORS.primary} />
-                  <Text style={{ fontWeight: 400, ...FONTS.h4, color: COLORS.primary }}>
+                  <Text style={{ fontWeight: 500, ...FONTS.h4, color: COLORS.primary }}>
                     Logout
                   </Text>
                 </TouchableOpacity>
@@ -408,7 +405,7 @@ const HomePage = () => {
                   onPress={() => navigation.navigate('LoginScreen' as never)}
                   style={{ flexDirection: 'row', gap: 2 }}>
                   <Ionicons name="log-in-outline" size={20} color={COLORS.primary} />
-                  <Text style={{ fontWeight: 400, ...FONTS.h4, color: COLORS.primary }}>Login</Text>
+                  <Text style={{ fontWeight: 500, ...FONTS.h4, color: COLORS.primary }}>Login</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -435,7 +432,10 @@ const HomePage = () => {
                     key={item.id}
                     style={styles.serviceItem1}
                     onPress={() => dispatch(setSelectedTab(screens.services))}>
-                    <MaterialIcons name="directions-car" size={28} color={COLORS.primary_02} />
+                    <Image
+                      source={require('../../assets/loading1.png')}
+                      style={{ width: 55, height: 55 }}
+                    />
                     <Text style={styles.serviceText}>{item?.category_name}</Text>
                   </TouchableOpacity>
                 ))
@@ -471,7 +471,10 @@ const HomePage = () => {
                 contentContainerStyle={{ paddingRight: 20 }}>
                 {spareParts?.slice(0, 10)?.map((item: any) => (
                   <View key={item?._id} style={[styles.partCard1, { width: 120 }]}>
-                    <Image source={item?.image} style={styles.partImage} />
+                    <Image
+                      source={item?.image && { uri: getImageUrl(item?.image) }}
+                      style={styles.partImage}
+                    />
                     <View style={styles.partDetails}>
                       <Text style={styles.partName}>{item?.productName?.substring(0, 15)}</Text>
                       <Text style={styles.partOem}>{item?.brand}</Text>
@@ -507,7 +510,7 @@ const HomePage = () => {
                       <FontAwesome name="tag" size={14} color={COLORS.white} />
                     </View>
                     <Image
-                      source={offer?.image}
+                      source={offer?.image && { uri: getImageUrl(offer?.image) }}
                       style={{
                         width: '100%',
                         height: 75,
@@ -518,7 +521,7 @@ const HomePage = () => {
                     />
                     <View
                       style={{
-                        flexDirection: 'row',
+                        flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}>
@@ -529,9 +532,9 @@ const HomePage = () => {
                       </Text>
                     </View>
                     <Text style={styles.offerDiscount}>{offer?.description?.substring(0, 15)}</Text>
-                    <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
+                    {/* <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
                       <Text style={styles.offerButtonText}>Claim Offer</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </Animated.View>
                 ))
               ) : (
@@ -638,10 +641,7 @@ const HomePage = () => {
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Full Name *</Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.fullName ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.fullName ? styles.inputError : null]}
                       value={formData.fullName}
                       onChangeText={(text) => handleInputChange('fullName', text)}
                     />
@@ -654,28 +654,20 @@ const HomePage = () => {
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Email *</Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.email ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.email ? styles.inputError : null]}
                       value={formData.email}
                       onChangeText={(text) => handleInputChange('email', text)}
                       keyboardType="email-address"
                       autoCapitalize="none"
                     />
-                    {errors.email ? (
-                      <Text style={styles.errorText}>{errors.email}</Text>
-                    ) : null}
+                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
                   </View>
 
                   {/* Phone Number */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Phone Number *</Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.phoneNumber ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.phoneNumber ? styles.inputError : null]}
                       value={formData.phoneNumber}
                       onChangeText={(text) => handleInputChange('phoneNumber', text)}
                       keyboardType="phone-pad"
@@ -690,10 +682,7 @@ const HomePage = () => {
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Car Details *</Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.carModel ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.carModel ? styles.inputError : null]}
                       value={formData.carModel}
                       onChangeText={(text) => handleInputChange('carModel', text)}
                     />
@@ -745,17 +734,12 @@ const HomePage = () => {
                       Preferred Service Date *
                     </Text>
                     <TextInput
-                      style={[
-                        styles.input,
-                        errors.date ? styles.inputError : null,
-                      ]}
+                      style={[styles.input, errors.date ? styles.inputError : null]}
                       value={formData.date}
                       onChangeText={(text) => handleInputChange('date', text)}
                       placeholder="DD/MM/YYYY"
                     />
-                    {errors.date ? (
-                      <Text style={styles.errorText}>{errors.date}</Text>
-                    ) : null}
+                    {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
                   </View>
 
                   {/* Your Enquiry */}
@@ -780,12 +764,8 @@ const HomePage = () => {
                   {/* Submit Button */}
                   <View
                     style={{ marginVertical: 12, justifyContent: 'center', alignItems: 'center' }}>
-                    <TouchableOpacity
-                      style={styles.submitButton}
-                      onPress={handleSubmitEnquiry}>
-                      <Text style={styles.submitButtonText}>
-                        Submit
-                      </Text>
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmitEnquiry}>
+                      <Text style={styles.submitButtonText}>Submit</Text>
                     </TouchableOpacity>
                   </View>
                 </ScrollView>

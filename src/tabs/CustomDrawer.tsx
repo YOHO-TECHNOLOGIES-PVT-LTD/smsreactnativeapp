@@ -14,6 +14,8 @@ import { useNavigation } from '@react-navigation/native';
 import toast from '../utils/toast';
 import { RootState } from '../store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserProfileDetails } from '~/features/profile/service';
+import { getImageUrl } from '~/utils/imageUtils';
 
 type CustomDrawerItemProps = {
   label: string;
@@ -56,13 +58,27 @@ const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({ label, icon, isFocu
 };
 
 type DrawerContentProps = {
-  navigation: DrawerNavigationProp<any>;
+  navigation: any;
 };
 
 const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
   const dispatch = useDispatch();
   const selectedTab = useSelector((state: RootState) => state.tabReducer.selectedTab);
   const [error, setError] = useState(false);
+  const [profileData, setProfileData] = useState<any>([]);
+
+  const fetchProfile = async () => {
+    try {
+      const response: any = await getUserProfileDetails({});
+      setProfileData(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, [dispatch]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -117,15 +133,21 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             navigation.navigate('MainLayout');
           }}>
           <Image
-            source={require('../assets/images/profile_picture.jpg')}
+            source={
+              profileData?.image
+                ? { uri: getImageUrl(profileData?.image) }
+                : require('../assets/images/profile_picture.jpg')
+            }
             onError={() => setError(true)}
             style={{ width: 50, height: 50, borderRadius: 25 }}
           />
           <View style={{ marginLeft: SIZES.radius, flex: 1 }}>
             <Text style={{ color: COLORS.primary_text, ...FONTS.h2_01, flexShrink: 1 }}>
-              YM User
+              {`${profileData?.firstName} ${profileData?.lastName}`}
             </Text>
-            <Text style={{ color: COLORS.primary_text, ...FONTS.h5 }}>ID: #YMU_1234</Text>
+            <Text style={{ color: COLORS.primary_text, ...FONTS.h5 }}>
+              Role: {profileData?.role}
+            </Text>
           </View>
         </TouchableOpacity>
 
@@ -178,21 +200,6 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             icon={icons.cart_outlined}
             onPress={() => navigation.navigate('BookingCartScreen')}
           />
-          {/* <CustomDrawerItem
-            label="Settings"
-            icon={icons.settings}
-            onPress={() => navigation.navigate('SettingsScreen')}
-          />
-          <CustomDrawerItem
-            label="Help Center"
-            icon={icons.help_outlined}
-            onPress={() => navigation.navigate('HelpCenterScreen')}
-          />
-          <CustomDrawerItem
-            label="FAQs"
-            icon={icons.faq}
-            onPress={() => navigation.navigate('FAQsScreen')}
-          /> */}
           <View
             style={{
               height: 1,
@@ -212,7 +219,6 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
 
 const ServiceDrawer: React.FC = () => {
   const Drawer = createDrawerNavigator();
-  const animatedValue = useSharedValue(0);
   const navigation = useNavigation<DrawerNavigationProp<any>>();
 
   useEffect(() => {
