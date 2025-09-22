@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   Easing,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import {
   User,
@@ -255,7 +256,7 @@ const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [profileData, setProfileData] = useState<any>({});
-  const [profileImageLogo,setProfileImageLogo] = useState<any>('');
+  const [profileImageLogo, setProfileImageLogo] = useState<any>('');
   const [bookingOrders, setBookingOrders] = useState<{
     serviceConfirm?: any[];
     productConfirm?: any[];
@@ -466,7 +467,7 @@ const Profile = () => {
   const [termsModal, setTermsModal] = useState(false);
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedImage,setUploadedImage] = useState<any>('');
+  const [uploadedImage, setUploadedImage] = useState<any>('');
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     vehicles: false,
@@ -636,8 +637,7 @@ const Profile = () => {
   };
 
   // Utility Functions
-  const saveUserProfileImage = (imageUri: string) => {
-  };
+  const saveUserProfileImage = (imageUri: string) => {};
 
   const getUserProfileImage = () => {
     return null;
@@ -668,7 +668,6 @@ const Profile = () => {
   };
 
   const handleSaveProfile = async () => {
-
     Animated.sequence([
       Animated.timing(headerOpacity, {
         toValue: 0.8,
@@ -749,55 +748,47 @@ const Profile = () => {
     ]);
   };
 
- const OBJECT_ID = profileData._id;
+  const OBJECT_ID = profileData._id;
 
-const pickImage = async () => {
-  setPhotoUploadModal(true);
-  try {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+  const pickImage = async () => {
+    setPhotoUploadModal(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-    if (!result.canceled) {
-      const localUri = result.assets[0].uri;
-      // prepare FormData
-      const formData = new FormData();
-      formData.append("file", {
-        uri: localUri,
-        type: "image/jpeg",
-        name: "profile.jpg",
-      } as any);
-     
-      const uploadResponse = await uploadSingleFileorImage(
-        {userId: OBJECT_ID},
-        formData
-      );
-      if (uploadResponse?.data.image) {
-        const uploadedUrl = uploadResponse.data.image;
+      if (!result.canceled) {
+        const localUri = result.assets[0].uri;
+        // prepare FormData
+        const formData = new FormData();
+        formData.append('file', {
+          uri: localUri,
+          type: 'image/jpeg',
+          name: 'profile.jpg',
+        } as any);
 
-        setFormData((prev) => ({ ...prev, image: uploadedUrl }));
-        saveUserProfileImage(uploadedUrl);
+        const uploadResponse = await uploadSingleFileorImage({ userId: OBJECT_ID }, formData);
+        if (uploadResponse?.data.image) {
+          const uploadedUrl = uploadResponse.data.image;
 
-       
-      } else {
-        Alert.alert("Upload Failed", "Could not upload image.");
+          setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+          saveUserProfileImage(uploadedUrl);
+        } else {
+          Alert.alert('Upload Failed', 'Could not upload image.');
+        }
       }
+    } catch (error) {
+      console.error('Error:', error);
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
+    } finally {
+      setPhotoUploadModal(false);
     }
-  } catch (error) {
-    console.error("Error:", error);
-    Alert.alert("Error", "Failed to upload image. Please try again.");
-  } finally {
-    setPhotoUploadModal(false);
-  }
-};
-
+  };
 
   const handlePhotoUpload = () => {
-  
-
     if (TokenSelector) {
       Alert.alert('Upload Photo', 'Choose photo source', [
         { text: 'Choose from Gallery', onPress: pickImage },
@@ -805,7 +796,6 @@ const pickImage = async () => {
       ]);
       // const response = uploadSingleFileorImage(currentImage,'ewkfmo')
       // setUploadedImage(response)
-
     } else {
       setLogoutModalVisible(true);
     }
@@ -951,7 +941,7 @@ const pickImage = async () => {
           return COLORS1.gray500;
       }
     };
-
+   
     return (
       <View style={styles.serviceItem}>
         <View style={styles.serviceHeader}>
@@ -1413,6 +1403,31 @@ const pickImage = async () => {
     </>
   );
 
+   // Add this state variable near your other useState declarations
+    const [refreshing, setRefreshing] = useState(false);
+
+    // Add this refresh function after your existing functions
+    const onRefresh = async () => {
+      try {
+        setRefreshing(true);
+
+        // Refresh user profile data
+        if (TokenSelector) {
+          await fetchUserProfile();
+          await fetchOrders();
+        }
+
+        // Optional: Add a small delay for better UX
+        setTimeout(() => {
+          setRefreshing(false);
+        }, 500);
+      } catch (error) {
+        console.error('Error refreshing profile:', error);
+        setRefreshing(false);
+      }
+    };
+
+
   return (
     <>
       <StatusBar backgroundColor={COLORS1.black} barStyle="light-content" />
@@ -1488,7 +1503,19 @@ const pickImage = async () => {
           </Animated.View>
 
           {/* Profile Information Content */}
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[COLORS1.primary]} // Android
+                tintColor={COLORS1.primary} // iOS
+                title="Refreshing..." // iOS
+                titleColor={COLORS1.primary} // iOS
+              />
+            }>
             {TokenSelector ? (
               <View style={styles.section}>
                 <View style={styles.sectionTitleContainer}>
@@ -1753,10 +1780,11 @@ const pickImage = async () => {
             onRequestClose={() => setEditProfileModal(false)}>
             <View style={styles.modalContainer}>
               <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => {
-                  setEditProfileModal(false);
-                  setFormData({...formData, image: profileImageLogo});
-                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEditProfileModal(false);
+                    setFormData({ ...formData, image: profileImageLogo });
+                  }}>
                   <X size={24} color={COLORS1.white} />
                 </TouchableOpacity>
                 <Text style={styles.modalTitle}>Edit Profile</Text>

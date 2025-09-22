@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { COLORS, FONTS, icons, SIZES, SPACING } from '~/constants';
@@ -279,15 +280,24 @@ const Bookings = () => {
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={handleRefresh}
-                    colors={[COLORS.primary]} 
-                    tintColor={COLORS.primary} 
+                    colors={[COLORS.primary]}
+                    tintColor={COLORS.primary}
                   />
                 }
               />
             ) : (
-              <View style={styles.emptyContainer}>
+              <ScrollView
+                contentContainerStyle={styles.emptyContainer}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    colors={[COLORS.primary]}
+                    tintColor={COLORS.primary}
+                  />
+                }>
                 <Text style={{ ...FONTS.body3, color: COLORS.grey }}>No orders found</Text>
-              </View>
+              </ScrollView>
             )}
           </View>
         </ImageBackground>
