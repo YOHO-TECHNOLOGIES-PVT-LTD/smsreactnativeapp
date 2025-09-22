@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Image } from 'react-native';
+import { RefreshControl } from 'react-native';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, icons, SIZES } from '~/constants';
@@ -24,6 +25,7 @@ const NotificationScreen: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('All');
   const navigate = useNavigation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchAllNotifications = async () => {
     const userId = await AsyncStorage.getItem('userId');
@@ -65,6 +67,17 @@ const NotificationScreen: React.FC = () => {
     </View>
   );
 
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchAllNotifications();
+    } catch (error) {
+      console.log('Error while refreshing notifications:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ paddingHorizontal: 10, flexDirection: 'row', gap: 15, marginVertical: 10 }}>
@@ -98,6 +111,7 @@ const NotificationScreen: React.FC = () => {
         renderItem={renderNotification}
         contentContainerStyle={{ padding: SIZES.radius }}
         ListEmptyComponent={<Text style={styles.emptyText}>No notifications found</Text>}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
     </SafeAreaView>
   );
@@ -147,7 +161,7 @@ const styles = StyleSheet.create({
   title: {
     ...FONTS.h3,
     fontWeight: 500,
-    color: COLORS.primary
+    color: COLORS.primary,
   },
   message: {
     marginTop: 4,

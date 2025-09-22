@@ -20,6 +20,7 @@ import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '../CustomLogoutModal';
+import { getImageUrl } from '~/utils/imageUtils';
 
 type Props = {
   part: SparePart;
@@ -145,7 +146,7 @@ const SparePartsCard = ({ part }: Props) => {
       <Pressable style={styles.card} onPress={() => setModalVisible(true)}>
         {/* Image at the top */}
         <Image
-          source={{ uri: part?.image }}
+          source={{ uri: getImageUrl(part?.image) }}
           style={styles.cardImage}
           resizeMode="cover"
           onError={() => setError(true)}
@@ -184,7 +185,7 @@ const SparePartsCard = ({ part }: Props) => {
         <ScrollView style={styles.modalContainer}>
           {/* Image with back button */}
           <View style={styles.modalImageContainer}>
-            <Image source={{ uri: part?.image }} style={styles.modalImage} resizeMode="cover" />
+            <Image source={{ uri: getImageUrl(part?.image) }} style={styles.modalImage} resizeMode="cover" />
             <TouchableOpacity style={styles.backButton} onPress={() => setModalVisible(false)}>
               <MaterialIcons name="arrow-back" size={24} color={COLORS.white} />
             </TouchableOpacity>

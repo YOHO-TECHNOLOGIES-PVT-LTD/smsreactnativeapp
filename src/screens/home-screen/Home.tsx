@@ -36,6 +36,7 @@ import { getAllOffers } from '~/features/Offer/service';
 import { getUserProfileDetails } from '~/features/profile/service';
 import { createEnquiry } from '../../screens/home-screen/service/index'; // Import your enquiry service
 import { getImageUrl } from '~/utils/imageUtils';
+import { RefreshControl } from 'react-native';
 
 const carlogos = [
   icons.carlogo1,
@@ -58,6 +59,7 @@ const HomePage = () => {
   const [showChatModal, setShowChatModal] = useState(false);
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const tokenSelector = useSelector(selectToken);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [spareParts, setSpareParts] = useState([]);
@@ -357,6 +359,21 @@ const HomePage = () => {
       setIsLoading(false);
     }
   };
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await getAllSparePartsDetails();
+      await fetchAllServices();
+      await fetchAllOffers();
+      if (tokenSelector) {
+        await fetchUserProfile();
+      }
+    } catch (error) {
+      console.log('Error while refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <>
@@ -414,7 +431,8 @@ const HomePage = () => {
           {/* Search Bar */}
           <AnimatedSearch />
         </View>
-        <ScrollView>
+        <ScrollView
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           {/* Image Carousel */}
           <View style={{ backgroundColor: COLORS.primary_04, paddingVertical: 10 }}>
             <ImageCarousel images={images} />
