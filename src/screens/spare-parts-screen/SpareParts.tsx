@@ -21,7 +21,7 @@ const SpareParts = () => {
   const [cartCount, setCartCount] = useState(0);
 
   const getAllSparePartsDetails = async () => {
-    try {
+    try { 
       const data = '';
       const response = await getAllSpareParts(data);
       if (response) {
@@ -97,10 +97,7 @@ const SpareParts = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <SparePartsPage
-          spareParts={spareParts}
-          onRefresh={getAllSparePartsDetails} 
-        />
+        <SparePartsPage spareParts={spareParts} onRefresh={getAllSparePartsDetails} />
       </SafeAreaView>
     </>
   );

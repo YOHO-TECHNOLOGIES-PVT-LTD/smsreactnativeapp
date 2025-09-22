@@ -22,10 +22,6 @@ import { AppDispatch } from '~/store';
 import CustomLogoutModal from '../CustomLogoutModal';
 import { getImageUrl } from '~/utils/imageUtils';
 
-type Props = {
-  part: SparePart;
-};
-
 type SparePart = {
   uuid: string;
   _id: string;
@@ -42,7 +38,7 @@ type SparePart = {
 
 const { width } = Dimensions.get('window');
 
-const SparePartsCard = ({ part }: Props) => {
+const SparePartsCard = ({ part }: any) => {
   const [error, setError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -84,13 +80,18 @@ const SparePartsCard = ({ part }: Props) => {
         };
         const response = await addBookingCartItem(data);
         if (response) {
-          setModalVisible(false);
-          setQuantity(1);
           toast.success('Added', `${part?.productName} is added to cart`);
-          setAdded(true);
+          setTimeout(() => {
+            setModalVisible(false);
+            setQuantity(1);
+            setAdded(true);
+          }, 2000);
+        } else {
+          toast.error('Error', 'Failed to add to cart');
         }
         setIsLoading(false);
       } catch (error) {
+        toast.error('Error', 'Failed to add to cart');
         console.error('Error adding to cart:', error);
       }
     }
@@ -185,7 +186,11 @@ const SparePartsCard = ({ part }: Props) => {
         <ScrollView style={styles.modalContainer}>
           {/* Image with back button */}
           <View style={styles.modalImageContainer}>
-            <Image source={{ uri: getImageUrl(part?.image) }} style={styles.modalImage} resizeMode="cover" />
+            <Image
+              source={{ uri: getImageUrl(part?.image) }}
+              style={styles.modalImage}
+              resizeMode="cover"
+            />
             <TouchableOpacity style={styles.backButton} onPress={() => setModalVisible(false)}>
               <MaterialIcons name="arrow-back" size={24} color={COLORS.white} />
             </TouchableOpacity>
