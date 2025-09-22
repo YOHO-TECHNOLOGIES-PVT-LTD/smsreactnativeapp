@@ -113,6 +113,12 @@ class Client {
       post: (params: any, data: any) =>
         httpClient.uploadFile(API_END_POINTS.upload.post.replace(':userId', params?.userId), data),
     },
+   
+       uploadMultiple: {
+       post: (params: any, data: any) =>
+        httpClient.uploadFile(API_END_POINTS.upload.postMultiImage.replace(':userId', params?.userId), data),
+    },
+
   };
 }
 

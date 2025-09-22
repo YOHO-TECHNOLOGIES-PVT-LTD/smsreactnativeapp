@@ -90,5 +90,6 @@ export const API_END_POINTS = {
   },
   upload: {
     post: '/api/image/singlefile/:userId',
+    postMultiImage: '/api/image/multiplefile/:userId'
   },
 };
