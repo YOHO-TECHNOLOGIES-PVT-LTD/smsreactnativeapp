@@ -110,7 +110,8 @@ class Client {
       post: (data: any) => httpClient.post(API_END_POINTS.enquiry.Post, data),
     },
     upload: {
-      post: (data: any) => httpClient.uploadFile(API_END_POINTS.upload.post, data),
+      post: (params: any, data: any) =>
+        httpClient.uploadFile(API_END_POINTS.upload.post.replace(':userId', params?.userId), data),
     },
   };
 }

@@ -49,12 +49,6 @@ Axios.interceptors.response.use(
     if (process.env.NODE_ENV === 'development') {
       console.log('HTTP Error:', error?.response);
     }
-    // if (
-    //   (error?.response?.data?.status && error?.response?.data?.message === 'Password not match') ||
-    //   error?.response?.data?.message === 'User not found with these credentials'
-    // ) {
-    //   Alert.alert('Failed', error?.response?.data?.message);
-    // }
     return Promise.reject(error);
   }
 );
