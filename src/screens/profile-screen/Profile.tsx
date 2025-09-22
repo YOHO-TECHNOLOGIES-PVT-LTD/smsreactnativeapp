@@ -81,10 +81,12 @@ import { getToken, logout } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllBookingsCartItems } from '~/features/bookings/service';
-import { formatDateandmonth, formatDateMonthandYear } from '../../utils/formatDate';
+import { formatDate, formatDateandmonth, formatDateMonthandYear } from '../../utils/formatDate';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
 import { Feather } from '@expo/vector-icons';
+import { uploadSingleFileorImage } from '~/features/common/service';
+import { getImageUrl } from '~/utils/imageUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -296,6 +298,7 @@ const Profile = () => {
   const fetchUserProfile = async () => {
     try {
       const response: any = await getUserProfileDetails({});
+      console.log(response, 'get response')
       if (response) {
         await AsyncStorage.setItem('userId', response?._id);
         setFormData({
@@ -462,6 +465,7 @@ const Profile = () => {
   const [termsModal, setTermsModal] = useState(false);
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedImage,setUploadedImage] = useState<any>('');
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     vehicles: false,
@@ -664,9 +668,7 @@ const Profile = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (formData?.image) {
-      saveUserProfileImage(formData?.image);
-    }
+
     Animated.sequence([
       Animated.timing(headerOpacity, {
         toValue: 0.8,
@@ -683,6 +685,7 @@ const Profile = () => {
     try {
       const response: any = await updateUserProfileDetails(formData);
       if (response) {
+        console.log(response, 'update res')
         setEditProfileModal(false);
         fetchUserProfile();
         toast.success('Success', 'Profile updated successfully!');
@@ -746,56 +749,70 @@ const Profile = () => {
     ]);
   };
 
-  const pickImage = async () => {
-    setPhotoUploadModal(true);
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
+ const OBJECT_ID = profileData._id;
 
-      if (!result.canceled) {
-        const newImageUri = result.assets[0].uri;
-        setFormData({ ...formData, image: newImageUri });
-        saveUserProfileImage(newImageUri);
+const pickImage = async () => {
+  setPhotoUploadModal(true);
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      const localUri = result.assets[0].uri;
+      console.log(localUri, 'local uri')
+      // prepare FormData
+      const formData = new FormData();
+      formData.append("file", {
+        uri: localUri,
+        type: "image/jpeg",
+        name: "profile.jpg",
+      } as any);
+
+      console.log('payload before update',formData)
+     
+      const uploadResponse = await uploadSingleFileorImage(
+        {userId: OBJECT_ID},
+        formData
+      );
+      console.log('uploaded image url',uploadResponse)
+      if (uploadResponse?.data.image) {
+        const uploadedUrl = uploadResponse.data.image;
+
+        setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+        saveUserProfileImage(uploadedUrl);
+
+
+        console.log('payload updated',formData);
+       
+      } else {
+        Alert.alert("Upload Failed", "Could not upload image.");
       }
-    } catch (error) {
-      toast.error('Error', 'Failed to upload image. Please try again.');
-    } finally {
-      setPhotoUploadModal(false);
     }
-  };
+  } catch (error) {
+    console.error("Error:", error);
+    Alert.alert("Error", "Failed to upload image. Please try again.");
+  } finally {
+    setPhotoUploadModal(false);
+  }
+};
 
-  const takePhoto = async () => {
-    setPhotoUploadModal(true);
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        const newImageUri = result.assets[0].uri;
-        setFormData({ ...formData, image: newImageUri });
-        saveUserProfileImage(newImageUri);
-      }
-    } catch (error) {
-      toast.error('Error', 'Failed to take photo. Please try again.');
-    } finally {
-      setPhotoUploadModal(false);
-    }
-  };
 
   const handlePhotoUpload = () => {
+  
+
     if (TokenSelector) {
       Alert.alert('Upload Photo', 'Choose photo source', [
-        { text: 'Take Photo', onPress: takePhoto },
         { text: 'Choose from Gallery', onPress: pickImage },
         { text: 'Cancel', style: 'cancel', onPress: () => setPhotoUploadModal(false) },
       ]);
+      // const response = uploadSingleFileorImage(currentImage,'ewkfmo')
+      // setUploadedImage(response)
+      // console.log('uploaded image response',response)
+
     } else {
       setLogoutModalVisible(true);
     }
@@ -1403,6 +1420,8 @@ const Profile = () => {
     </>
   );
 
+  console.log(formData, 'formadata')
+
   return (
     <>
       <StatusBar backgroundColor={COLORS1.black} barStyle="light-content" />
@@ -1428,7 +1447,7 @@ const Profile = () => {
                   <View style={styles.profileImageContainer}>
                     {formData?.image ? (
                       <Image
-                        source={{ uri: formData?.image }}
+                        source={{ uri: getImageUrl(formData?.image) }}
                         accessibilityLabel={`${formData?.firstName + ' ' + formData?.lastName || 'Customer'}`}
                         style={{
                           width: 100,
@@ -1743,7 +1762,10 @@ const Profile = () => {
             onRequestClose={() => setEditProfileModal(false)}>
             <View style={styles.modalContainer}>
               <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => setEditProfileModal(false)}>
+                <TouchableOpacity onPress={() => {
+                  setEditProfileModal(false);
+                 
+                }}>
                   <X size={24} color={COLORS1.white} />
                 </TouchableOpacity>
                 <Text style={styles.modalTitle}>Edit Profile</Text>
@@ -1753,7 +1775,7 @@ const Profile = () => {
                 <View style={styles.photoSection}>
                   <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
                     <View style={styles.editProfileImageContainer}>
-                      <Image source={{ uri: formData?.image }} style={styles.editProfileImage} />
+                      <Image src={getImageUrl(formData?.image)} style={styles.editProfileImage} />
                       <View style={styles.editCameraIcon}>
                         <Camera size={16} color={COLORS1.white} />
                       </View>
