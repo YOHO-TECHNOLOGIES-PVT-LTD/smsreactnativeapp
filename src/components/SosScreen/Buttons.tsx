@@ -355,7 +355,6 @@ export default function RoadsideAssistanceScreen() {
   const onRefresh = async () => {
     try {
       setRefreshing(true);
-      // 🔄 Re-fetch user profile and reset state
       const userResponse = await getUserProfileDetails();
       setUser(userResponse);
 
@@ -366,8 +365,6 @@ export default function RoadsideAssistanceScreen() {
         setVehicleList([]);
         setSelectedVehicle(null);
       }
-
-      // Re-fetch location if modal is open
       if (modalVisible) {
         await fetchLocation();
       }
