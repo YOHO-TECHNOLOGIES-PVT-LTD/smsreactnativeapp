@@ -94,6 +94,7 @@ const OrderDetailsModal: React.FC<{
   const isDispatched = order?.status === 'Dispatched to Courier';
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log('first, ', order);
   const handleDownloadInvoice = async () => {
     try {
       if (!order?.uuid) {
@@ -179,12 +180,12 @@ const OrderDetailsModal: React.FC<{
         {/* Fixed Order Summary Section */}
         <View style={styles.fixedOrderSummary}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
-          <View style={styles.summaryRow}>
+          {/* <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Order ID:</Text>
             <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
-              {order?.orderId || 'N/A'}
+              {order?.slipId }
             </Text>
-          </View>
+          </View> */}
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Order Date:</Text>
             <Text style={styles.summaryValue}>{formatDateandTime(order?.createdAt)}</Text>
@@ -315,19 +316,21 @@ const OrderDetailsModal: React.FC<{
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.downloadButton]}
-              onPress={handleDownloadInvoice}
-              disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color={COLORS.white} size="small" />
-              ) : (
-                <>
-                  <MaterialIcons name="file-download" size={20} color={COLORS.white} />
-                  <Text style={styles.actionButtonText}>Download Invoice</Text>
-                </>
-              )}
-            </TouchableOpacity>
+            {(order.status === 'Confirm Order' || order.status === 'Dispatched to Courier') && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.downloadButton]}
+                onPress={handleDownloadInvoice}
+                disabled={isLoading}>
+                {isLoading ? (
+                  <ActivityIndicator color={COLORS.white} size="small" />
+                ) : (
+                  <>
+                    <MaterialIcons name="file-download" size={20} color={COLORS.white} />
+                    <Text style={styles.actionButtonText}>Download Invoice</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
 
             {isDispatched && (
               <TouchableOpacity
@@ -426,7 +429,10 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   return (
     <>
       <Animated.View style={[animatedStyle, styles.container]}>
-        <TouchableOpacity style={styles.card} onPress={() => setShowDetails(true)}>
+        <TouchableOpacity
+          style={styles.card}
+          //  onPress={() => setShowDetails(true)}
+        >
           {/* Image and Status Section */}
           <View style={styles.imageContainer}>
             <Image source={{ uri: data.image }} style={styles.image} />
@@ -535,7 +541,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     ...FONTS.h7,
-    color: "white"
+    color: 'white',
   },
   contentContainer: {
     flex: 1,

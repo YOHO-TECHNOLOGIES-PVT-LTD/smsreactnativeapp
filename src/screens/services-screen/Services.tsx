@@ -575,7 +575,7 @@ const Services = () => {
                   source={
                     category?.image
                       ? { uri: getImageUrl(category?.image) }
-                      : require('../../assets/loading1.png')
+                      : require('../../assets/service.png')
                   }
                   style={styles.categoryImage}
                   alt="Category Image"
