@@ -159,7 +159,9 @@ const Services = () => {
     if (TokenSelector) {
       fetchUserProfile();
     }
+  }, [dispatch]);
 
+  useEffect(() => {
     const getCartCount = () => {
       if (cartItems?.length == 1) {
         return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
@@ -173,7 +175,7 @@ const Services = () => {
       }
     };
     setCartCount(getCartCount() ?? 0);
-  }, [dispatch, TokenSelector]);
+  }, [dispatch, cartItems]);
 
   const handleAddtoCart = async (vehicleIndex: number | null) => {
     if (!selectedService?.uuid) {
