@@ -24,6 +24,7 @@ import { AppDispatch } from '~/store';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { getUserProfileDetails } from '~/features/profile/service';
+import { uploadMutlipleFileorImage } from '~/features/common/service';
 
 interface Issues {
   id: String;
@@ -105,6 +106,7 @@ export default function RoadsideAssistanceScreen() {
   const [locationText, setLocationText] = useState('Fetching location...');
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [userId,setuserId] = useState<any>('');
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -113,7 +115,7 @@ export default function RoadsideAssistanceScreen() {
         // console.log('User details:', userResponse);
 
         setUser(userResponse);
-
+        setuserId(userResponse._id)
         if (userResponse?.vehicleInfo?.length > 0) {
           setVehicleList(userResponse.vehicleInfo);
           setSelectedVehicle(userResponse.vehicleInfo[0]);
@@ -194,29 +196,51 @@ export default function RoadsideAssistanceScreen() {
     setModalVisible(true);
   };
 
-  const pickImage = async () => {
+  
+
+const pickImage = async () => {
+  try {
     let result: any = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
       quality: 1,
       allowsMultipleSelection: true,
     });
 
     if (!result.canceled) {
-      let newImages = result.assets.map((asset: any) => asset.uri);
+      // take only first 3 images
+      const selected = result.assets.slice(0, 3);
 
-      // Combine old + new
-      let combined = [...images, ...newImages];
+      // prepare FormData
+      const formData = new FormData();
+      selected.forEach((file: any, index: number) => {
+        const filename = file.uri.split("/").pop();
+        const match = /\.(\w+)$/.exec(filename ?? "");
+        const type = match ? `image/${match[1]}` : `image`;
 
-      if (combined.length > 3) {
-        alert(`You selected ${combined.length} images, but only 3 are allowed.`);
-        combined = combined.slice(0, 3);
-      }
+        formData.append("files", {
+          uri: file.uri,
+          name: filename,
+          type,
+        } as any);
+      });
 
-      setImages(combined);
+      const response = await uploadMutlipleFileorImage(
+        { userId: userId }, 
+        formData  
+      );
+      const uploadedImages = Array.isArray(response.data.image)
+        ? response.data.image
+        : [response.data.image];
+
+      setImages(uploadedImages);
+      console.log("Upload Response:", response);
     }
-  };
+  } catch (error) {
+    console.error("Error in pickImage:", error);
+  }
+};
+
 
   const takePhoto = async () => {
     if (images.length >= 3) {
@@ -436,7 +460,7 @@ export default function RoadsideAssistanceScreen() {
 
           {/* Own Tab Content */}
           {activeTab === 'own' && user && (
-            <View style={styles.tabContent}>
+            <ScrollView style={styles.tabContent}>
               <Text style={styles.sectionTitle}>Your Details</Text>
 
               <View style={styles.detailRow}>
@@ -532,7 +556,7 @@ export default function RoadsideAssistanceScreen() {
                   </View>
                 ))}
               </View>
-            </View>
+            </ScrollView>
           )}
 
           {/* Others Tab Content */}
