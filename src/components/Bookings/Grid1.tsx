@@ -6,13 +6,12 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Alert,
   ImageBackground,
+  Dimensions,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { COLORS, FONTS, icons, SPACING } from '~/constants';
+import { COLORS, FONTS, icons, } from '~/constants';
 import {
-  addBookingCartItem,
   deleteBookingCartProduct,
   deleteBookingCartService,
 } from '~/features/booking-cart/service';
@@ -20,6 +19,8 @@ import { addServiceCartItems, addSparePartCartItems } from '~/features/bookings/
 import toast from '~/utils/toast';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { getImageUrl } from '~/utils/imageUtils';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 type CartItem = {
   _id: string;
@@ -68,10 +69,8 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
   const [cartId, setCartId] = useState<string | null>(null);
   const [serviceId, setServiceId] = useState<string | null>(null);
 
-  // Fix: Proper cart items extraction
   useEffect(() => {
     if (bookingCarts && bookingCarts?.length > 0) {
-      // Get all products and services from all carts
       const allProducts = bookingCarts.reduce((acc, cart) => {
         if (cart.products && cart.products.length > 0) {
           return [...acc, ...cart.products];
@@ -96,21 +95,16 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
         services: allServices.length,
       });
     } else {
-      // Reset cart items if no booking carts
       setCartItems({ products: [], services: [] });
     }
   }, [bookingCarts]);
   console.log('Bookin', bookingCarts);
 
-  // Fix: Proper cart ID extraction
   useEffect(() => {
     if (bookingCarts && bookingCarts?.length > 0) {
-      // Find spare parts cart
       const spareCart = bookingCarts.find(
         (cart) => cart.type === 'spare' || (cart.products && cart.products.length > 0)
       );
-
-      // Find services cart
       const serviceCart = bookingCarts.find(
         (cart) => cart.type === 'service' || (cart.services && cart.services.length > 0)
       );
@@ -159,7 +153,6 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
 
     try {
       if (activeTab === 'Spare Parts') {
-        // Find the cart that has products
         const spareCart = bookingCarts.find((cart) => cart.products && cart.products.length > 0);
 
         if (!spareCart) {
@@ -183,7 +176,6 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
           toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
         }
       } else if (activeTab === 'Services') {
-        // Find the cart that has services
         const serviceCart = bookingCarts.find((cart) => cart.services && cart.services.length > 0);
 
         if (!serviceCart) {
@@ -317,11 +309,11 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <View style={{ flex: 1 }}>
-        <ImageBackground
-          source={icons.booking_background}
-          style={styles.backgroundImage}
-          resizeMode="cover">
+      <ImageBackground
+        source={icons.booking_background}
+        style={styles.backgroundImage}
+        resizeMode="cover">
+        <View style={styles.contentOverlay}>
           <View style={styles.tabContainer}>
             {(['Spare Parts', 'Services'] as const).map((tab) => (
               <TouchableOpacity
@@ -343,7 +335,10 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
           </View>
 
           <ScrollView
-            contentContainerStyle={styles.scrollContainer}
+            contentContainerStyle={[
+              styles.scrollContainer,
+              filteredItems.length === 0 && styles.emptyScrollContainer,
+            ]}
             showsVerticalScrollIndicator={false}>
             {filteredItems?.length > 0 ? (
               <View style={styles.itemsContainer}>
@@ -363,7 +358,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
 
           {/* Footer */}
           {filteredItems.length > 0 && (
-            <View style={[styles.footer]}>
+            <View style={styles.footer}>
               <View style={styles.totalContainer}>
                 <Text style={styles.totalLabel}>Total ({filteredItems.length} items):</Text>
                 <Text style={styles.totalAmount}>₹{totalAmount.toLocaleString('en-IN')}</Text>
@@ -376,8 +371,8 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
               </TouchableOpacity>
             </View>
           )}
-        </ImageBackground>
-      </View>
+        </View>
+      </ImageBackground>
     </GestureHandlerRootView>
   );
 };
@@ -389,16 +384,17 @@ const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
     width: '100%',
-    height: SPACING.huge,
+    height: '100%',
   },
-  contentContainer: {
+  contentOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.85)',
   },
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 30,
-    justifyContent: 'space-between',
+  },
+  emptyScrollContainer: {
+    minHeight: screenHeight - 150,
   },
   header: {
     padding: 20,
@@ -414,7 +410,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 10,
-    backgroundColor: COLORS.primary_04,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   tabButton: {
     paddingVertical: 8,
@@ -515,6 +511,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
+    minHeight: screenHeight * 0.5,
   },
   emptyText: {
     ...FONTS.h3,
@@ -533,6 +530,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     borderRadius: 10,
     marginTop: 10,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
