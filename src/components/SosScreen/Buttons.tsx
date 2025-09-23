@@ -208,11 +208,16 @@ const pickImage = async () => {
     });
 
     if (!result.canceled) {
-      // take only first 3 images
+      // Take only first 3 images
       const selected = result.assets.slice(0, 3);
-
-      // prepare FormData
+      
+      // Prepare FormData correctly
       const formData = new FormData();
+      
+      // Append userId as a field if the API expects it
+      formData.append('userId', userId);
+      
+      // Append each file
       selected.forEach((file: any, index: number) => {
         const filename = file.uri.split("/").pop();
         const match = /\.(\w+)$/.exec(filename ?? "");
@@ -225,19 +230,24 @@ const pickImage = async () => {
         } as any);
       });
 
-      const response = await uploadMutlipleFileorImage(
-        { userId: userId }, 
-        formData  
-      );
-      const uploadedImages = Array.isArray(response.data.image)
-        ? response.data.image
-        : [response.data.image];
+      console.log('Uploading images...', formData);
+      
+      // Call the API with just FormData
+      const response = await uploadMutlipleFileorImage(formData, userId);
+      
+      if (response && response.data) {
+        const uploadedImages = Array.isArray(response.data.image)
+          ? response.data.image
+          : [response.data.image];
 
-      setImages(uploadedImages);
-      console.log("Upload Response:", response);
+        setImages(prev => [...prev, ...uploadedImages]);
+        toast.success('Success', 'Images uploaded successfully!');
+        console.log("Upload Response:", response);
+      }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in pickImage:", error);
+    toast.error('Upload Failed', error.message || 'Failed to upload images');
   }
 };
 
