@@ -107,7 +107,12 @@ const Settings = () => {
           ) : (
             <ScrollView
               // style={{ flex: 1 }}
-              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            >
               <Grid1
                 bookingCarts={bookingCarts}
                 onChangeCart={fetchAllBookingCarts}

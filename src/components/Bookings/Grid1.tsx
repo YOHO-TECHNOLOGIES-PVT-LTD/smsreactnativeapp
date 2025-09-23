@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   ImageBackground,
+  Dimensions,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { COLORS, FONTS, icons, SPACING } from '~/constants';
@@ -20,6 +21,8 @@ import { addServiceCartItems, addSparePartCartItems } from '~/features/bookings/
 import toast from '~/utils/toast';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { getImageUrl } from '~/utils/imageUtils';
+
+const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
 type CartItem = {
   _id: string;
@@ -317,11 +320,12 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <View style={{ flex: 1 }}>
-        <ImageBackground
-          source={icons.booking_background}
-          style={styles.backgroundImage}
-          resizeMode="cover">
+      <ImageBackground
+        source={icons.booking_background}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.contentOverlay}>
           <View style={styles.tabContainer}>
             {(['Spare Parts', 'Services'] as const).map((tab) => (
               <TouchableOpacity
@@ -342,28 +346,31 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
             ))}
           </View>
 
-          <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            showsVerticalScrollIndicator={false}>
-            {filteredItems?.length > 0 ? (
-              <View style={styles.itemsContainer}>
-                {filteredItems.map((item, index) => renderItem(item, index))}
-              </View>
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>
-                  {activeTab === 'Spare Parts'
-                    ? 'No products in your cart'
-                    : 'No services in your cart'}
-                </Text>
-                <Text style={styles.emptySubText}>Add some items to get started!</Text>
-              </View>
-            )}
-          </ScrollView>
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}>
+              {filteredItems?.length > 0 ? (
+                <View style={styles.itemsContainer}>
+                  {filteredItems.map((item, index) => renderItem(item, index))}
+                </View>
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    {activeTab === 'Spare Parts'
+                      ? 'No products in your cart'
+                      : 'No services in your cart'}
+                  </Text>
+                  <Text style={styles.emptySubText}>Add some items to get started!</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
 
           {/* Footer */}
           {filteredItems.length > 0 && (
-            <View style={[styles.footer]}>
+            <View style={styles.footer}>
               <View style={styles.totalContainer}>
                 <Text style={styles.totalLabel}>Total ({filteredItems.length} items):</Text>
                 <Text style={styles.totalAmount}>₹{totalAmount.toLocaleString('en-IN')}</Text>
@@ -376,8 +383,8 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
               </TouchableOpacity>
             </View>
           )}
-        </ImageBackground>
-      </View>
+        </View>
+      </ImageBackground>
     </GestureHandlerRootView>
   );
 };
@@ -388,17 +395,18 @@ const styles = StyleSheet.create({
   },
   backgroundImage: {
     flex: 1,
+    minHeight: screenHeight,
     width: '100%',
-    height: SPACING.huge,
   },
-  contentContainer: {
+  contentOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
+  scrollWrapper: {
+    flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 30,
-    justifyContent: 'space-between',
   },
   header: {
     padding: 20,
@@ -414,7 +422,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 10,
-    backgroundColor: COLORS.primary_04,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   tabButton: {
     paddingVertical: 8,
@@ -515,6 +523,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
+    minHeight: screenHeight * 0.6,
   },
   emptyText: {
     ...FONTS.h3,
@@ -533,6 +542,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     borderRadius: 10,
     marginTop: 10,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
