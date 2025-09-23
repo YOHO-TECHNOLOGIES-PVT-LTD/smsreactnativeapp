@@ -563,8 +563,18 @@ const Services = () => {
                   setActiveNavItem(category?.category_name);
                   setSearchQuery('');
                 }}>
+                {/* <Image
+                  // source={{ uri: getImageUrl(category?.image) }}
+                  source={require('../../assets/loading1.png')}
+                  style={styles.categoryImage}
+                  alt="Category Image"
+                /> */}
                 <Image
-                  source={{ uri: getImageUrl(category?.image) }}
+                  source={
+                    category?.image
+                      ? { uri: getImageUrl(category?.image) }
+                      : require('../../assets/loading1.png')
+                  }
                   style={styles.categoryImage}
                   alt="Category Image"
                 />
@@ -833,7 +843,9 @@ const styles = StyleSheet.create({
     height: 65,
     borderRadius: 50,
     marginBottom: 5,
-    backgroundColor: COLORS.primary_04,
+    // backgroundColor: COLORS.primary_04,
+    borderColor: COLORS.primary_04,
+    borderWidth: 1,
   },
   categoryText: {
     ...FONTS.h6,

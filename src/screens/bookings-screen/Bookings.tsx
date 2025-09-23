@@ -137,6 +137,8 @@ const Bookings = () => {
   const totalOrders = orders?.length;
   const completedOrders = orders?.filter((order) => order?.status === 'completed')?.length;
   const pendingOrders = orders?.filter((order) => order?.status === 'pending')?.length;
+  console.log("first", orders);
+  console.log("second", filteredOrders);
 
   const handleRefresh = async () => {
     if (!tokenSelector) return;

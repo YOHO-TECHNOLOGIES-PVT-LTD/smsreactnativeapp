@@ -104,7 +104,11 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts, onRefresh }
                 activeOpacity={0.7}>
                 <View style={styles.horizontalNavIcon}>
                   <Image
-                    source={{ uri: getImageUrl(item?.image) }}
+                    source={
+                      item?.image
+                        ? { uri: getImageUrl(item?.image) }
+                        : require('../../assets/spareparts.png')
+                    }
                     style={styles.image}
                     onError={() => setError(true)}
                   />
@@ -234,7 +238,8 @@ const styles = StyleSheet.create({
     height: 65,
     borderRadius: 50,
     marginBottom: 5,
-    backgroundColor: COLORS.primary_04,
+    borderColor: COLORS.primary_04,
+    borderWidth: 1,
   },
   cardContainer: {
     flex: 1,
