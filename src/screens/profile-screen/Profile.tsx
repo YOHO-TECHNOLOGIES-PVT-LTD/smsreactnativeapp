@@ -770,7 +770,7 @@ const pickImage = async () => {
         type: "image/jpeg",
         name: "profile.jpg",
       } as any);
-     
+      console.log(formData, 'form profile')
       const uploadResponse = await uploadSingleFileorImage(
         {userId: OBJECT_ID},
         formData
