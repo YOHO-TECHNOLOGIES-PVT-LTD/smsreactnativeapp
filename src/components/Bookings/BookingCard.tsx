@@ -165,56 +165,58 @@ const OrderDetailsModal: React.FC<{
       animationType="slide"
       transparent={false}
       onRequestClose={onClose}
-      statusBarTranslucent={true}>
+      statusBarTranslucent={false}>
       <View style={styles.modalFullscreenContainer}>
+        {/* Fixed Header */}
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <AntDesign name="arrowleft" size={24} color={COLORS.black} />
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Order Details</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        {/* Fixed Order Summary Section */}
+        <View style={styles.fixedOrderSummary}>
+          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Order ID:</Text>
+            <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
+              {order?.orderId || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Order Date:</Text>
+            <Text style={styles.summaryValue}>{formatDateandTime(order?.createdAt)}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Status:</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: isDispatched ? COLORS.success_lightgreen : COLORS.error },
+              ]}>
+              <Text style={styles.statusText}>{order?.status}</Text>
+            </View>
+          </View>
+          {isDispatched && order?.track_id && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Tracking ID:</Text>
+              <TextInput
+                style={styles.trackingInput}
+                value={order?.track_id}
+                editable={false}
+                numberOfLines={1}
+              />
+            </View>
+          )}
+        </View>
+
+        {/* Scrollable Content */}
         <ScrollView
-          style={styles.modalScrollView}
-          contentContainerStyle={styles.modalContentContainer}>
-          {/* Header */}
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={onClose} style={styles.backButton}>
-              <AntDesign name="arrowleft" size={24} color={COLORS.black} />
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Order Details</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-
-          {/* Order Summary */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Order Summary</Text>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Order ID:</Text>
-              <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
-                {order?.orderId || 'N/A'}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Order Date:</Text>
-              <Text style={styles.summaryValue}>{formatDateandTime(order?.createdAt)}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Status:</Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: isDispatched ? COLORS.success_lightgreen : COLORS.error },
-                ]}>
-                <Text style={styles.statusText}>{order?.status}</Text>
-              </View>
-            </View>
-            {isDispatched && order?.track_id && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Tracking ID:</Text>
-                <TextInput
-                  style={styles.trackingInput}
-                  value={order?.track_id}
-                  editable={false}
-                  numberOfLines={1}
-                />
-              </View>
-            )}
-          </View>
-
+          style={styles.scrollableContent}
+          contentContainerStyle={styles.scrollableContentContainer}
+          showsVerticalScrollIndicator={false}>
           {/* Items Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
@@ -361,8 +363,6 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
       if (!data?.uuid) {
         throw new Error('No order UUID available');
       }
-
-      // 1. Get the PDF blob from API
       let response;
       if (data?.services?.length) {
         response = await getinvoiceService({ uuid: data.uuid });
@@ -371,12 +371,8 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
       } else {
         console.log('Invalid order type');
       }
-
-      // 2. Create a reference to the Blob
       const blob = response?.data;
       const base64Data = await blobToBase64(blob);
-
-      // 4. Create file and share
       const fileName = `invoice_${data.uuid}.pdf`;
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
@@ -415,7 +411,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
     opacity.value = withTiming(1, { duration: 1500 });
   }, [delay, opacity, translateY]);
 
-  const animatedStyle = useAnimatedStyle(() => ({ 
+  const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
@@ -539,6 +535,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     ...FONTS.h7,
+    color: "white"
   },
   contentContainer: {
     flex: 1,
@@ -621,21 +618,20 @@ const styles = StyleSheet.create({
   modalFullscreenContainer: {
     flex: 1,
     backgroundColor: COLORS.white,
+    paddingBottom: 0,
+    marginBottom: 0,
   },
-  modalScrollView: {
-    flex: 1,
-  },
-  modalContentContainer: {
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
+
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
     paddingHorizontal: 16,
     paddingTop: 50,
+    paddingBottom: 10,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGrey,
   },
   backButton: {
     padding: 4,
@@ -649,6 +645,26 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 24,
+  },
+  fixedOrderSummary: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.lightGrey,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scrollableContent: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  scrollableContentContainer: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   section: {
     marginBottom: 20,
