@@ -237,7 +237,7 @@ const HomePage = () => {
     if (tokenSelector) {
       fetchUserProfile();
     }
-  }, [tokenSelector]);
+  }, [dispatch]);
 
   const validateForm = () => {
     let isValid = true;
@@ -544,13 +544,13 @@ const HomePage = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}>
-                      <Text style={styles.offerTitle}>{offer?.title?.substring(0, 12)}</Text>
+                      <Text style={styles.offerTitle}>{offer?.title}</Text>
                       <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
                         {' '}
                         Offer: ₹{offer?.offer}
                       </Text>
                     </View>
-                    <Text style={styles.offerDiscount}>{offer?.description?.substring(0, 15)}</Text>
+                    <Text style={styles.offerDiscount}>{offer?.description}</Text>
                     {/* <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
                       <Text style={styles.offerButtonText}>Claim Offer</Text>
                     </TouchableOpacity> */}
@@ -782,7 +782,7 @@ const HomePage = () => {
 
                   {/* Submit Button */}
                   <View
-                    style={{ marginVertical: 12, justifyContent: 'center', alignItems: 'center' }}>
+                    style={{ marginVertical: 20, justifyContent: 'center', alignItems: 'center' }}>
                     <TouchableOpacity style={styles.submitButton} onPress={handleSubmitEnquiry}>
                       <Text style={styles.submitButtonText}>Submit</Text>
                     </TouchableOpacity>
@@ -997,6 +997,7 @@ const styles = StyleSheet.create({
   offerDiscount: {
     ...FONTS.body6,
     color: COLORS.black,
+    marginTop: 5,
   },
   offerButton: {
     backgroundColor: COLORS.primary,
