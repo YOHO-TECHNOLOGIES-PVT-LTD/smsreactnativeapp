@@ -106,6 +106,8 @@ const Settings = () => {
           ) : (
             <ScrollView
               // style={{ flex: 1 }}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
