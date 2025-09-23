@@ -24,7 +24,7 @@ import { AppDispatch } from '~/store';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { getUserProfileDetails } from '~/features/profile/service';
-import { uploadMutlipleFileorImage } from '~/features/common/service';
+import { uploadSingleFileorImage } from '~/features/common/service';
 
 interface Issues {
   id: String;
@@ -208,36 +208,61 @@ const pickImage = async () => {
     });
 
     if (!result.canceled) {
-      // take only first 3 images
+      // Take only first 3 images
       const selected = result.assets.slice(0, 3);
+      console.log(selected, 'selected images');
 
-      // prepare FormData
-      const formData = new FormData();
-      selected.forEach((file: any, index: number) => {
-        const filename = file.uri.split("/").pop();
-        const match = /\.(\w+)$/.exec(filename ?? "");
-        const type = match ? `image/${match[1]}` : `image`;
+      const uploadedUrls: string[] = [];
+      
+      for (let i = 0; i < selected.length; i++) {
+        const file = selected[i];
+        try {
+          const formData = new FormData();
+          formData.append("file", {
+            uri: file.uri,
+            type: file.mimeType || "image/jpeg",
+            name: file.fileName || `image_${i + 1}.jpg`,
+          } as any);
 
-        formData.append("files", {
-          uri: file.uri,
-          name: filename,
-          type,
-        } as any);
-      });
+          console.log(`Uploading image ${i + 1}: ${file.fileName || 'image'}`);
 
-      const response = await uploadMutlipleFileorImage(
-        { userId: userId }, 
-        formData  
-      );
-      const uploadedImages = Array.isArray(response.data.image)
-        ? response.data.image
-        : [response.data.image];
+        
+          const uploadResponse = await uploadSingleFileorImage(
+            { userId: userId },
+            formData
+          );
 
-      setImages(uploadedImages);
-      console.log("Upload Response:", response);
+          if (uploadResponse?.data?.image) {
+            uploadedUrls.push(uploadResponse.data.image);
+            console.log(`Image ${i + 1} uploaded successfully: ${uploadResponse.data.image}`);
+          } else {
+            console.error(`Upload failed for image ${i + 1}:`, file.fileName);
+            // You can choose to stop or continue with remaining images
+          }
+        } catch (error) {
+          console.error(`Error uploading image ${i + 1}:`, error);
+          // Continue with other images even if one fails
+        }
+      }
+
+      // Set the array of uploaded URLs to state
+      if (uploadedUrls.length > 0) {
+        setImages(uploadedUrls);
+        console.log("All uploaded images array:", uploadedUrls);
+        
+        // Show success message based on how many images were uploaded
+        if (uploadedUrls.length === selected.length) {
+          toast.success('Success', `All ${uploadedUrls.length} images uploaded successfully!`);
+        } else {
+          // toast.warning('Partial Upload', `Uploaded ${uploadedUrls.length} out of ${selected.length} images.`);
+        }
+      } else {
+        toast.error('Upload Failed', 'Could not upload any images.');
+      }
     }
   } catch (error) {
     console.error("Error in pickImage:", error);
+    toast.error('Error', 'Failed to select images. Please try again.');
   }
 };
 
