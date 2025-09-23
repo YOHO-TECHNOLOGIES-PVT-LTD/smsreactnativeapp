@@ -313,7 +313,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
           />
           <CustomDrawerItem
             label="Bookings"
-            icon={selectedTab === 'Bookings' ? icons.booking_filled : icons.booking_outlined}
+            icon={selectedTab === 'Bookings' ? icons.booking_icon : icons.booking_icon}
             isFocused={selectedTab === 'Bookings'}
             onPress={() => {
               dispatch(setSelectedTab('Bookings'));

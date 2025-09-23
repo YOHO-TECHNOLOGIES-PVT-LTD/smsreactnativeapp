@@ -105,8 +105,8 @@ const Routes: React.FC = () => {
       {isFirstLaunch ? (
         <>
           <Stack.Screen
-            name="Onboarding"
-            component={OnboardingScreen}
+            name="Onboarding" 
+            component={OnboardingScreen} 
             options={{ gestureEnabled: false }}
           />
           <Stack.Screen name="MainStack" component={MainStack} />

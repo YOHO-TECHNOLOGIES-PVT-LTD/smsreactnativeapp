@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  StatusBar, 
-  Image, 
-  ScrollView, 
-  RefreshControl, 
-  ActivityIndicator 
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  StatusBar,
+  Image,
+  ScrollView,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
@@ -22,7 +22,7 @@ import { AppDispatch } from '~/store';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 
-const Settings = () => { 
+const Settings = () => {
   const navigation = useNavigation();
   const [bookingCarts, setBookingCarts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,13 +48,14 @@ const Settings = () => {
     try {
       setIsLoading(true);
       const response = tokenSelector ? await getAllBookingCartItems({}) : [];
+      console.log(response, 'booking cart res');
       setBookingCarts(response || []);
     } catch (error) {
       console.log('Error fetching booking carts:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [tokenSelector]);
+  }, [dispatch]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -66,7 +67,7 @@ const Settings = () => {
     if (tokenSelector) {
       fetchAllBookingCarts();
     }
-  }, [tokenSelector, fetchAllBookingCarts]);
+  }, [dispatch]);
 
   return (
     <>
@@ -106,10 +107,7 @@ const Settings = () => {
           ) : (
             <ScrollView
               // style={{ flex: 1 }}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-            >
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
               <Grid1
                 bookingCarts={bookingCarts}
                 onChangeCart={fetchAllBookingCarts}

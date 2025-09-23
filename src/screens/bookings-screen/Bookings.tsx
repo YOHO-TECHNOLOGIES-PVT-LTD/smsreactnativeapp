@@ -124,7 +124,7 @@ const Bookings = () => {
       }
     };
     setCartCount(getCartCount() ?? 0);
-  }, [dispatch, tokenSelector]);
+  }, [dispatch]);
 
   const filteredOrders = orders?.filter((order: any) => {
     const matchesTab =
