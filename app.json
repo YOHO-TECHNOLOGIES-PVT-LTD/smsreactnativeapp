@@ -17,7 +17,8 @@
           "photosPermission": "The app accesses your photos to let you share them.",
           "cameraPermission": "The app accesses your camera to let you take photos."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -25,7 +26,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "y",
@@ -38,14 +41,15 @@
         "foregroundImage": "./src/assets/appLogoNew.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["android.permission.RECORD_AUDIO"],
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "package": "com.suryas_1805.smsreactnativeapp"
     },
     "extra": {
-      // "eas": {
-      //   "projectId": "780079e4-e585-4c61-9a76-58f396c7d6c6"
-      // }
+      "eas": {
+        "projectId": "50e4a192-2f74-4052-9d4c-2ca792da20fc"
+      }
     }
-    // "owner": "wikki_3108"
   }
 }
