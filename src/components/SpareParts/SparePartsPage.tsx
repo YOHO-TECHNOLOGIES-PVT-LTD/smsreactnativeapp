@@ -18,7 +18,7 @@ import { getImageUrl } from '~/utils/imageUtils';
 
 type SparePartsPageProps = {
   spareParts: SparePartCategory[];
-  onRefresh?: () => Promise<void>;
+  onRefresh?: () => void;
 };
 
 const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts, onRefresh }) => {
@@ -29,6 +29,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts, onRefresh }
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const categories = [...new Set(spareParts.map((item) => item.category))];
   const [refreshing, setRefreshing] = useState(false);
+
   const handleRefresh = async () => {
     if (onRefresh) {
       setRefreshing(true);

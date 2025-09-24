@@ -33,10 +33,13 @@ const SpareParts = () => {
   };
 
   useEffect(() => {
+    getAllSparePartsDetails();
     if (TokenSelector) {
       dispatch(getBookingCartItems());
     }
-    getAllSparePartsDetails();
+  }, [dispatch]);
+
+  useEffect(() => {
     const getCartCount = () => {
       if (cartItems?.length == 1) {
         return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
@@ -52,7 +55,7 @@ const SpareParts = () => {
       }
     };
     setCartCount(getCartCount() ?? 0);
-  }, [dispatch, TokenSelector]);
+  }, [dispatch, cartItems]);
 
   return (
     <>
@@ -99,7 +102,13 @@ const SpareParts = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <SparePartsPage spareParts={spareParts} onRefresh={getAllSparePartsDetails} />
+        <SparePartsPage
+          spareParts={spareParts}
+          onRefresh={() => {
+            getAllSparePartsDetails();
+            dispatch(getBookingCartItems());
+          }}
+        />
       </SafeAreaView>
     </>
   );

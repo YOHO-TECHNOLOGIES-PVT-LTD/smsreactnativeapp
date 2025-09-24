@@ -1,5 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, ImageSourcePropType } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Alert,
+  ImageSourcePropType,
+  RefreshControl,
+} from 'react-native';
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
@@ -17,6 +25,8 @@ import { getImageUrl } from '~/utils/imageUtils';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { logout } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
+import { selectToken } from '~/features/token/redux/selectors';
+import AnimatedUserDummy from '~/components/profile/AnimatedUserDummy';
 
 type CustomDrawerItemProps = {
   label: string;
@@ -121,19 +131,38 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
   const [profileData, setProfileData] = useState<any>({});
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const tokenSelector = useSelector(selectToken);
+  const didFetch = useRef(false);
 
   const fetchProfile = async () => {
     try {
       const response: any = await getUserProfileDetails({});
       setProfileData(response);
+      setError(false);
     } catch (error) {
       console.log(error);
+      setError(true);
     }
   };
 
   useEffect(() => {
-    fetchProfile();
-  }, [dispatch]);
+    if (tokenSelector && !didFetch.current) {
+      fetchProfile();
+      didFetch.current = true;
+    }
+  }, [tokenSelector]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchProfile();
+    } catch (error) {
+      toast.error('Refresh failed', 'Could not refresh profile data');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -142,7 +171,6 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
       toast.success('Logged out', 'You have been successfully logged out');
       setIsLoading(false);
       setLogoutModalVisible(false);
-      navigation.reset({ index: 0, routes: [{ name: 'AuthStack' }] });
     } catch (error) {
       toast.error('Logout failed', 'Could not complete logout. Please try again.');
       console.log('Logout error:', error);
@@ -156,7 +184,17 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
     <DrawerContentScrollView
       scrollEnabled
       contentContainerStyle={{ flex: 1 }}
-      showsVerticalScrollIndicator={false}>
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          colors={[COLORS.primary]}
+          tintColor={COLORS.primary}
+          title="Pull to refresh"
+          titleColor={COLORS.grey60}
+        />
+      }>
       <View style={{ flex: 1 }}>
         {/* Header Section */}
         <View
@@ -187,7 +225,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             activeOpacity={0.8}>
             <Image
               source={icons?.cross}
-              style={{ height: 16, width: 16, tintColor: COLORS.primary }}
+              style={{ height: 12, width: 12, tintColor: COLORS.primary }}
             />
           </TouchableOpacity>
 
@@ -210,27 +248,39 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
               navigation.navigate('MainLayout');
             }}
             activeOpacity={0.9}>
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                overflow: 'hidden',
-                backgroundColor: COLORS.primary_03,
-                borderWidth: 2,
-                borderColor: COLORS.primary_03,
-              }}>
-              <Image
-                source={
-                  profileData?.image && !error
-                    ? { uri: getImageUrl(profileData?.image) }
-                    : require('../assets/images/profile_picture.jpg')
-                }
-                onError={() => setError(true)}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="cover"
-              />
-            </View>
+            {profileData?.image && !error ? (
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  overflow: 'hidden',
+                  backgroundColor: COLORS.primary_03,
+                  borderWidth: 2,
+                  borderColor: COLORS.primary_03,
+                }}>
+                <Image
+                  source={{ uri: getImageUrl(profileData?.image) }}
+                  onError={() => setError(true)}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+              </View>
+            ) : (
+              <View
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 45,
+                  backgroundColor: COLORS.white,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 2,
+                  borderColor: COLORS.primary_03,
+                }}>
+                <AnimatedUserDummy />
+              </View>
+            )}
             <View style={{ marginLeft: SIZES.radius, flex: 1 }}>
               <Text
                 style={{
@@ -242,7 +292,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
                 numberOfLines={1}>
                 {profileData?.firstName && profileData?.lastName
                   ? `${profileData.firstName} ${profileData.lastName}`
-                  : 'User Name'}
+                  : 'Customer'}
               </Text>
               <Text
                 style={{
@@ -251,7 +301,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
                   textTransform: 'capitalize',
                 }}
                 numberOfLines={1}>
-                {profileData?.role || 'Role'}
+                {profileData?.role}
               </Text>
             </View>
             <View

@@ -45,6 +45,7 @@ type CartItem = {
     description: string;
     image: string;
   };
+  image?: string;
   price: string;
   quantity: number;
   type: 'spare' | 'service';
@@ -93,38 +94,41 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
         products: allProducts,
         services: allServices,
       });
-
-      console.log('Cart items updated:', {
-        products: allProducts.length,
-        services: allServices.length,
-      });
     } else {
       // Reset cart items if no booking carts
       setCartItems({ products: [], services: [] });
     }
   }, [bookingCarts]);
-  console.log('Bookin', bookingCarts);
 
   // Fix: Proper cart ID extraction
   useEffect(() => {
     if (bookingCarts && bookingCarts?.length > 0) {
-      // Find spare parts cart
-      const spareCart = bookingCarts.find(
-        (cart) => cart.type === 'spare' || (cart.products && cart.products.length > 0)
+      // Find the most appropriate cart for each type
+      let spareCartId: string | null = null;
+      let serviceCartId: string | null = null;
+
+      // First, try to find by explicit type
+      const spareCartByType = bookingCarts.find((cart) => cart.type === 'spare');
+      const serviceCartByType = bookingCarts.find((cart) => cart.type === 'service');
+
+      // If not found by type, find by content
+      const spareCartByContent = bookingCarts.find(
+        (cart) => cart.products && cart.products.length > 0
+      );
+      const serviceCartByContent = bookingCarts.find(
+        (cart) => cart.services && cart.services.length > 0
       );
 
-      // Find services cart
-      const serviceCart = bookingCarts.find(
-        (cart) => cart.type === 'service' || (cart.services && cart.services.length > 0)
-      );
+      // Priority: type-based finding first, then content-based
+      spareCartId = spareCartByType?._id || spareCartByContent?._id || null;
+      serviceCartId = serviceCartByType?._id || serviceCartByContent?._id || null;
 
-      setCartId(spareCart?._id ?? null);
-      setServiceId(serviceCart?._id ?? null);
-
-      console.log('Cart IDs updated:', {
-        spareCartId: spareCart?._id,
-        serviceCartId: serviceCart?._id,
-      });
+      setCartId(spareCartId);
+      setServiceId(serviceCartId);
+    } else {
+      // Reset cart IDs if no booking carts
+      setCartId(null);
+      setServiceId(null);
     }
   }, [bookingCarts]);
 
@@ -151,10 +155,6 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
   const totalAmount = calculateTotal(filteredItems);
 
   const handleConfirmOrder = useCallback(async () => {
-    console.log('Confirm order called for tab:', activeTab);
-    console.log('Filtered items:', filteredItems);
-    console.log('Booking carts:', bookingCarts);
-
     if (filteredItems?.length === 0) {
       toast.error('Empty Cart', 'Your cart is empty. Please add items to proceed.');
       return;
@@ -163,21 +163,20 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
     try {
       if (activeTab === 'Spare Parts') {
         // Find the cart that has products
-        const spareCart = bookingCarts.find((cart) => cart.products && cart.products.length > 0);
+        const spareCart = bookingCarts?.find(
+          (cart) => cart?.products && cart?.products?.length > 0
+        );
 
         if (!spareCart) {
           toast.error('Error', 'No spare parts cart found.');
           return;
         }
 
-        console.log('Confirming spare parts order with cart ID:', spareCart._id);
-
-        const data = { cartId: spareCart._id };
+        const data = { cartId: spareCart?._id };
         const response = await addSparePartCartItems(data);
-        console.log('REspo', response);
 
         if (response) {
-          token && onChangeCart();
+          onChangeCart();
           toast.success(
             'Success',
             response.message || 'Successfully placed your spare parts order!'
@@ -187,20 +186,20 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
         }
       } else if (activeTab === 'Services') {
         // Find the cart that has services
-        const serviceCart = bookingCarts.find((cart) => cart.services && cart.services.length > 0);
+        const serviceCart = bookingCarts?.find(
+          (cart) => cart?.services && cart?.services?.length > 0
+        );
 
         if (!serviceCart) {
           toast.error('Error', 'No services cart found.');
           return;
         }
 
-        console.log('Confirming services order with cart ID:', serviceCart._id);
-
-        const data = { cartId: serviceCart._id };
+        const data = { cartId: serviceCart?._id };
         const response = await addServiceCartItems(data);
 
         if (response) {
-          token && onChangeCart();
+          onChangeCart();
           toast.success('Success', response.message || 'Successfully placed your services order!');
         } else {
           toast.error('Order Failed', 'There was an issue placing your order. Please try again.');
@@ -210,42 +209,54 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
       console.error('Error confirming order:', error);
       toast.error('Error', 'An error occurred while placing your order.');
     }
-  }, [activeTab, bookingCarts, filteredItems, token, onChangeCart]);
+  }, [activeTab]);
 
   const handleDelete = useCallback(
     async (itemId: string) => {
-      console.log('Deleting item:', itemId, 'from tab:', activeTab);
-
       try {
         if (activeTab === 'Spare Parts') {
-          if (!cartId) {
-            toast.error('Error', 'Cart ID not found for spare parts.');
+          // Find the current spare cart ID dynamically
+          const spareCart = bookingCarts?.find(
+            (cart) => cart?.products && cart?.products.length > 0
+          );
+
+          if (!spareCart?._id) {
+            toast.error('Error', 'No spare parts cart found.');
             return;
           }
 
           const response = await deleteBookingCartProduct({
-            cartId: cartId,
+            cartId: spareCart._id,
             productId: itemId,
           });
 
           if (response) {
-            token && onChangeCart();
+            onChangeCart();
             toast.success('Success', 'Product removed from the cart');
+          } else {
+            toast.error('Error', 'Failed to remove the product');
           }
         } else if (activeTab === 'Services') {
-          if (!serviceId) {
-            toast.error('Error', 'Cart ID not found for services.');
+          // Find the current service cart ID dynamically
+          const serviceCart = bookingCarts?.find(
+            (cart) => cart?.services && cart?.services.length > 0
+          );
+
+          if (!serviceCart?._id) {
+            toast.error('Error', 'No services cart found.');
             return;
           }
 
           const response = await deleteBookingCartService({
-            cartId: serviceId,
+            cartId: serviceCart._id,
             serviceId: itemId,
           });
 
           if (response) {
-            token && onChangeCart();
+            onChangeCart();
             toast.success('Success', 'Service removed from the cart');
+          } else {
+            toast.error('Error', 'Failed to remove the service');
           }
         }
       } catch (error) {
@@ -253,7 +264,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
         toast.error('Error', 'Failed to remove item from cart.');
       }
     },
-    [activeTab, cartId, serviceId, token, onChangeCart]
+    [activeTab, bookingCarts, onChangeCart]
   );
 
   const renderItem = (item: CartItem, index: number) => {
@@ -269,15 +280,17 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
     let imageUri = '';
     if (item?.productId?.image) {
       imageUri = getImageUrl(item.productId.image);
-    } else if (item?.serviceId?.image) {
-      imageUri = getImageUrl(item.serviceId.image);
-    } else {
-      imageUri = 'https://via.placeholder.com/80x80?text=No+Image';
+    } else if (item?.image) {
+      imageUri = getImageUrl(item.image);
     }
 
     return (
       <View key={`${item._id}-${index}`} style={styles.itemContainer}>
-        <Image source={{ uri: imageUri }} style={styles.itemImage} resizeMode="cover" />
+        <Image
+          source={imageUri ? { uri: imageUri } : require('../../assets/cartdummy.jpg')}
+          style={styles.itemImage}
+          resizeMode="cover"
+        />
 
         <View style={styles.itemDetails}>
           <Text style={styles.itemName} numberOfLines={2}>
@@ -323,8 +336,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
       <ImageBackground
         source={icons.booking_background}
         style={styles.backgroundImage}
-        resizeMode="cover"
-      >
+        resizeMode="cover">
         <View style={styles.contentOverlay}>
           <View style={styles.tabContainer}>
             {(['Spare Parts', 'Services'] as const).map((tab) => (
@@ -353,7 +365,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
               showsHorizontalScrollIndicator={false}>
               {filteredItems?.length > 0 ? (
                 <View style={styles.itemsContainer}>
-                  {filteredItems.map((item, index) => renderItem(item, index))}
+                  {filteredItems?.map((item, index) => renderItem(item, index))}
                 </View>
               ) : (
                 <View style={styles.emptyContainer}>
@@ -369,16 +381,16 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
           </View>
 
           {/* Footer */}
-          {filteredItems.length > 0 && (
+          {filteredItems?.length > 0 && (
             <View style={styles.footer}>
               <View style={styles.totalContainer}>
-                <Text style={styles.totalLabel}>Total ({filteredItems.length} items):</Text>
+                <Text style={styles.totalLabel}>Total ({filteredItems?.length} items):</Text>
                 <Text style={styles.totalAmount}>₹{totalAmount.toLocaleString('en-IN')}</Text>
               </View>
 
               <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmOrder}>
                 <Text style={styles.confirmButtonText}>
-                  Confirm Order ({filteredItems.length} items)
+                  Confirm Order ({filteredItems?.length} items)
                 </Text>
               </TouchableOpacity>
             </View>

@@ -65,6 +65,7 @@ const HomePage = () => {
   const [spareParts, setSpareParts] = useState([]);
   const [serviceCategories, setServiceCategories] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const didFetch = useRef(false);
   const [profileData, setProfileData] = useState<{
     firstName?: string;
     lastName?: string;
@@ -234,10 +235,11 @@ const HomePage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (tokenSelector) {
+    if (tokenSelector && !didFetch.current) {
       fetchUserProfile();
+      didFetch.current = true;
     }
-  }, [dispatch]);
+  }, [tokenSelector]);
 
   const validateForm = () => {
     let isValid = true;
@@ -399,7 +401,8 @@ const HomePage = () => {
                 <View style={{ flexDirection: 'row' }}>
                   <HandShakeAnimation />
                   <Text style={styles.title}>
-                    Hi, {tokenSelector ? profileData?.firstName : 'Customer'}
+                    Hi,{' '}
+                    {tokenSelector && profileData?.firstName ? profileData?.firstName : 'Customer'}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -433,7 +436,13 @@ const HomePage = () => {
           <AnimatedSearch />
         </View>
         <ScrollView
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+            />
+          }>
           {/* Image Carousel */}
           <View style={{ backgroundColor: COLORS.primary_04, paddingVertical: 10 }}>
             <ImageCarousel images={images} />
@@ -491,7 +500,11 @@ const HomePage = () => {
                 {spareParts?.slice(0, 10)?.map((item: any) => (
                   <View key={item?._id} style={[styles.partCard1, { width: 120 }]}>
                     <Image
-                      source={item?.image && { uri: getImageUrl(item?.image) }}
+                      source={
+                        item?.image
+                          ? { uri: getImageUrl(item?.image) }
+                          : require('../../assets/spareparts.png')
+                      }
                       style={styles.partImage}
                     />
                     <View style={styles.partDetails}>
@@ -529,7 +542,11 @@ const HomePage = () => {
                       <FontAwesome name="tag" size={14} color={COLORS.white} />
                     </View>
                     <Image
-                      source={offer?.image && { uri: getImageUrl(offer?.image) }}
+                      source={
+                        offer?.image
+                          ? { uri: getImageUrl(offer?.image) }
+                          : require('../../assets/home/offer.jpg')
+                      }
                       style={{
                         width: '100%',
                         height: 75,

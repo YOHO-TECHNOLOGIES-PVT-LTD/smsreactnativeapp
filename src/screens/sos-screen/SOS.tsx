@@ -18,6 +18,7 @@ import { AntDesign } from '@expo/vector-icons';
 import PhoneDialerButton from '~/components/PhoneDialerButton';
 import { getUserProfileDetails } from '~/features/profile/service';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
 
 const issuesList = [
   'Battery Discharged',
@@ -39,11 +40,11 @@ const SOS = () => {
   const [filteredIssues, setFilteredIssues] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<any>();
+  const dispatch = useDispatch<any>();
 
   const fetchUser = async () => {
     try {
       const userResponse = await getUserProfileDetails();
-      // console.log('userResponse', userResponse);
       if (userResponse) {
         const mobileNumber = userResponse?.contact_info?.phoneNumber || '';
         setValue(mobileNumber);
@@ -54,7 +55,7 @@ const SOS = () => {
   };
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [dispatch]);
 
   const handleChange = (text: any) => {
     if (/^\d*$/.test(text)) {
@@ -166,7 +167,7 @@ const SOS = () => {
                 </Text>
               ))
             ) : (
-              <Text style={styles.noServiceText}>No service available</Text>
+              <Text style={styles.noServiceText}>No issues available</Text>
             )}
           </View>
         )}
@@ -174,7 +175,13 @@ const SOS = () => {
         {/* Main Content */}
         <ScrollView
           style={[styles.container, { position: 'relative' }]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+            />
+          }>
           <View style={styles.mapContainer}>
             <MarinaMap />
           </View>

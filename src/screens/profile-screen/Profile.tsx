@@ -89,7 +89,7 @@ import { Feather } from '@expo/vector-icons';
 import { uploadSingleFileorImage } from '~/features/common/service';
 import { getImageUrl } from '~/utils/imageUtils';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const COLORS1 = {
   // Primary colors1 - Refined Deep Crimson Theme
@@ -227,6 +227,7 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<any>({});
   const [profileImageLogo, setProfileImageLogo] = useState<any>('');
   const phoneNumber = '+91-9876543210';
+  const didFetch = useRef(false);
   const [bookingOrders, setBookingOrders] = useState<{
     serviceConfirm?: any[];
     productConfirm?: any[];
@@ -316,11 +317,12 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    if (TokenSelector) {
+    if (TokenSelector && !didFetch.current) {
       fetchUserProfile();
       fetchOrders();
+      didFetch.current = true;
     }
-  }, [dispatch, TokenSelector]);
+  }, [TokenSelector]);
 
   const [userInfo, setUserInfo] = useState({
     name: '',
@@ -346,6 +348,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
   const [editForm, setEditForm] = useState({ ...userInfo });
+  const [imageModalVisible, setImageModalVisible] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     vehicles: false,
     orders: false,
@@ -1311,7 +1314,13 @@ const Profile = () => {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}>
               <View style={styles.profileSection}>
-                <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (formData?.image) {
+                      setImageModalVisible(true);
+                    }
+                  }}
+                  activeOpacity={0.8}>
                   <View style={styles.profileImageContainer}>
                     {formData?.image ? (
                       <Image
@@ -1330,9 +1339,9 @@ const Profile = () => {
                         <AnimatedUserDummy />
                       </View>
                     )}
-                    <View style={styles.cameraIcon}>
+                    {/* <View style={styles.cameraIcon}>
                       <Camera size={12} color={COLORS1.white} />
-                    </View>
+                    </View> */}
                   </View>
                 </TouchableOpacity>
                 <View style={styles.profileInfo}>
@@ -1341,7 +1350,7 @@ const Profile = () => {
                       {(TokenSelector
                         ? formData?.firstName != null &&
                           formData?.firstName + ' ' + formData?.lastName
-                        : '') ?? 'Customer'}
+                        : '') || 'Customer'}
                     </Text>
                     {TokenSelector && <Verified size={16} color={COLORS1.success} />}
                   </View>
@@ -2426,6 +2435,42 @@ const Profile = () => {
             </View>
           </Modal>
 
+          {/* Full Image Modal */}
+          <Modal
+            visible={imageModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setImageModalVisible(false)}>
+            <View style={styles.modalContainer1}>
+              {/* Close Button */}
+              <TouchableOpacity
+                style={styles.closeButton1}
+                onPress={() => setImageModalVisible(false)}
+                activeOpacity={0.7}>
+                <View style={styles.closeIconContainer}>
+                  <Image source={icons.cross} style={styles.closeIcon} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Full Image */}
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{ uri: getImageUrl(profileImageLogo) }}
+                  style={styles.fullImage}
+                  resizeMode="contain"
+                  accessibilityLabel={`Full size profile image of ${formData?.firstName + ' ' + formData?.lastName || 'Customer'}`}
+                />
+              </View>
+
+              {/* Background Overlay - Click to close */}
+              <TouchableOpacity
+                style={styles.overlay}
+                activeOpacity={1}
+                onPress={() => setImageModalVisible(false)}
+              />
+            </View>
+          </Modal>
+
           <View>
             <CustomLogoutModal
               visible={logoutModalVisible}
@@ -2482,6 +2527,8 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: COLORS1.shadowStrong,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -2496,9 +2543,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS1.primary,
   },
   placeholderImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: COLORS1.white,
     justifyContent: 'center',
     alignItems: 'center',
@@ -3048,6 +3095,52 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: COLORS1.cardPrimary,
+  },
+  modalContainer1: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
+  },
+  closeButton1: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    zIndex: 10,
+  },
+  closeIconContainer: {
+    width: 30,
+    height: 30,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary_02,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary_02,
+  },
+  closeIcon: {
+    width: 10,
+    height: 10,
+    tintColor: COLORS.white,
+  },
+  imageContainer: {
+    width: width * 0.9,
+    height: height * 0.7,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
   modalHeader: {
     flexDirection: 'row',

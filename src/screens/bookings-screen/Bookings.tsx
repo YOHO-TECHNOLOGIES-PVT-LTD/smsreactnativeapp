@@ -136,9 +136,10 @@ const Bookings = () => {
 
   const totalOrders = orders?.length;
   const completedOrders = orders?.filter((order) => order?.status === 'completed')?.length;
-  const pendingOrders = orders?.filter((order) => order?.status === 'pending')?.length;
-  console.log("first", orders);
-  console.log("second", filteredOrders);
+  const pendingOrders = orders?.filter((order) => order?.status === 'pending' || 'Pending')?.length;
+  const dispatchOrders = orders?.filter(
+    (order) => order?.status === 'Dispatched to Courier'
+  )?.length;
 
   const handleRefresh = async () => {
     if (!tokenSelector) return;
@@ -228,17 +229,27 @@ const Bookings = () => {
             {/* Count cards */}
             <View style={styles.countCardsContainer}>
               <View style={styles.countCard}>
-                <Text style={{ ...FONTS.h4, color: COLORS.support1 }}>{totalOrders}</Text>
-                <Text style={styles.text}>Total Orders</Text>
+                <Text style={{ ...FONTS.h3, color: COLORS.support1, fontWeight: 600 }}>
+                  {totalOrders}
+                </Text>
+                <Text style={styles.text}>Total</Text>
               </View>
               <View style={styles.countCard}>
-                <Text style={{ color: COLORS.success_lightgreen, ...FONTS.h4 }}>
+                <Text style={{ color: COLORS.sucesss_darkgreen, ...FONTS.h3, fontWeight: 600 }}>
                   {completedOrders}
                 </Text>
                 <Text style={styles.text}>Completed</Text>
               </View>
               <View style={styles.countCard}>
-                <Text style={{ ...FONTS.h4, color: COLORS.error }}>{pendingOrders}</Text>
+                <Text style={{ color: COLORS.success_lightgreen, ...FONTS.h3, fontWeight: 600 }}>
+                  {dispatchOrders}
+                </Text>
+                <Text style={styles.text}>Dispatch</Text>
+              </View>
+              <View style={styles.countCard}>
+                <Text style={{ ...FONTS.h3, color: COLORS.error, fontWeight: 600 }}>
+                  {pendingOrders}
+                </Text>
                 <Text style={styles.text}>Pending</Text>
               </View>
             </View>
@@ -339,8 +350,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   text: {
-    ...FONTS.body4,
+    ...FONTS.body5,
     color: COLORS.primary_text,
+    fontWeight: 400,
   },
   tabContainer: {
     backgroundColor: COLORS.white,

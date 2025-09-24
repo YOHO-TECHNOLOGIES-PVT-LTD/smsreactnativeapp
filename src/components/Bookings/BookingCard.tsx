@@ -25,6 +25,9 @@ import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import * as Linking from 'expo-linking';
 import toast from '~/utils/toast';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CloudSnow } from 'lucide-react-native';
+import { getImageUrl } from '~/utils/imageUtils';
 
 type BookingType = 'spare' | 'service';
 type OrderStatus = 'pending' | 'Confirm Order' | 'Dispatched to Courier';
@@ -94,7 +97,6 @@ const OrderDetailsModal: React.FC<{
   const isDispatched = order?.status === 'Dispatched to Courier';
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log('first, ', order);
   const handleDownloadInvoice = async () => {
     try {
       if (!order?.uuid) {
@@ -147,17 +149,13 @@ const OrderDetailsModal: React.FC<{
   const handleViewTrackSlip = async () => {
     setIsLoading(true);
     try {
-      toast.success('Success', `Viewing track slip for order: ${order?.track_id}`);
+      Alert.alert('Track Order', `Tracking slip ID for this order: ${order?.track_id}`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error: any) {
-      toast.error('Failed to view track slip:', error.message);
+      Alert.alert('Failed to view track slip:', error.message);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getImageSource = (item: Product | Service) => {
-    return order?.image;
   };
 
   return (
@@ -167,11 +165,11 @@ const OrderDetailsModal: React.FC<{
       transparent={false}
       onRequestClose={onClose}
       statusBarTranslucent={false}>
-      <View style={styles.modalFullscreenContainer}>
+      <SafeAreaView style={styles.modalFullscreenContainer} edges={['top']}>
         {/* Fixed Header */}
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <AntDesign name="arrowleft" size={24} color={COLORS.black} />
+            <AntDesign name="arrowleft" size={24} color={COLORS.primary} />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Order Details</Text>
           <View style={styles.headerSpacer} />
@@ -197,7 +195,7 @@ const OrderDetailsModal: React.FC<{
                 styles.statusBadge,
                 { backgroundColor: isDispatched ? COLORS.success_lightgreen : COLORS.error },
               ]}>
-              <Text style={styles.statusText}>{order?.status}</Text>
+              <Text style={styles.statusText}>{order?.status?.toLowerCase()}</Text>
             </View>
           </View>
           {isDispatched && order?.track_id && (
@@ -228,7 +226,10 @@ const OrderDetailsModal: React.FC<{
               ? order?.services?.map((service, index) => (
                   <View key={`service-${index}`} style={styles.itemContainer}>
                     <View style={styles.itemImageContainer}>
-                      <Image source={{ uri: getImageSource(service) }} style={styles.itemImage} />
+                      <Image
+                        source={{ uri: getImageUrl(service?.image) }}
+                        style={styles.itemImage}
+                      />
                     </View>
                     <View style={styles.itemDetails}>
                       <Text style={styles.itemName} numberOfLines={2}>
@@ -244,10 +245,17 @@ const OrderDetailsModal: React.FC<{
                     </View>
                   </View>
                 ))
-              : order?.products?.map((product, index) => (
+              : order?.products?.map((product: any, index) => (
                   <View key={`product-${index}`} style={styles.itemContainer}>
                     <View style={styles.itemImageContainer}>
-                      <Image source={{ uri: getImageSource(product) }} style={styles.itemImage} />
+                      <Image
+                        source={
+                          product?.productId?.image
+                            ? { uri: getImageUrl(product?.productId?.image) }
+                            : require('../../assets/spareparts.png')
+                        }
+                        style={styles.itemImage}
+                      />
                     </View>
                     <View style={styles.itemDetails}>
                       <Text style={styles.itemName} numberOfLines={2}>
@@ -351,7 +359,7 @@ const OrderDetailsModal: React.FC<{
             )}
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -360,38 +368,6 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
-
-  const handleDownloadInvoice = async () => {
-    try {
-      if (!data?.uuid) {
-        throw new Error('No order UUID available');
-      }
-      let response;
-      if (data?.services?.length) {
-        response = await getinvoiceService({ uuid: data.uuid });
-      } else if (data?.products?.length) {
-        response = await getinvoiceProduct({ uuid: data.uuid });
-      } else {
-        console.log('Invalid order type');
-      }
-      const blob = response?.data;
-      const base64Data = await blobToBase64(blob);
-      const fileName = `invoice_${data.uuid}.pdf`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-
-      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      await Sharing.shareAsync(fileUri, {
-        mimeType: 'application/pdf',
-        dialogTitle: 'Save Invoice',
-        UTI: 'com.adobe.pdf',
-      });
-    } catch (error) {
-      toast.error('Error', 'Failed to download invoice');
-    }
-  };
 
   const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -419,9 +395,12 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
     opacity: opacity.value,
   }));
 
-  const statusColor = data?.status === 'pending' ? COLORS.error : COLORS.success_lightgreen;
+  const statusColor =
+    data?.status === 'pending' || 'Pending' ? COLORS.error : COLORS.success_lightgreen;
   const statusText =
-    data?.status === 'Dispatched to Courier' ? data?.status.substring(0, 10) : data?.status;
+    data?.status === 'Dispatched to Courier'
+      ? data?.status.substring(0, 10)
+      : data?.status.toLowerCase();
 
   const itemCount = data?.products?.length || data?.services?.length || 0;
   const itemText = itemCount === 1 ? 'item' : 'items';
@@ -429,15 +408,19 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   return (
     <>
       <Animated.View style={[animatedStyle, styles.container]}>
-        <TouchableOpacity
-          style={styles.card}
-          //  onPress={() => setShowDetails(true)}
-        >
+        <View style={styles.card}>
           {/* Image and Status Section */}
           <View style={styles.imageContainer}>
-            <Image source={{ uri: data.image }} style={styles.image} />
+            <Image
+              source={
+                data?.products?.length
+                  ? require('../../assets/spareOrder.jpg')
+                  : require('../../assets/serviceOrder.jpg')
+              }
+              style={styles.image}
+            />
             <View style={styles.statusContainer}>
-              {data.status !== 'pending' ? (
+              {data.status !== 'pending' || 'Pending' ? (
                 <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
               ) : (
                 <Image source={icons.clock} style={styles.statusIcon} tintColor={statusColor} />
@@ -489,7 +472,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
               <Text style={styles.viewButtonText}>View</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Animated.View>
 
       <OrderDetailsModal visible={showDetails} onClose={() => setShowDetails(false)} order={data} />
@@ -604,9 +587,9 @@ const styles = StyleSheet.create({
   },
   viewButton: {
     backgroundColor: COLORS.primary_borders,
-    borderRadius: SIZES.small,
+    borderRadius: 6,
     width: 60,
-    paddingVertical: 2,
+    paddingVertical: 6,
     paddingHorizontal: 4,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },

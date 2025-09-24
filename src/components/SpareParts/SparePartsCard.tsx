@@ -63,37 +63,52 @@ const SparePartsCard = ({ part }: any) => {
   }, [dispatch]);
 
   const handleAddtoCart = async (part: SparePart) => {
-    if (TokenSelector) {
-      if (!part?.uuid || !part?.price) {
-        console.error('Missing required part data');
-        return;
-      }
-      try {
-        const data = {
-          uuid: part?.uuid,
-          products: {
-            productId: part?._id,
-            quantity,
-            price: part?.price,
-          },
-          type: 'spare',
-        };
-        const response = await addBookingCartItem(data);
-        if (response) {
-          toast.success('Added', `${part?.productName} is added to cart`);
-          setTimeout(() => {
-            setModalVisible(false);
-            setQuantity(1);
-            setAdded(true);
-          }, 2000);
-        } else {
-          toast.error('Error', 'Failed to add to cart');
-        }
-        setIsLoading(false);
-      } catch (error) {
+    // Prevent multiple calls
+    if (isLoading) {
+      return;
+    }
+
+    if (!part?.uuid || !part?.price) {
+      console.error('Missing required part data');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const data = {
+        uuid: part.uuid,
+        products: {
+          productId: part._id,
+          quantity: quantity,
+          price: part.price,
+        },
+        type: 'spare',
+      };
+
+      const response = await addBookingCartItem(data);
+
+      if (response) {
+        toast.success('Added', `${part.productName} is added to cart`);
+        setAdded(true);
+
+        // Reset after success
+        setTimeout(() => {
+          setModalVisible(false);
+          setQuantity(1);
+          setAdded(false);
+        }, 2000);
+      } else {
         toast.error('Error', 'Failed to add to cart');
-        console.error('Error adding to cart:', error);
       }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Error', 'Failed to add to cart');
+    } finally {
+      setIsLoading(false);
+      setModalVisible(false);
+      setQuantity(1);
+      setAdded(false);
     }
   };
 
@@ -147,7 +162,9 @@ const SparePartsCard = ({ part }: any) => {
       <Pressable style={styles.card} onPress={() => setModalVisible(true)}>
         {/* Image at the top */}
         <Image
-          source={{ uri: getImageUrl(part?.image) }}
+          source={
+            part?.image ? { uri: getImageUrl(part?.image) } : require('../../assets/spareparts.png')
+          }
           style={styles.cardImage}
           resizeMode="cover"
           onError={() => setError(true)}
@@ -187,7 +204,11 @@ const SparePartsCard = ({ part }: any) => {
           {/* Image with back button */}
           <View style={styles.modalImageContainer}>
             <Image
-              source={{ uri: getImageUrl(part?.image) }}
+              source={
+                part?.image
+                  ? { uri: getImageUrl(part?.image) }
+                  : require('../../assets/spareparts.png')
+              }
               style={styles.modalImage}
               resizeMode="cover"
             />
@@ -276,7 +297,10 @@ const SparePartsCard = ({ part }: any) => {
 
             {/* Add to Cart Button */}
             <TouchableOpacity
-              style={[styles.modalAddButton]}
+              style={[
+                styles.modalAddButton,
+                (!part?.inStock || isLoading) && styles.disabledButton,
+              ]}
               onPress={() => {
                 if (TokenSelector) {
                   handleAddtoCart(part);
@@ -284,9 +308,9 @@ const SparePartsCard = ({ part }: any) => {
                   setSignUpConfirmModalVisible(true);
                 }
               }}
-              disabled={!part?.inStock}>
+              disabled={!part?.inStock || isLoading}>
               <Text style={styles.modalAddButtonText}>
-                {part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
+                {isLoading ? 'ADDING...' : part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -529,7 +553,10 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: 'bold',
   },
-
+  disabledButton: {
+    backgroundColor: COLORS.grey,
+    opacity: 0.6,
+  },
   // Common Styles
   inStock: {
     backgroundColor: COLORS.success_lightgreen,

@@ -25,6 +25,7 @@ import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { getUserProfileDetails } from '~/features/profile/service';
 import { uploadSingleFileorImage } from '~/features/common/service';
+import { getImageUrl } from '~/utils/imageUtils';
 
 interface Issues {
   id: String;
@@ -102,20 +103,17 @@ export default function RoadsideAssistanceScreen() {
   const [user, setUser] = useState<any>(null);
   const [vehicleList, setVehicleList] = useState<any[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
-
   const [locationText, setLocationText] = useState('Fetching location...');
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [userId,setuserId] = useState<any>('');
+  const [userId, setuserId] = useState<any>('');
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const userResponse = await getUserProfileDetails();
-        // console.log('User details:', userResponse);
-
         setUser(userResponse);
-        setuserId(userResponse._id)
+        setuserId(userResponse._id);
         if (userResponse?.vehicleInfo?.length > 0) {
           setVehicleList(userResponse.vehicleInfo);
           setSelectedVehicle(userResponse.vehicleInfo[0]);
@@ -126,7 +124,7 @@ export default function RoadsideAssistanceScreen() {
     };
 
     fetchUser();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     try {
@@ -196,76 +194,63 @@ export default function RoadsideAssistanceScreen() {
     setModalVisible(true);
   };
 
-  
+  const pickImage = async () => {
+    try {
+      let result: any = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+        allowsMultipleSelection: true,
+      });
 
-const pickImage = async () => {
-  try {
-    let result: any = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-      allowsMultipleSelection: true,
-    });
+      if (!result.canceled) {
+        // Take only first 3 images
+        const selected = result.assets.slice(0, 3);
+        const uploadedUrls: string[] = [];
 
-    if (!result.canceled) {
-      // Take only first 3 images
-      const selected = result.assets.slice(0, 3);
-      console.log(selected, 'selected images');
+        for (let i = 0; i < selected.length; i++) {
+          const file = selected[i];
+          try {
+            const formData = new FormData();
+            formData.append('file', {
+              uri: file.uri,
+              type: file.mimeType || 'image/jpeg',
+              name: file.fileName || `image_${i + 1}.jpg`,
+            } as any);
 
-      const uploadedUrls: string[] = [];
-      
-      for (let i = 0; i < selected.length; i++) {
-        const file = selected[i];
-        try {
-          const formData = new FormData();
-          formData.append("file", {
-            uri: file.uri,
-            type: file.mimeType || "image/jpeg",
-            name: file.fileName || `image_${i + 1}.jpg`,
-          } as any);
+            const uploadResponse = await uploadSingleFileorImage({ userId: userId }, formData);
 
-          console.log(`Uploading image ${i + 1}: ${file.fileName || 'image'}`);
-
-        
-          const uploadResponse = await uploadSingleFileorImage(
-            { userId: userId },
-            formData
-          );
-
-          if (uploadResponse?.data?.image) {
-            uploadedUrls.push(uploadResponse.data.image);
-            console.log(`Image ${i + 1} uploaded successfully: ${uploadResponse.data.image}`);
-          } else {
-            console.error(`Upload failed for image ${i + 1}:`, file.fileName);
-            // You can choose to stop or continue with remaining images
+            if (uploadResponse?.data?.image) {
+              uploadedUrls.push(uploadResponse.data.image);
+            } else {
+              console.log(`Upload failed for image ${i + 1}:`, file.fileName);
+            }
+          } catch (error) {
+            console.log(`Error uploading image ${i + 1}:`, error);
           }
-        } catch (error) {
-          console.error(`Error uploading image ${i + 1}:`, error);
-          // Continue with other images even if one fails
         }
-      }
 
-      // Set the array of uploaded URLs to state
-      if (uploadedUrls.length > 0) {
-        setImages(uploadedUrls);
-        console.log("All uploaded images array:", uploadedUrls);
-        
-        // Show success message based on how many images were uploaded
-        if (uploadedUrls.length === selected.length) {
-          toast.success('Success', `All ${uploadedUrls.length} images uploaded successfully!`);
+        // Set the array of uploaded URLs to state
+        if (uploadedUrls?.length > 0) {
+          setImages(uploadedUrls);
+
+          if (uploadedUrls?.length === selected.length) {
+            toast.success('Success', `All ${uploadedUrls.length} images uploaded successfully!`);
+          } else {
+            toast.error(
+              'Error',
+              `Uploaded ${uploadedUrls.length} out of ${selected.length} images.`
+            );
+          }
         } else {
-          // toast.warning('Partial Upload', `Uploaded ${uploadedUrls.length} out of ${selected.length} images.`);
+          toast.error('Upload Failed', 'Could not upload any images.');
         }
-      } else {
-        toast.error('Upload Failed', 'Could not upload any images.');
       }
+    } catch (error) {
+      console.error('Error in pickImage:', error);
+      toast.error('Error', 'Failed to select images. Please try again.');
     }
-  } catch (error) {
-    console.error("Error in pickImage:", error);
-    toast.error('Error', 'Failed to select images. Please try again.');
-  }
-};
-
+  };
 
   const takePhoto = async () => {
     if (images.length >= 3) {
@@ -307,31 +292,6 @@ const pickImage = async () => {
     }));
   };
 
-  // const handleSubmit = async () => {
-  //   const requestData = {
-  //     issue: selectedIssue,
-  //     type: activeTab,
-  //     ...(activeTab === 'own' ? userDetails : otherDetails),
-  //   };
-  //   setModalVisible(false);
-  //   setOtherDetails({
-  //     name: '',
-  //     phone: '',
-  //     relationship: '',
-  //     location: '',
-  //     additionalNotes: '',
-  //   });
-
-  //   try {
-  //     const response = await postSOSData({});
-  //     if (response) {
-  //       toast.success('Success', response?.message || 'SOS details created successfully!');
-  //     }
-  //   } catch (error: any) {
-  //     console.log(error.message);
-  //   }
-  // };
-
   const handleSubmit = async () => {
     if (!selectedIssue) {
       toast.error('Error', 'Please select an issue.');
@@ -348,7 +308,7 @@ const pickImage = async () => {
     const payload: any = {
       problem: selectedIssue,
       type: activeTab,
-      images: images,
+      image: images,
     };
 
     if (activeTab === 'own') {
@@ -369,14 +329,8 @@ const pickImage = async () => {
       payload.location = otherDetails.location;
     }
 
-    // Log payload in console for debugging
-    console.log('--- Payload ---');
-    console.log(JSON.stringify(payload, null, 2));
-    console.log('---------------');
-
     try {
       const response = await postSOSData(payload);
-      console.log('response', response);
 
       if (response) {
         toast.success('Success', response?.message || 'SOS details sent successfully!');
@@ -458,7 +412,13 @@ const pickImage = async () => {
         onRequestClose={() => setModalVisible(false)}>
         <ScrollView
           contentContainerStyle={styles.modalContainer}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+            />
+          }>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
@@ -485,7 +445,7 @@ const pickImage = async () => {
 
           {/* Own Tab Content */}
           {activeTab === 'own' && user && (
-            <ScrollView style={styles.tabContent}>
+            <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
               <Text style={styles.sectionTitle}>Your Details</Text>
 
               <View style={styles.detailRow}>
@@ -570,9 +530,14 @@ const pickImage = async () => {
               </View>
 
               <View style={styles.imagePreviewContainer}>
-                {images.map((uri, index) => (
+                {images.map((img, index) => (
                   <View key={index} style={styles.imageWrapper}>
-                    <Image source={{ uri }} style={styles.previewImage} />
+                    <Image
+                      source={
+                        img ? { uri: getImageUrl(img) } : require('../../assets/loading1.png')
+                      }
+                      style={styles.previewImage}
+                    />
                     <TouchableOpacity
                       style={styles.removeImageButton}
                       onPress={() => removeImage(index)}>
@@ -586,7 +551,7 @@ const pickImage = async () => {
 
           {/* Others Tab Content */}
           {activeTab === 'others' && (
-            <View style={styles.tabContent}>
+            <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
               {/* Person Details */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Full Name</Text>
@@ -709,9 +674,14 @@ const pickImage = async () => {
               </View>
 
               <View style={styles.imagePreviewContainer}>
-                {images.map((uri, index) => (
+                {images.map((img, index) => (
                   <View key={index} style={styles.imageWrapper}>
-                    <Image source={{ uri }} style={styles.previewImage} />
+                    <Image
+                      source={
+                        img ? { uri: getImageUrl(img) } : require('../../assets/loading1.png')
+                      }
+                      style={styles.previewImage}
+                    />
                     <TouchableOpacity
                       style={styles.removeImageButton}
                       onPress={() => removeImage(index)}>
@@ -720,7 +690,7 @@ const pickImage = async () => {
                   </View>
                 ))}
               </View>
-            </View>
+            </ScrollView>
           )}
 
           {/* Submit Button */}
@@ -737,11 +707,11 @@ const pickImage = async () => {
       <View>
         <CustomLogoutModal
           visible={signUpConfirmModalVisible}
-          onConfirm={() => navigation.navigate('LoginScreen' as never)} 
+          onConfirm={() => navigation.navigate('LoginScreen' as never)}
           onCancel={() => setSignUpConfirmModalVisible(false)}
-          title="Please Login" 
-          message="You need to login to request assistance." 
-          confirmText="Login" 
+          title="Please Login"
+          message="You need to login to request assistance."
+          confirmText="Login"
           cancelText="Cancel"
           confirmButtonColor={COLORS.primary}
           cancelButtonColor={COLORS.transparent}
@@ -939,7 +909,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 40,
+    // marginBottom: 40,
     width: '60%',
     alignSelf: 'center',
   },

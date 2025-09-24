@@ -357,7 +357,7 @@ const Services = () => {
                 <Text style={styles.detailText}>Working Hours: 9:00 AM - 5:00 PM</Text>
               </View>
               {/* Vehicle Selection Dropdown */}
-              {(profileData?.vehicleInfo?.length ?? 0) > 0 && (
+              {(profileData?.vehicleInfo?.length ?? 0) > 0 ? (
                 <View style={styles.vehicleSelection}>
                   <Text style={styles.sectionTitle}>Select Your Vehicle</Text>
                   <View style={styles.dropdownContainer}>
@@ -379,6 +379,18 @@ const Services = () => {
                       </TouchableOpacity>
                     ))}
                   </View>
+                </View>
+              ) : (
+                <View style={{ marginTop: 15 }}>
+                  <Text
+                    style={{
+                      color: 'red',
+                      fontStyle: 'italic',
+                      ...FONTS.body5,
+                      textAlign: 'center',
+                    }}>
+                    Add the car details in profile page and start book a service
+                  </Text>
                 </View>
               )}
             </View>
@@ -442,7 +454,7 @@ const Services = () => {
               </View>
 
               {/* Vehicle Selection Dropdown */}
-              {(profileData?.vehicleInfo?.length ?? 0) > 0 && (
+              {(profileData?.vehicleInfo?.length ?? 0) > 0 ? (
                 <View style={styles.vehicleSelection}>
                   <Text style={styles.sectionTitle}>Select Your Vehicle</Text>
                   <View style={styles.dropdownContainer}>
@@ -465,6 +477,20 @@ const Services = () => {
                     ))}
                   </View>
                 </View>
+              ) : (
+                <>
+                  <View style={{ marginTop: 15 }}>
+                    <Text
+                      style={{
+                        color: 'red',
+                        fontStyle: 'italic',
+                        ...FONTS.body5,
+                        textAlign: 'center',
+                      }}>
+                      Add the car details in profile page and start book a service
+                    </Text>
+                  </View>
+                </>
               )}
 
               <View style={styles.noteContainer}>
@@ -634,7 +660,11 @@ const Services = () => {
                   setModalVisible(true);
                 }}>
                 <ImageBackground
-                  source={{ uri: getImageUrl(item?.image) }}
+                  source={
+                    item?.image
+                      ? { uri: getImageUrl(item?.image) }
+                      : require('../../assets/service.png')
+                  }
                   style={styles.serviceImage}
                   resizeMode="cover">
                   <View style={styles.serviceDuration}>
@@ -670,7 +700,13 @@ const Services = () => {
                 </Text>
               </View>
             }
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[COLORS.primary]}
+              />
+            }
           />
         </View>
 
@@ -688,7 +724,11 @@ const Services = () => {
             </View>
 
             <Image
-              source={{ uri: getImageUrl(selectedService?.image) }}
+              source={
+                selectedService?.image
+                  ? { uri: getImageUrl(selectedService?.image) }
+                  : require('../../assets/service.png')
+              }
               style={styles.modalImage}
               resizeMode="cover"
             />

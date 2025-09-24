@@ -48,7 +48,6 @@ const Settings = () => {
     try {
       setIsLoading(true);
       const response = tokenSelector ? await getAllBookingCartItems({}) : [];
-      console.log(response, 'booking cart res');
       setBookingCarts(response || []);
     } catch (error) {
       console.log('Error fetching booking carts:', error);
@@ -59,9 +58,11 @@ const Settings = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchAllBookingCarts();
+    if (tokenSelector) {
+      await fetchAllBookingCarts();
+    }
     setRefreshing(false);
-  }, [fetchAllBookingCarts]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (tokenSelector) {
@@ -110,9 +111,12 @@ const Settings = () => {
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-            >
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={[COLORS.primary]}
+                />
+              }>
               <Grid1
                 bookingCarts={bookingCarts}
                 onChangeCart={fetchAllBookingCarts}
