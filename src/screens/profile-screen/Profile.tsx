@@ -1410,16 +1410,25 @@ const Profile = () => {
         <View style={styles.sectionIconContainer}>
           <ShoppingCart size={20} color={COLORS.primary} />
         </View>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.navigate('BookingsScreen' as never);
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 85,
           }}>
           <Text style={styles.sectionTitle}>My Orders</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('BookingsScreen' as never);
+            }}>
+            <Text style={{ ...FONTS.body5, fontWeight: 500, color: COLORS.primary }}>View All</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.card}>
         {orders ? (
-          orders.map((order, index) => (
+          orders?.slice(-3)?.map((order, index) => (
             <View key={index}>
               <OrderItem order={order} />
               <View style={styles.separator} />
