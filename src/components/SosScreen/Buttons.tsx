@@ -33,6 +33,15 @@ interface Issues {
   icon: any;
 }
 
+interface ValidationErrors {
+  name?: string;
+  phone?: string;
+  relationship?: string;
+  location?: string;
+  additionalNotes?: string;
+  general?: string;
+}
+
 const issues = [
   {
     id: 'battery',
@@ -96,6 +105,7 @@ export default function RoadsideAssistanceScreen() {
     location: '',
     additionalNotes: '',
   });
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const dispatch = useDispatch<AppDispatch>();
   const TokenSelector = useSelector(selectToken);
   const [isLoading, setIsLoading] = useState(false);
@@ -143,6 +153,7 @@ export default function RoadsideAssistanceScreen() {
       fetchLocation();
     }
   }, [modalVisible]);
+
   useEffect(() => {
     if (modalVisible) {
       setOtherDetails({
@@ -156,6 +167,7 @@ export default function RoadsideAssistanceScreen() {
       setActiveTab('own');
       setLocationText('Fetching location...');
       setCoords(null);
+      setValidationErrors({});
     }
   }, [modalVisible]);
 
@@ -192,6 +204,57 @@ export default function RoadsideAssistanceScreen() {
   const handleSelect = (id: any) => {
     setSelectedIssue(id);
     setModalVisible(true);
+  };
+
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+
+    if (activeTab === 'own') {
+      // Validate Own tab
+      if (!user) {
+        errors.general = 'User details not available';
+      }
+      if (!selectedVehicle) {
+        errors.general = 'Please select a vehicle';
+      }
+      if (
+        !locationText ||
+        locationText === 'Fetching location...' ||
+        locationText === 'Unable to fetch location'
+      ) {
+        errors.general = 'Please wait for location to be fetched or refresh location';
+      }
+    } else {
+      // Validate Others tab
+      if (!otherDetails.name.trim()) {
+        errors.name = 'Full name is required';
+      } else if (otherDetails.name.trim().length < 2) {
+        errors.name = 'Full name must be at least 2 characters';
+      }
+
+      if (!otherDetails.phone.trim()) {
+        errors.phone = 'Phone number is required';
+      } else if (!/^\d{10}$/.test(otherDetails.phone.trim())) {
+        errors.phone = 'Phone number must be 10 digits';
+      }
+
+      if (!otherDetails.relationship.trim()) {
+        errors.relationship = 'Relationship is required';
+      }
+
+      if (!otherDetails.location.trim()) {
+        errors.location = 'Location is required';
+      }
+
+      if (!otherDetails.additionalNotes.trim()) {
+        errors.additionalNotes = 'Additional notes are required';
+      } else if (otherDetails.additionalNotes.trim().length < 10) {
+        errors.additionalNotes = 'Please provide more details (at least 10 characters)';
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const pickImage = async () => {
@@ -290,6 +353,13 @@ export default function RoadsideAssistanceScreen() {
       ...prev,
       [field]: value,
     }));
+    // Clear validation error when user starts typing
+    if (validationErrors[field as keyof ValidationErrors]) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [field]: undefined,
+      }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -298,8 +368,9 @@ export default function RoadsideAssistanceScreen() {
       return;
     }
 
-    if (activeTab === 'own' && (!user || !selectedVehicle)) {
-      toast.error('Error', 'User or vehicle details not available.');
+    // Validate form
+    if (!validateForm()) {
+      toast.error('Validation Error', 'Please fill all required fields correctly.');
       return;
     }
 
@@ -319,7 +390,7 @@ export default function RoadsideAssistanceScreen() {
         ? `${selectedVehicle.company || ''} - ${selectedVehicle.model || ''}`
         : '';
       payload.licensePlate = selectedVehicle?.registerNumber || '';
-      payload.vehicleId = selectedVehicle?._id || ''; // include vehicle _id
+      payload.vehicleId = selectedVehicle?._id || '';
       payload.location = locationText || '';
     } else {
       payload.name = otherDetails.name;
@@ -328,9 +399,11 @@ export default function RoadsideAssistanceScreen() {
       payload.additionalNotes = otherDetails.additionalNotes;
       payload.location = otherDetails.location;
     }
+    // console.log("payload",payload)
 
     try {
       const response = await postSOSData(payload);
+      // console.log("response",response)
 
       if (response) {
         toast.success('Success', response?.message || 'SOS details sent successfully!');
@@ -347,6 +420,7 @@ export default function RoadsideAssistanceScreen() {
         setImages([]);
         setSelectedIssue(null);
         setSelectedVehicle(null);
+        setValidationErrors({});
       }
     } catch (error: any) {
       console.error(error.message);
@@ -355,6 +429,7 @@ export default function RoadsideAssistanceScreen() {
       setIsLoading(false);
     }
   };
+
   const onRefresh = async () => {
     try {
       setRefreshing(true);
@@ -442,6 +517,13 @@ export default function RoadsideAssistanceScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* General validation error */}
+          {validationErrors.general && (
+            <View style={styles.generalErrorContainer}>
+              <Text style={styles.generalErrorText}>{validationErrors.general}</Text>
+            </View>
+          )}
 
           {/* Own Tab Content */}
           {activeTab === 'own' && user && (
@@ -554,35 +636,55 @@ export default function RoadsideAssistanceScreen() {
             <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
               {/* Person Details */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Full Name</Text>
+                <Text style={styles.inputLabel}>Full Name *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, validationErrors.name && styles.inputError]}
                   value={otherDetails.name}
                   onChangeText={(text) => handleOtherDetailsChange('name', text)}
                   placeholder="Enter full name"
                 />
+                {validationErrors.name && (
+                  <Text style={styles.errorText}>{validationErrors.name}</Text>
+                )}
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Phone Number</Text>
+                <Text style={styles.inputLabel}>Phone Number *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, validationErrors.phone && styles.inputError]}
                   value={otherDetails.phone}
                   onChangeText={(text) => handleOtherDetailsChange('phone', text)}
                   placeholder="Enter phone number"
                   keyboardType="phone-pad"
                   maxLength={10}
                 />
+                {validationErrors.phone && (
+                  <Text style={styles.errorText}>{validationErrors.phone}</Text>
+                )}
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Relationship</Text>
-                <TextInput
-                  style={styles.input}
-                  value={otherDetails.relationship}
-                  onChangeText={(text) => handleOtherDetailsChange('relationship', text)}
-                  placeholder="Friend, family, etc."
-                />
+                <Text style={styles.inputLabel}>Relationship *</Text>
+                <View
+                  style={[
+                    styles.pickerContainer,
+                    validationErrors.relationship && styles.inputError,
+                  ]}>
+                  <Picker
+                    selectedValue={otherDetails.relationship}
+                    onValueChange={(value) => {
+                      handleOtherDetailsChange('relationship', value);
+                      
+                    }}>
+                    <Picker.Item label="Select Relationship" value="" />
+                    <Picker.Item label="Friend" value="Friend" />
+                    <Picker.Item label="Family" value="Family" />
+                    <Picker.Item label="Other" value="Other" />
+                  </Picker>
+                </View>
+                {validationErrors.relationship && (
+                  <Text style={styles.errorText}>{validationErrors.relationship}</Text>
+                )}
               </View>
 
               <Text style={styles.sectionTitle}>Vehicle Problem</Text>
@@ -591,25 +693,38 @@ export default function RoadsideAssistanceScreen() {
               </Text>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Additional Notes</Text>
+                <Text style={styles.inputLabel}>Additional Notes *</Text>
                 <TextInput
-                  style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+                  style={[
+                    styles.input,
+                    { height: 100, textAlignVertical: 'top' },
+                    validationErrors.additionalNotes && styles.inputError,
+                  ]}
                   value={otherDetails.additionalNotes}
                   onChangeText={(text) => handleOtherDetailsChange('additionalNotes', text)}
                   placeholder="Describe the problem in detail"
                   multiline
                 />
+                {validationErrors.additionalNotes && (
+                  <Text style={styles.errorText}>{validationErrors.additionalNotes}</Text>
+                )}
               </View>
+
               {/* Location with button */}
               <Text style={styles.sectionTitle}>Location</Text>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 15 }}>
                 {/* Location input */}
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  value={otherDetails.location}
-                  onChangeText={(text) => handleOtherDetailsChange('location', text)}
-                  placeholder="Enter location or address"
-                />
+                <View style={{ flex: 1 }}>
+                  <TextInput
+                    style={[styles.input, validationErrors.location && styles.inputError]}
+                    value={otherDetails.location}
+                    onChangeText={(text) => handleOtherDetailsChange('location', text)}
+                    placeholder="Enter location or address"
+                  />
+                  {validationErrors.location && (
+                    <Text style={styles.errorText}>{validationErrors.location}</Text>
+                  )}
+                </View>
 
                 {/* Button with text on top */}
                 <View style={{ alignItems: 'center', marginLeft: 10 }}>
@@ -694,12 +809,10 @@ export default function RoadsideAssistanceScreen() {
           )}
 
           {/* Submit Button */}
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleSubmit}
-            // disabled={images.length === 0}
-          >
-            <Text style={styles.submitButtonText}>REQUEST ASSISTANCE</Text>
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isLoading}>
+            <Text style={styles.submitButtonText}>
+              {isLoading ? 'SUBMITTING...' : 'REQUEST ASSISTANCE'}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </Modal>
@@ -896,6 +1009,29 @@ const styles = StyleSheet.create({
     padding: 12,
     ...FONTS.body4,
   },
+  inputError: {
+    borderColor: COLORS.error,
+    borderWidth: 1,
+  },
+  errorText: {
+    ...FONTS.body5,
+    color: COLORS.error,
+    marginTop: 5,
+    marginLeft: 5,
+  },
+  generalErrorContainer: {
+    backgroundColor: '#FFE6E6',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.error,
+  },
+  generalErrorText: {
+    ...FONTS.body5,
+    color: COLORS.error,
+    fontWeight: '500',
+  },
   selectedIssue: {
     ...FONTS.body4,
     color: COLORS.primary,
@@ -909,7 +1045,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    // marginBottom: 40,
     width: '60%',
     alignSelf: 'center',
   },
@@ -970,5 +1105,11 @@ const styles = StyleSheet.create({
     height: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: COLORS.lightGrey,
+    borderRadius: 8,
+    marginTop: 5,
   },
 });
