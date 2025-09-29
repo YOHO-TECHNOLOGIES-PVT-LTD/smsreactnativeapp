@@ -37,6 +37,7 @@ import { getUserProfileDetails } from '~/features/profile/service';
 import { getImageUrl } from '~/utils/imageUtils';
 import { RefreshControl } from 'react-native';
 import { createEnquiry } from '~/features/home/service';
+import SparePartsCard from '~/components/SpareParts/SparePartsCard';
 
 const carlogos = [
   icons.carlogo1,
@@ -491,44 +492,31 @@ const HomePage = () => {
             </View>
             <Text style={styles.sectionSubtitle}>Original OEM parts with warranty</Text>
 
-            {spareParts?.length ? (
-              <ScrollView
-                style={styles.partsContainer1}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 20 }}>
-                {spareParts?.slice(0, 10)?.map((item: any) => (
-                  <View key={item?._id} style={[styles.partCard1, { width: 120 }]}>
-                    <Image
-                      source={
-                        item?.image
-                          ? { uri: getImageUrl(item?.image) }
-                          : require('../../assets/spareparts.png')
-                      }
-                      style={styles.partImage}
-                    />
-                    <View style={styles.partDetails}>
-                      <Text style={styles.partName}>{item?.productName?.substring(0, 15)}</Text>
-                      <Text style={styles.partOem}>{item?.brand}</Text>
-                      <Text style={styles.partPrice}>₹{item.price}</Text>
-                      <Text style={styles.stock}>
-                        {item.inStock === true ? 'In Stock' : 'Out of Stock'}({item?.stock})
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            ) : (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginTop: 10,
-                }}>
-                <Text style={{ ...FONTS.body5 }}>No spare parts available</Text>
-              </View>
-            )}
+           
+{spareParts?.length ? (
+  <ScrollView
+    style={styles.partsContainer1}
+    horizontal
+    showsHorizontalScrollIndicator={false}
+    contentContainerStyle={{ paddingRight: 10 }}>
+    {spareParts?.slice(0, 10)?.map((item: any) => (
+      <SparePartsCard
+        key={item?._id}
+        part={item}
+      />
+    ))}
+  </ScrollView>
+) : (
+  <View
+    style={{
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 10,
+    }}>
+    <Text style={{ ...FONTS.body5 }}>No spare parts available</Text>
+  </View>
+)}
           </View>
 
           {/* Special Offers */}

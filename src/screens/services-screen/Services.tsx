@@ -15,7 +15,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
@@ -83,9 +83,8 @@ const Services = () => {
   const [selectedBookingType, setSelectedBookingType] = useState<'general' | 'schedule'>('general');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [startTime, setStartTime] = useState('00:00');
-  const [endTime, setEndTime] = useState('00:00');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const TokenSelector = useSelector(selectToken);
   const [isLoading, setIsLoading] = useState(false);
   const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
@@ -94,6 +93,22 @@ const Services = () => {
   const [profileData, setprofileData] = useState<ProfileData>();
   const [selectedVehicleIndex, setSelectedVehicleIndex] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState<false | "start" | "end">(false);
+
+  
+  useFocusEffect(
+    React.useCallback(() => {
+      setStartTime('');
+      setEndTime('');
+      setSelectedDate(new Date());
+      setSelectedVehicleIndex(null);
+      setSelectedBookingType('general');
+      
+      return () => {
+        // Optional cleanup when screen loses focus
+      };
+    }, [])
+  );
 
   useEffect(() => {
     try {
@@ -136,11 +151,14 @@ const Services = () => {
           setFilteredParts(categories[0]?.services);
         }
       }
+      
     } catch (error) {
       console.error('Error fetching services:', error);
       setError(true);
     }
   };
+
+ 
 
   const fetchUserProfile = async () => {
     try {
@@ -177,6 +195,17 @@ const Services = () => {
     setCartCount(getCartCount() ?? 0);
   }, [dispatch, cartItems]);
 
+  // Reset booking modal states when it opens/closes
+  useEffect(() => {
+    if (bookingModalVisible) {
+      // Reset time states when booking modal opens
+      setStartTime('');
+      setEndTime('');
+      setSelectedDate(new Date());
+      setSelectedVehicleIndex(null);
+    }
+  }, [bookingModalVisible]);
+
   const handleAddtoCart = async (vehicleIndex: number | null) => {
     if (!selectedService?.uuid) {
       console.log('Error: No service selected');
@@ -190,10 +219,27 @@ const Services = () => {
       return;
     }
 
+    // Enhanced validation for schedule booking
     if (selectedBookingType === 'schedule') {
-      if (!selectedDate || !startTime || !endTime) {
-        console.log('Error: Schedule details missing');
-        toast.error('Error', 'Please fill all schedule details.');
+      if (!selectedDate) {
+        console.log('Error: Date not selected');
+        toast.error('Error', 'Please select a date.');
+        return;
+      }
+      
+      if (!startTime || !endTime) {
+        console.log('Error: Time not selected');
+        toast.error('Error', 'Please select both start and end time.');
+        return;
+      }
+
+      // Validate that end time is after start time
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+      
+      if (endHours < startHours || (endHours === startHours && endMinutes <= startMinutes)) {
+        console.log('Error: End time must be after start time');
+        toast.error('Error', 'End time must be after start time.');
         return;
       }
     }
@@ -225,6 +271,9 @@ const Services = () => {
         setModalVisible(false);
         setSelectedDate(new Date());
         setSelectedVehicleIndex(null);
+        // Reset time states after successful booking
+        setStartTime('');
+        setEndTime('');
       } else {
         console.log('Error: Booking failed');
         toast.error('Error', 'Something went wrong. Try again.');
@@ -297,14 +346,28 @@ const Services = () => {
       animationType="slide"
       transparent={false}
       visible={bookingModalVisible}
-      onRequestClose={() => setBookingModalVisible(false)}>
+      onRequestClose={() => {
+        setBookingModalVisible(false);
+        // Reset states when modal closes
+        setStartTime('');
+        setEndTime('');
+        setSelectedDate(new Date());
+        setSelectedVehicleIndex(null);
+      }}>
       <ScrollView style={styles.modalContainer}>
         <View style={styles.modalContent1}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 }}>
             <View style={{}}>
               <TouchableOpacity
                 style={styles.backButton1}
-                onPress={() => setBookingModalVisible(false)}>
+                onPress={() => {
+                  setBookingModalVisible(false);
+                  // Reset states when modal closes via back button
+                  setStartTime('');
+                  setEndTime('');
+                  setSelectedDate(new Date());
+                  setSelectedVehicleIndex(null);
+                }}>
                 <Ionicons name="arrow-back" size={26} color={COLORS.primary} />
               </TouchableOpacity>
             </View>
@@ -318,7 +381,12 @@ const Services = () => {
                 styles.bookingTypeButton,
                 selectedBookingType === 'general' && styles.selectedBookingType,
               ]}
-              onPress={() => setSelectedBookingType('general')}>
+              onPress={() => {
+                setSelectedBookingType('general');
+                // Reset time when switching to general service
+                setStartTime('');
+                setEndTime('');
+              }}>
               <Text
                 style={[
                   styles.bookingTypeText,
@@ -425,33 +493,61 @@ const Services = () => {
                 />
               )}
 
+              {/* Time Selection */}
               <View style={styles.timeSelection}>
                 <Text style={styles.timeLabel}>Preferred Time:</Text>
                 <View style={styles.timeInputContainer}>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={startTime}
-                    onChangeText={setStartTime}
-                    placeholder="Start time"
-                  />
-                  {showTimePicker && (
-                    <DateTimePicker
-                      value={selectedDate}
-                      mode="date"
-                      display="default"
-                      onChange={onDateChange}
-                      minimumDate={new Date()}
-                    />
-                  )}
+                  
+                  {/* Start Time */}
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setShowTimePicker('start')}>
+                    <MaterialIcons name="access-time" size={20} color={COLORS.primary} />
+                    <Text style={styles.dateText}>
+                      {startTime ? startTime : 'Pick Start Time'}
+                    </Text>
+                  </TouchableOpacity>
+
                   <Text style={styles.timeSeparator}>-</Text>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={endTime}
-                    onChangeText={setEndTime}
-                    placeholder="End time"
-                  />
+
+                  {/* End Time */}
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setShowTimePicker('end')}>
+                    <MaterialIcons name="access-time" size={20} color={COLORS.primary} />
+                    <Text style={styles.dateText}>
+                      {endTime ? endTime : 'Pick End Time'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
+
+              {/* Show Time Picker */}
+              {showTimePicker && (
+                <DateTimePicker
+                  value={new Date()}
+                  mode="time"
+                  display="default"
+                  onChange={(event, selected) => {
+                    if (event.type === "dismissed") {
+                      setShowTimePicker(false);
+                      return;
+                    }
+                    const hours = selected?.getHours() ?? 0;
+                    const minutes = selected?.getMinutes() ?? 0;
+                    const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
+                      .toString()
+                      .padStart(2, "0")}`;
+
+                    if (showTimePicker === 'start') {
+                      setStartTime(formattedTime);
+                    } else {
+                      setEndTime(formattedTime);
+                    }
+                    setShowTimePicker(false);
+                  }}
+                />
+              )}
 
               {/* Vehicle Selection Dropdown */}
               {(profileData?.vehicleInfo?.length ?? 0) > 0 ? (
@@ -506,7 +602,8 @@ const Services = () => {
           <TouchableOpacity
             style={[
               styles.bookButton,
-              selectedVehicleIndex === null && {
+              (selectedVehicleIndex === null || 
+               (selectedBookingType === 'schedule' && (!startTime || !endTime))) && {
                 opacity: 0.6,
               },
             ]}
@@ -517,7 +614,10 @@ const Services = () => {
                 setSignUpConfirmModalVisible(true);
               }
             }}
-            disabled={selectedVehicleIndex === null}>
+            disabled={
+              selectedVehicleIndex === null || 
+              (selectedBookingType === 'schedule' && (!startTime || !endTime))
+            }>
             <Text style={styles.bookButtonText}>
               {selectedBookingType === 'general' ? 'BOOK NOW' : 'PRE-BOOK SERVICE'}
             </Text>
@@ -526,6 +626,7 @@ const Services = () => {
       </ScrollView>
     </Modal>
   );
+
   const onRefresh = async () => {
     try {
       setRefreshing(true);
@@ -534,6 +635,10 @@ const Services = () => {
         await fetchUserProfile();
       }
       dispatch(getBookingCartItems());
+      // Reset time states on refresh
+      setStartTime('');
+      setEndTime('');
+      setSelectedDate(new Date());
     } catch (error) {
       console.error('Error refreshing services:', error);
     } finally {
@@ -591,12 +696,6 @@ const Services = () => {
                   setActiveNavItem(category?.category_name);
                   setSearchQuery('');
                 }}>
-                {/* <Image
-                  // source={{ uri: getImageUrl(category?.image) }}
-                  source={require('../../assets/loading1.png')}
-                  style={styles.categoryImage}
-                  alt="Category Image"
-                /> */}
                 <Image
                   source={
                     category?.image
@@ -679,15 +778,6 @@ const Services = () => {
                   </Text>
                   <Text style={styles.servicePrice}>₹{item.price.toLocaleString('en-IN')}</Text>
                 </View>
-                {/* <View style={styles.bottomRow}>
-                  {renderStars(item?.rating)}
-                  <View
-                    style={[styles.stockBadge, item?.isavailable ? styles.inStock : styles.outOfStock]}>
-                    <Text style={styles.stockText}>
-                      {item?.inStock ? 'In Stock' : 'Out of Stock'}
-                    </Text>
-                  </View>
-                </View> */}
               </TouchableOpacity>
             )}
             keyExtractor={(item) => item.uuid}
@@ -821,6 +911,7 @@ const Services = () => {
     </>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
