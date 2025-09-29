@@ -1516,7 +1516,7 @@ const Profile = () => {
   const onRefresh = async () => {
     try {
       setRefreshing(true);
-
+      setProfileData({});
       // Refresh user profile data
       if (TokenSelector) {
         await fetchUserProfile();

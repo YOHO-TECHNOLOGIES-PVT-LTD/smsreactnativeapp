@@ -93,9 +93,8 @@ const Services = () => {
   const [profileData, setprofileData] = useState<ProfileData>();
   const [selectedVehicleIndex, setSelectedVehicleIndex] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState<false | "start" | "end">(false);
+  const [showTimePicker, setShowTimePicker] = useState<false | 'start' | 'end'>(false);
 
-  
   useFocusEffect(
     React.useCallback(() => {
       setStartTime('');
@@ -103,9 +102,8 @@ const Services = () => {
       setSelectedDate(new Date());
       setSelectedVehicleIndex(null);
       setSelectedBookingType('general');
-      
+
       return () => {
-        // Optional cleanup when screen loses focus
       };
     }, [])
   );
@@ -151,14 +149,11 @@ const Services = () => {
           setFilteredParts(categories[0]?.services);
         }
       }
-      
     } catch (error) {
       console.error('Error fetching services:', error);
       setError(true);
     }
   };
-
- 
 
   const fetchUserProfile = async () => {
     try {
@@ -226,7 +221,7 @@ const Services = () => {
         toast.error('Error', 'Please select a date.');
         return;
       }
-      
+
       if (!startTime || !endTime) {
         console.log('Error: Time not selected');
         toast.error('Error', 'Please select both start and end time.');
@@ -236,7 +231,7 @@ const Services = () => {
       // Validate that end time is after start time
       const [startHours, startMinutes] = startTime.split(':').map(Number);
       const [endHours, endMinutes] = endTime.split(':').map(Number);
-      
+
       if (endHours < startHours || (endHours === startHours && endMinutes <= startMinutes)) {
         console.log('Error: End time must be after start time');
         toast.error('Error', 'End time must be after start time.');
@@ -271,7 +266,6 @@ const Services = () => {
         setModalVisible(false);
         setSelectedDate(new Date());
         setSelectedVehicleIndex(null);
-        // Reset time states after successful booking
         setStartTime('');
         setEndTime('');
       } else {
@@ -497,15 +491,12 @@ const Services = () => {
               <View style={styles.timeSelection}>
                 <Text style={styles.timeLabel}>Preferred Time:</Text>
                 <View style={styles.timeInputContainer}>
-                  
                   {/* Start Time */}
                   <TouchableOpacity
                     style={styles.datePickerButton}
                     onPress={() => setShowTimePicker('start')}>
                     <MaterialIcons name="access-time" size={20} color={COLORS.primary} />
-                    <Text style={styles.dateText}>
-                      {startTime ? startTime : 'Pick Start Time'}
-                    </Text>
+                    <Text style={styles.dateText}>{startTime ? startTime : 'Pick Start Time'}</Text>
                   </TouchableOpacity>
 
                   <Text style={styles.timeSeparator}>-</Text>
@@ -515,9 +506,7 @@ const Services = () => {
                     style={styles.datePickerButton}
                     onPress={() => setShowTimePicker('end')}>
                     <MaterialIcons name="access-time" size={20} color={COLORS.primary} />
-                    <Text style={styles.dateText}>
-                      {endTime ? endTime : 'Pick End Time'}
-                    </Text>
+                    <Text style={styles.dateText}>{endTime ? endTime : 'Pick End Time'}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -529,15 +518,15 @@ const Services = () => {
                   mode="time"
                   display="default"
                   onChange={(event, selected) => {
-                    if (event.type === "dismissed") {
+                    if (event.type === 'dismissed') {
                       setShowTimePicker(false);
                       return;
                     }
                     const hours = selected?.getHours() ?? 0;
                     const minutes = selected?.getMinutes() ?? 0;
-                    const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
+                    const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes
                       .toString()
-                      .padStart(2, "0")}`;
+                      .padStart(2, '0')}`;
 
                     if (showTimePicker === 'start') {
                       setStartTime(formattedTime);
@@ -602,8 +591,8 @@ const Services = () => {
           <TouchableOpacity
             style={[
               styles.bookButton,
-              (selectedVehicleIndex === null || 
-               (selectedBookingType === 'schedule' && (!startTime || !endTime))) && {
+              (selectedVehicleIndex === null ||
+                (selectedBookingType === 'schedule' && (!startTime || !endTime))) && {
                 opacity: 0.6,
               },
             ]}
@@ -615,7 +604,7 @@ const Services = () => {
               }
             }}
             disabled={
-              selectedVehicleIndex === null || 
+              selectedVehicleIndex === null ||
               (selectedBookingType === 'schedule' && (!startTime || !endTime))
             }>
             <Text style={styles.bookButtonText}>
@@ -911,7 +900,6 @@ const Services = () => {
     </>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {

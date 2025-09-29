@@ -18,15 +18,13 @@ import { useNavigation } from '@react-navigation/native';
 const AnimatedSearch = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
-
   const searchContent = ['Warranty', 'Dent Paint', 'Periodic Services', 'Miles', 'Top Assist'];
-
   const [searchIndex, setSearchIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [inputText, setInputText] = useState('');
   const [serviceCategories, setServiceCategories] = useState<any[]>([]);
   const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([]);
-
+  const [showAllServices, setShowAllServices] = useState(false);
   const animatedValue = useRef(new Animated.Value(0)).current;
   const currentSearch = useRef(searchContent[0]);
   const nextSearch = useRef(searchContent[1]);
@@ -97,14 +95,24 @@ const AnimatedSearch = () => {
   useEffect(() => {
     if (inputText.trim() === '') {
       setFilteredSuggestions([]);
+      setShowAllServices(false);
       return;
     }
+
+    // Check if user is searching for "available services"
+    if (inputText.toLowerCase().includes('available services')) {
+      setShowAllServices(true);
+      setFilteredSuggestions(serviceCategories);
+      return;
+    }
+
+    setShowAllServices(false);
     const matches = serviceCategories.filter((cat) =>
-  cat.category_name
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .includes(inputText.toLowerCase().trim().replace(/\s+/g, ' '))
-);
+      cat.category_name
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .includes(inputText.toLowerCase().trim().replace(/\s+/g, ' '))
+    );
 
     setFilteredSuggestions(matches);
   }, [inputText, serviceCategories]);
@@ -134,19 +142,37 @@ const AnimatedSearch = () => {
     }
   };
 
-  const handleBlur = () => {setIsFocused(false)}
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
 
+  const handleSuggestionPress = (item: any) => {
+    setInputText(item.category_name);
+    setFilteredSuggestions([]);
+    setShowAllServices(false);
+    setIsFocused(false);
+    dispatch(setSelectedTab(screens.services));
+    // navigation.navigate('Services', { categoryId: item._id, categoryName: item.category_name });
+  };
 
- const handleSuggestionPress = (item: any) => {
-  setInputText(item.category_name);
-  setFilteredSuggestions([]);
-  setIsFocused(false);
-  
-  dispatch(setSelectedTab(screens.services));
-  // navigation.navigate('Services', { categoryId: item._id, categoryName: item.category_name });
-};
+  const handleReset = () => {
+    setInputText('');
+    setFilteredSuggestions([]);
+    setShowAllServices(false);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
 
-
+  const getDropdownTitle = () => {
+    if (showAllServices) {
+      return 'All Available Services';
+    }
+    if (filteredSuggestions.length > 0) {
+      return `Found ${filteredSuggestions.length} service(s)`;
+    }
+    return null;
+  };
 
   return (
     <View>
@@ -159,7 +185,7 @@ const AnimatedSearch = () => {
             style={styles.searchText}
             placeholder=""
             onFocus={handleFocus}
-          
+            onBlur={handleBlur}
             onChangeText={(text) => setInputText(text)}
             value={inputText}
           />
@@ -182,31 +208,40 @@ const AnimatedSearch = () => {
             </View>
           )}
         </View>
+        {inputText !== '' && (
+          <TouchableOpacity onPress={handleReset} style={styles.resetButton}>
+            <MaterialIcons name="close" size={18} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {isFocused && inputText !== '' && (
-  <View style={styles.dropdown} pointerEvents="box-none">
-    {filteredSuggestions.length > 0 ? (
-      <FlatList
-        data={filteredSuggestions}
-        keyExtractor={(item, index) => `${item._id}-${index}`}
-        keyboardShouldPersistTaps="handled"  
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.suggestionItem}
-            activeOpacity={0.7}
-            onPress={() => handleSuggestionPress(item)}
-          >
-            <Text style={styles.suggestionText}>{item.category_name}</Text>
-          </TouchableOpacity>
-        )}
-      />
-    ) : (
-      <Text style={styles.noServiceText}>No services available</Text>
-    )}
-  </View>
-)}
-
+        <View style={styles.dropdown} pointerEvents="box-none">
+          {filteredSuggestions.length > 0 || showAllServices ? (
+            <>
+              {getDropdownTitle() && (
+                <View style={styles.dropdownHeader}>
+                  <Text style={styles.dropdownTitle}>{getDropdownTitle()}</Text>
+                </View>
+              )}
+              <FlatList
+                data={filteredSuggestions}
+                keyExtractor={(item, index) => `${item._id}-${index}`}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.suggestionItem}
+                    onPress={() => handleSuggestionPress(item)}>
+                    <Text style={styles.suggestionText}>{item.category_name}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </>
+          ) : (
+            <Text style={styles.noServiceText}>No services available</Text>
+          )}
+        </View>
+      )}
     </View>
   );
 };
@@ -223,7 +258,12 @@ const styles = StyleSheet.create({
     height: 42,
   },
   searchIcon: { marginRight: 10 },
-  inputWrapper: { flex: 1, height: '100%', justifyContent: 'center', position: 'relative' },
+  inputWrapper: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center',
+    position: 'relative',
+  },
   searchText: {
     color: COLORS.primary,
     fontSize: 14,
@@ -233,31 +273,66 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   placeholderWrapper: {
-    position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, justifyContent: 'center',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
   },
-  animatedTextContainer: { position: 'absolute', left: 0, right: 0 },
-  placeholderText: { color: COLORS.primary_03, fontSize: 14, lineHeight: 20 },
+  animatedTextContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
+  placeholderText: {
+    color: COLORS.primary_03,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  resetButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
   dropdown: {
     backgroundColor: 'white',
     borderRadius: 8,
     marginTop: 4,
     elevation: 4,
-    maxHeight: 150,
+    maxHeight: 200,
   },
-suggestionItem: {
-  width: '100%',
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingVertical: 10,
-  paddingHorizontal: 15,
-  borderBottomWidth: 0.5,
-  borderBottomColor: '#ddd',
-  backgroundColor: 'white',
-},
-
-
-  suggestionText: { fontSize: 14, color: COLORS.primary },
-  noServiceText: { padding: 15, fontSize: 14, color: 'gray', textAlign: 'center' },
+  dropdownHeader: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#f8f8f8',
+  },
+  dropdownTitle: {
+    fontSize: 12,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  suggestionItem: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#ddd',
+    backgroundColor: 'white',
+  },
+  suggestionText: {
+    fontSize: 14,
+    color: COLORS.primary,
+  },
+  noServiceText: {
+    padding: 15,
+    fontSize: 14,
+    color: 'gray',
+    textAlign: 'center',
+  },
 });
 
 export default AnimatedSearch;
