@@ -1,4 +1,4 @@
-const BackEndUrl = process.env.EXPO_PUBLIC_URL ?? ''; // fallback in case it's undefined
+const BackEndUrl = 'https://sms-node-backend.onrender.com/';
 
 export const getImageUrl = (imageKey: string | null | undefined): string => {
   return imageKey ? `${BackEndUrl}${imageKey}` : '';

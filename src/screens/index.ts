@@ -8,6 +8,13 @@ import ForgotPasswordScreen from '~/features/authentication/Forgot-Password/Forg
 import RegisterScreen from '~/features/authentication/Register-Screen/RegisterScreen';
 import OtpVerificationScreen from '~/features/authentication/Otp-verification/OtpVerificationScreen';
 import SetNewPasswordScreen from '~/features/authentication/SetNew-Password/SetNewPasswordScreen';
+import NotificationScreen from './notification-screen/NotificationScreen';
+import SettingsScreen from './settings-screen/Settings';
+import BookingCartScreen from './booking-cart-screen/BookingCart';
+import BookingsScreen from './bookings-screen/Bookings';
+import HelpCenterScreen from './help-center-screen/HelpCenter';
+import FAQsScreen from './faqs-screen/FAQs';
+import OnboardingScreen from './OnboardingScreen/OnboardingScreen';
 
 export {
   HomeScreen,
@@ -20,4 +27,11 @@ export {
   RegisterScreen,
   OtpVerificationScreen,
   SetNewPasswordScreen,
+  NotificationScreen,
+  SettingsScreen,
+  BookingCartScreen,
+  BookingsScreen,
+  HelpCenterScreen,
+  FAQsScreen,
+  OnboardingScreen,
 };

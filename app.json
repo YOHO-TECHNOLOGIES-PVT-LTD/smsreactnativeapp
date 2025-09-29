@@ -1,38 +1,55 @@
 {
   "expo": {
-    "name": "smsreactnativeapp",
+    "name": "YES MECHANIC",
     "slug": "smsreactnativeapp",
     "version": "1.0.0",
-
+    "icon": "./src/assets/appLogoNew.png",
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./src/assets/appLogoNew.png"
     },
-
     "experiments": {
       "tsconfigPaths": true
     },
-
-    "plugins": [],
-
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them.",
+          "cameraPermission": "The app accesses your camera to let you take photos."
+        }
+      ],
+      "expo-secure-store"
+    ],
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-
     "userInterfaceStyle": "light",
-
     "splash": {
-      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "y",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./src/assets/appLogoNew.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.suryas_1805.smsreactnativeapp"
+    },
+    "extra": {
+      // "eas": {
+      //   "projectId": "50e4a192-2f74-4052-9d4c-2ca792da20fc"
+      // }
     }
   }
 }

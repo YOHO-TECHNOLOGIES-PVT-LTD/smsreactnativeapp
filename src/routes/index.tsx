@@ -1,25 +1,33 @@
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
-import toast from '../utils/toast';
-import CustomDrawer from '../tabs/CustomDrawer';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  BookingCartScreen,
+  BookingsScreen,
+  FAQsScreen,
   ForgotPasswordScreen,
+  HelpCenterScreen,
   HomeScreen,
   LoginScreen,
+  NotificationScreen,
+  OnboardingScreen,
   OtpVerificationScreen,
   ProfileScreen,
   RegisterScreen,
   ServicesScreen,
   SetNewPasswordScreen,
+  SettingsScreen,
   SosScreen,
   SparePartsScreen,
 } from '~/screens';
+import ServiceDrawer from '../tabs/CustomDrawer';
+import { View, ActivityIndicator, Text, Animated, Easing, Image } from 'react-native';
+import { COLORS, FONTS } from '~/constants';
 
-// Define the types for navigation stack
 export type RootStackParamList = {
   AuthStack: undefined;
+  Onboarding: undefined;
   MainStack: undefined;
   CustomDrawer: undefined;
   HomeScreen: undefined;
@@ -32,61 +40,80 @@ export type RootStackParamList = {
   OtpVerificationScreen: undefined;
   SetNewPasswordScreen: undefined;
   ForgotPasswordScreen: undefined;
+  NotificationScreen: undefined;
+  SettingsScreen: undefined;
+  BookingCartScreen: undefined;
+  BookingsScreen: undefined;
+  FAQsScreen: undefined;
+  HelpCenterScreen: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Routes: React.FC = () => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkAuthState = async () => {
+    const checkOnboardingStatus = async () => {
       try {
-        const isLoggedIn = true; // Replace this with your actual logic
-        if (isLoggedIn) {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'MainStack' }],
-          });
-        } else {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'AuthStack' }],
-          });
-        }
-      } catch (error: any) {
-        toast.error('Error during auth state check:', error.message || 'Unknown error');
+        const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
+        setIsFirstLaunch(hasSeenOnboarding === null);
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        setIsFirstLaunch(true);
       }
     };
 
-    checkAuthState();
-  }, [navigation]);
-
-  const AuthStack: React.FC = () => (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="LoginScreen" component={LoginScreen} />
-      <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
-      <Stack.Screen name="ForgetPasswordScreen" component={ForgotPasswordScreen} />
-      <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
-      <Stack.Screen name="SetNewPasswordScreen" component={SetNewPasswordScreen} />
-    </Stack.Navigator>
-  );
+    checkOnboardingStatus();
+  }, []);
 
   const MainStack: React.FC = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="CustomDrawer" component={CustomDrawer} />
+      <Stack.Screen name="CustomDrawer" component={ServiceDrawer} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
+      <Stack.Screen name="OtpVerificationScreen" component={OtpVerificationScreen} />
+      <Stack.Screen name="SetNewPasswordScreen" component={SetNewPasswordScreen} />
       <Stack.Screen name="SOSScreen" component={SosScreen} />
       <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
       <Stack.Screen name="SparePartsScreen" component={SparePartsScreen} />
       <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+      <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+      <Stack.Screen name="BookingsScreen" component={BookingsScreen} />
+      <Stack.Screen name="BookingCartScreen" component={BookingCartScreen} />
+      <Stack.Screen name="HelpCenterScreen" component={HelpCenterScreen} />
+      <Stack.Screen name="FAQsScreen" component={FAQsScreen} />
     </Stack.Navigator>
   );
 
+  if (isFirstLaunch === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ color: COLORS.primary, ...FONTS.h3, fontWeight: 500, marginTop: 5 }}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="AuthStack" component={AuthStack} />
-      <Stack.Screen name="MainStack" component={MainStack} />
+      {isFirstLaunch ? (
+        <>
+          <Stack.Screen
+            name="Onboarding" 
+            component={OnboardingScreen} 
+            options={{ gestureEnabled: false }}
+          />
+          <Stack.Screen name="MainStack" component={MainStack} />
+        </>
+      ) : (
+        <Stack.Screen name="MainStack" component={MainStack} />
+      )}
     </Stack.Navigator>
   );
 };

@@ -10,23 +10,13 @@ export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export const icons = {
-  zoom: require('../assets/icons/zoom.png'),
-  magnify: require('../assets/icons/magnifying-glass.png'),
   voice: require('../assets/icons/voice.png'),
   close_mark: require('../assets/icons/close.png'),
   menu_dots: require('../assets/icons/menu-dots-vertical.png'),
   single_tick: require('../assets/icons/icons8-done-32.png'),
   double_tick: require('../assets/icons/[CITYPNG.COM]HD Grey Double Tick Check Mark Icon WhatsApp PNG - 2000x2000.png'),
-  home_filled: require('../assets/icons/home_filled.png'),
-  home_outlined: require('../assets/icons/home_outlined.png'),
-  course_filled: require('../assets/icons/course-filled.png'),
-  course_outlined: require('../assets/icons/course-outlined.png'),
-  class_filled: require('../assets/icons/class-filled.png'),
-  class_outlined: require('../assets/icons/class-outlined.png'),
-  calendar_filled: require('../assets/icons/calendar-filled.png'),
-  calendar_outlined: require('../assets/icons/calendar-outlined.png'),
-  account_filled: require('../assets/icons/account-filled.png'),
-  account_outlined: require('../assets/icons/account-outlined.png'),
+  home_filled: require('../assets/icons/home-filled.png'),
+  home_outlined: require('../assets/icons/home-outlined.png'),
   stats_filled: require('../assets/icons/stats-filled.png'),
   stats_outlined: require('../assets/icons/stats-outlined.png'),
   add_filled: require('../assets/icons/add-filled.png'),
@@ -35,8 +25,6 @@ export const icons = {
   more_outlined: require('../assets/icons/more_outlined.png'),
   more_filled: require('../assets/icons/more_filled.png'),
   notification: require('../assets/icons/notification.png'),
-  community_filled: require('../assets/icons/community-filled.png'),
-  community_outlined: require('../assets/icons/community-outline.png'),
   search: require('../assets/icons/search.png'),
   search_two: require('../assets/icons/search_two.png'),
   filter: require('../assets/icons/filter.png'),
@@ -52,46 +40,98 @@ export const icons = {
   down: require('../assets/icons/down.png'),
   menu: require('../assets/icons/menu.png'),
   card_background: require('../assets/icons/card-background.png'),
-  logo: require('../assets/icons/logo.png'),
   girl: require('../assets/icons/girl.png'),
-  white_triangle: require('../assets/icons/white_rectangle.png'),
   background: require('../assets/icons/background.png'),
-  onboarding_1: require('../assets/icons/onboarding_1.png'),
-  onboarding_2: require('../assets/icons/onboarding_2.png'),
-  onboarding_3: require('../assets/icons/onboarding_3.png'),
-  attendance_background: require('../assets/icons/attendance_baground.png'),
+  profile_background: require('../assets/icons/attendance_baground.png'),
   left_arrow: require('../assets/icons/left_arrow.png'),
   right_arrow: require('../assets/icons/right_arrow.png'),
-  activity_background: require('../assets/icons/activity_background.png'),
-  payment_background: require('../assets/icons/payment.png'),
-  class_background: require('../assets/icons/class_background.png'),
-  course_background: require('../assets/icons/course_back.png'),
-  ticket_background: require('../assets/icons/ticket_back.png'),
+  spares_background: require('../assets/icons/activity_background.png'),
+  services_background: require('../assets/icons/payment.png'),
+  home_background: require('../assets/icons/class_background.png'),
+  booking_background: require('../assets/icons/course_back.png'),
+  cart_background: require('../assets/icons/ticket_back.png'),
   logs_outlined: require('../assets/icons/log-outlined.png'),
   logs_filled: require('../assets/icons/log-filled.png'),
-  payment_outlined: require('../assets/icons/payment-outlined.png'),
-  payment_filled: require('../assets/icons/payment-filled.png'),
   ticket_outlined: require('../assets/icons/ticket-outlined.png'),
   ticket_filled: require('../assets/icons/ticket-filled.png'),
   help_outlined: require('../assets/icons/help-center-outlined.png'),
   help_filled: require('../assets/icons/help-center-filled.png'),
   tick: require('../assets/icons/check.png'),
   pending: require('../assets/icons/pending.png'),
-  live_class: require('../assets/icons/live.png'),
-  online_class: require('../assets/icons/online_class.png'),
-  offline_class: require('../assets/icons/offline_class.png'),
   logout: require('../assets/icons/logout.png'),
-  calendar_color: require('../assets/icons/calendar.png'),
   course_fee: require('../assets/icons/course-fee.png'),
   amount_paid: require('../assets/icons/amount-paid.png'),
   status: require('../assets/icons/status.png'),
-  payment_method: require('../assets/icons/payment-method.png'),
   notes: require('../assets/icons/notes.png'),
   video: require('../assets/icons/video.png'),
   message: require('../assets/icons/message.png'),
   scholarship: require('../assets/icons/scholarship.png'),
   library: require('../assets/icons/library.png'),
-  teacher: require('../assets/icons/teacher.png'),
+  sos: require('../assets/icons/sos.png'),
+  services_filled: require('../assets/icons/services-filled.png'),
+  services_outlined: require('../assets/icons/services-outlined.png'),
+  spare_filled: require('../assets/icons/spare-filled.png'),
+  spare_outlined: require('../assets/icons/spare-outlined.png'),
+  booking_filled: require('../assets/icons/booking-filled.png'),
+  booking_outlined: require('../assets/icons/booking-outlined.png'),
+  cart_filled: require('../assets/icons/cart-filled.png'),
+  cart_outlined: require('../assets/icons/cart-outlined.png'),
+  faq: require('../assets/icons/conversation.png'),
+  settings: require('../assets/icons/setting.png'),
+  cart_bg: require('../assets/images/cart-bg.jpg'),
+  black_friday: require('../assets/home/black-friday.jpg'),
+  promo1: require('../assets/home/promo-banner1.jpg'),
+  promo2: require('../assets/home/promo-banner2.jpg'),
+  promo3: require('../assets/home/promo-banner3.jpg'),
+  promo4: require('../assets/home/promo-banner4.jpg'),
+  promo5: require('../assets/home/promo-banner5.jpg'),
+  spare_card: require('../assets/home/spare-card.jpg'),
+  spare_card2: require('../assets/home/spare-card2.jpg'),
+  spare_card3: require('../assets/home/spare-cart-card.jpg'),
+  payment_card: require('../assets/home/payment-card.jpg'),
+  booking_icon: require('../assets/icons/booking_icon.png'),
+  service1: require('../assets/home/service1.jpg'),
+  service2: require('../assets/home/service2.jpg'),
+  service3: require('../assets/home/service3.jpg'),
+  service4: require('../assets/home/service4.jpg'),
+  service5: require('../assets/home/service5.jpg'),
+  service6: require('../assets/home/service6.jpg'),
+  service7: require('../assets/home/service7.jpg'),
+  service8: require('../assets/home/service8.jpg'),
+  servicepromo1: require('../assets/home/servicepromo1.jpg'),
+  servicepromo2: require('../assets/home/servicepromo2.jpg'),
+  carlogo1: require('../assets/home/car logo/carlogo1.png'),
+  carlogo2: require('../assets/home/car logo/carlogo2.png'),
+  carlogo3: require('../assets/home/car logo/carlogo3.png'),
+  carlogo4: require('../assets/home/car logo/carlogo4.png'),
+  carlogo5: require('../assets/home/car logo/carlogo5.png'),
+  carlogo6: require('../assets/home/car logo/carlogo6.png'),
+  carlogo7: require('../assets/home/car logo/carlogo7.png'),
+  carlogo8: require('../assets/home/car logo/carlogo8.png'),
+  carlogo9: require('../assets/home/car logo/carlogo9.png'),
+  carlogo10: require('../assets/home/car logo/carlogo10.png'),
+  carlogo11: require('../assets/home/car logo/carlogo11.png'),
+  carlogo12: require('../assets/home/car logo/carlogo12.png'),
+  carlogo13: require('../assets/home/car logo/carlogo13.png'),
+  carlogo14: require('../assets/home/car logo/carlogo14.png'),
+  carlogo15: require('../assets/home/car logo/carlogo15.png'),
+  clock: require('../assets/icons/clock.png'),
+  carservice1: require('../assets/loading1.png'),
+  carservice2: require('../assets/loading2.png'),
+};
+
+export const Styles = {
+  item: {
+    padding: 10,
+    fontSize: 18,
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
+  },
+  searchBackground: {
+    marginBottom: 12,
+    padding: 2,
+    borderRadius: 8,
+  },
 };
 
 export const screens = {
@@ -100,29 +140,39 @@ export const screens = {
   services: 'Services',
   sos: 'SOS',
   spare_parts: 'Spare Parts',
-  profile: 'Profile',
+  profile: 'Account',
 };
 
 export const bottom_tabs = [
   {
     id: 0,
     label: screens.home,
+    icon: icons.home_outlined,
+    activeIcon: icons.home_filled,
   },
   {
     id: 1,
     label: screens.services,
+    icon: icons.services_outlined,
+    activeIcon: icons.services_filled,
   },
   {
     id: 2,
     label: screens.sos,
+    icon: icons.sos,
+    activeIcon: icons.sos,
   },
   {
     id: 3,
     label: screens.spare_parts,
+    icon: icons.spare_outlined,
+    activeIcon: icons.spare_filled,
   },
   {
     id: 4,
     label: screens.profile,
+    icon: icons.user_outlined,
+    activeIcon: icons.user_filled,
   },
 ];
 
@@ -136,6 +186,14 @@ export const COLORS = {
   error20: 'rgba(246, 86, 93, 0.2)',
   error08: 'rgba(246, 86, 93, 0.08)',
 
+  // Warning
+  warning: 'rgba(255, 199, 46, 1)',
+  warning80: 'rgba(255, 199, 46, 0.8)',
+  warning60: 'rgba(255, 199, 46, 0.6)',
+  warning40: 'rgba(255, 199, 46, 0.4)',
+  warning20: 'rgba(255, 199, 46, 0.2)',
+  warning08: 'rgba(255, 199, 46, 0.08)',
+
   indigo: {
     100: '#d0d9f7',
     200: '#a2b3ef',
@@ -148,14 +206,17 @@ export const COLORS = {
     900: '#040d2b',
   },
   // Primary
-  primary: '#1640D6',
-  primary80: 'rgba(78, 85, 175, 0.8)',
-  primary60: 'rgba(78, 85, 175, 0.6)',
-  primary20: 'rgba(78, 85, 175, 0.2)',
-  primary08: 'rgba(78, 85, 175, 0.08)',
+  primary: '#0050A5',
+  primary_01: '#0050A5',
+  primary_02: '#0050A5',
+  primary_03: '#BED0EC',
+  primary_04: '#d8e1ef',
+  primary_text: '#0050A5',
+  primary_borders: '#0050A5',
+  primary_active: '#0050A5',
 
   // Secondary
-  secondary: 'rgba(161, 219, 245, 1)',
+  secondary: 'rgba(161, 219, 245)',
   secondary80: 'rgba(161, 219, 245, 0.8)',
   secondary60: 'rgba(161, 219, 245, 0.6)',
   secondary40: 'rgba(161, 219, 245, 0.4)',
@@ -164,6 +225,9 @@ export const COLORS = {
   secondary08: 'rgba(161, 219, 245, 0.08)',
 
   // Success
+  sucesss_darkgreen: '#218c75',
+  success_lightgreen: '#82dd55',
+  success_lightgreen_01: 'rgba(220, 252, 231, 0.8)',
   success: 'rgba(253, 212, 70, 1)',
   success80: 'rgba(253, 212, 70, 0.8)',
   success60: 'rgba(253, 212, 70, 0.6)',
@@ -179,7 +243,7 @@ export const COLORS = {
   dark08: 'rgba(13, 15, 35, 0.08)',
 
   // Grey
-  grey: 'rgba(160, 161, 180, 1)',
+  grey: '000',
   grey80: 'rgba(160, 161, 180, 0.8)',
   grey60: 'rgba(160, 161, 180, 0.6)',
   grey40: 'rgba(160, 161, 180, 0.4)',
@@ -192,6 +256,7 @@ export const COLORS = {
   lightGrey60: 'rgba(247, 247, 247, 0.6)',
   lightGrey20: 'rgba(247, 247, 247, 0.2)',
   lightGrey08: 'rgba(247, 247, 247, 0.08)',
+  lightGrey05: '#f2f2f2',
 
   // Light
   light: 'rgba(255, 255, 255, 1)',
@@ -232,6 +297,8 @@ export const COLORS = {
   white: '#FFFFFF',
   black: '#000000',
 
+  buttonbg1: '#4CAF50',
+
   transparent: 'transparent',
   transparentWhite1: 'rgba(255, 255, 255, 0.1)',
   transparentBlack1: 'rgba(0, 0, 0, 0.1)',
@@ -240,19 +307,23 @@ export const COLORS = {
 
 export const SIZES = {
   // global sizes
-  base: wp('4%'), // Responsive base size
-  small: wp('2%'), // Responsive base size
+  full: wp('100%'), // Responsive full width
   extraSmall: wp('1%'), // Responsive base size
-  font: RFValue(14), // Responsive font size
+  small: wp('2%'), // Responsive base size
   radius: wp('3%'), // Responsive radius
+  base: wp('4%'), // Responsive base size
   padding: wp('5%'), // Responsive padding
-  margin: wp('4%'), // Responsive margin
+  margin: wp('6%'), // Responsive margin
   extra: wp('7%'),
+  font: RFValue(14), // Responsive font size
 
   // font sizes
   largeTitle: 40,
   h1: 30,
   h2: 22,
+  h2_01: 20,
+  h2_02: 18,
+  h2_03: 24,
   h3: 16,
   h4: 14,
   h5: 12,
@@ -267,6 +338,8 @@ export const SIZES = {
   body6: 10,
   body7: 8,
   body8: 6,
+  body9: 4,
+  newbody: 35,
 
   // app dimensions
   width,
@@ -276,78 +349,86 @@ export const SIZES = {
 export const FONTS = {
   largeTitle: { fontFamily: 'Poppins-Black', fontSize: SIZES.largeTitle },
   h1: {
-    fontFamily: 'Poppins-Bold',
+    // fontFamily: 'Poppins-Bold',
     fontSize: SIZES.h1,
     lineHeight: 36,
   },
   h2: {
-    fontFamily: 'Poppins-Bold',
+    // fontFamily: 'Poppins-Bold',
     fontSize: SIZES.h2,
     lineHeight: 30,
   },
+  h2_01: {
+    // fontFamily: 'Poppins-Bold',
+    fontSize: SIZES.h2_01,
+  },
+  h2_02: {
+    // fontFamily: 'Poppins-Bold',
+    fontSize: SIZES.h2_02,
+  },
   h3: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h3,
     lineHeight: 22,
   },
   h4: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h4,
     lineHeight: 22,
   },
   h5: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h5,
     lineHeight: 22,
   },
   h6: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h6,
-    lineHeight: 22,
+    // lineHeight: 22,
   },
   h7: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h7,
   },
   h8: {
-    fontFamily: 'Poppins-SemiBold',
+    // fontFamily: 'Poppins-SemiBold',
     fontSize: SIZES.h8,
   },
   body1: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body1,
     lineHeight: 36,
   },
   body2: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body2,
     lineHeight: 30,
   },
   body3: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body3,
     lineHeight: 22,
   },
   body4: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body4,
     lineHeight: 22,
   },
   body5: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body5,
     // lineHeight: RFValue(12),
   },
   body6: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body6,
   },
   body7: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body7,
   },
   body8: {
-    fontFamily: 'Poppins-Regular',
+    // fontFamily: 'Poppins-Regular',
     fontSize: SIZES.body8,
   },
 };
@@ -356,7 +437,16 @@ export const FONTS = {
 export const SPACING = {
   small: wp('4%'), // Responsive small spacing
   medium: wp('8%'), // Responsive medium spacing
+  medium_01: wp('9%'), // Responsive medium spacing
+  medium_02: wp('10%'), // Responsive medium spacing
   large: wp('12%'), // Responsive large spacing
+  xl: wp('16%'), // Responsive extra large spacing
+  xl_01: wp('18%'), // Responsive extra large spacing
+  xl_02: wp('20%'), // Responsive extra large spacing
+  xl_03: wp('22%'), // Responsive extra large spacing
+  xxl: wp('24%'), // Responsive extra extra large spacing
+  xxxl: wp('32%'), // Responsive extra extra extra large spacing
+  huge: hp('90%'), // Responsive huge spacing
 };
 
 // Elevation
