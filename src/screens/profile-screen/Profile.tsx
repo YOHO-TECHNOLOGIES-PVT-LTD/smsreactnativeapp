@@ -65,12 +65,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import AnimatedUserDummy from '~/components/profile/AnimatedUserDummy';
 import LoadingAnimation from '~/components/LoadingAnimation';
+import PhoneDialerButton from '~/components/PhoneDialerButton';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken, logout } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllBookingsCartItems } from '~/features/bookings/service';
-import { formatDateMonthandYear } from '../../utils/formatDate';
+import { formatDate, formatDateandmonth, formatDateMonthandYear } from '../../utils/formatDate';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
 import { Feather } from '@expo/vector-icons';
@@ -80,13 +81,18 @@ import { getImageUrl } from '~/utils/imageUtils';
 const { width, height } = Dimensions.get('window');
 
 const COLORS1 = {
+  // Primary colors1 - Refined Deep Crimson Theme
   primary: '#0050A5',
   primaryLight: '#4566de',
   primaryDark: '#0050A5',
   primaryUltraLight: '#d8e1ef',
   primaryBorder: '#BED0EC',
+
+  // Background colors1
   background: '#0050A5',
   backgroundGradient: ['#0050A5', '#BED0EC'],
+
+  // Card colors1 with sophisticated combinations
   cardPrimary: '#FFFFFF',
   cardSecondary: '#F8FAFC',
   cardTertiary: '#F1F5F9',
@@ -96,6 +102,8 @@ const COLORS1 = {
   cardError: '#FEF2F2',
   cardInfo: '#EFF6FF',
   primaryinfo: ['#2563EB', '#3B82F6'],
+
+  // Status colors1
   success: '#82dd55',
   successLight: '#10B981',
   successDark: '#047857',
@@ -105,6 +113,8 @@ const COLORS1 = {
   errorLight: '#EF4444',
   info: '#2563EB',
   infoLight: '#3B82F6',
+
+  // Neutral colors1
   white: '#FFFFFF',
   black: '#000000',
   gray50: 'rgba(247, 247, 247, 1)',
@@ -117,9 +127,13 @@ const COLORS1 = {
   gray700: 'rgba(247, 247, 247, 0.2)',
   gray800: 'rgba(247, 247, 247, 0.08)',
   gray900: '#111827',
+
+  // Shadow colors1
   shadow: 'rgba(255, 255, 255, 0.1)',
   shadowMedium: 'rgba(0, 0, 0, 0.1)',
   shadowStrong: 'rgba(0, 0, 0, 0.7)',
+
+  // Special gradient combinations
   gradientPrimary: ['#0050A5', '#BED0EC'] as [string, string],
   gradientprimary: ['#D97706', '#F59E0B'] as [string, string],
   gradientSuccess: ['#059669', '#10B981'] as [string, string],
@@ -127,6 +141,7 @@ const COLORS1 = {
   gradientNeutral: ['#F8FAFC', '#F1F5F9'] as [string, string],
 };
 
+// Enhanced Type Definitions
 interface Vehicle {
   id: string | number;
   registerNumber: string;
@@ -199,13 +214,73 @@ const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-const validatePhone = (phone: string): boolean => {
+const validatePhone = (phone: string): { isValid: boolean; error?: string } => {
+  if (!phone?.trim()) {
+    return { isValid: false, error: 'Phone number is required' };
+  }
+
+  const cleanedPhone = phone.replace(/\D/g, '');
   const phoneRegex = /^[6-9]\d{9}$/;
-  return phoneRegex.test(phone.replace(/\D/g, ''));
+
+  if (cleanedPhone.length !== 10) {
+    return { isValid: false, error: 'Phone number must be exactly 10 digits' };
+  }
+
+  if (!phoneRegex.test(cleanedPhone)) {
+    return {
+      isValid: false,
+      error: 'Please enter a valid 10-digit phone number starting with 6-9',
+    };
+  }
+
+  return { isValid: true };
 };
 
-const validateName = (name: string): boolean => {
+const validateFirstName = (name: string): boolean => {
+  return name.trim().length >= 2 && /^[a-zA-Z\s]+$/.test(name);
+};
+
+const validateLastName = (name: string): boolean => {
   return name.trim().length >= 1 && /^[a-zA-Z\s]+$/.test(name);
+};
+
+const validateAddress = (address: string): string => {
+  if (!address?.trim()) {
+    return 'Address is required';
+  }
+  if (address.trim().length < 5) {
+    return 'Address must be at least 5 characters long';
+  }
+  if (address.trim().length > 200) {
+    return 'Address must be less than 200 characters';
+  }
+  return '';
+};
+
+const validateCity = (city: string): string => {
+  if (!city?.trim()) {
+    return 'City is required';
+  }
+  if (city.trim().length < 3) {
+    return 'City must be at least 3 characters long';
+  }
+  if (!/^[a-zA-Z\s\-]+$/.test(city)) {
+    return 'City can only contain letters, spaces, and hyphens';
+  }
+  return '';
+};
+
+const validateState = (state: string): string => {
+  if (!state?.trim()) {
+    return 'State is required';
+  }
+  if (state.trim().length < 2) {
+    return 'State must be at least 2 characters long';
+  }
+  if (!/^[a-zA-Z\s\-]+$/.test(state)) {
+    return 'State can only contain letters, spaces, and hyphens';
+  }
+  return '';
 };
 
 const validateVehicleYear = (year: string): boolean => {
@@ -224,6 +299,10 @@ interface FormErrors {
   lastName?: string;
   email?: string;
   phoneNumber?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
   vehicles?: Array<{
     registerNumber?: string;
     company?: string;
@@ -253,7 +332,6 @@ const Profile = () => {
     productConfirm?: any[];
     success?: boolean;
   } | null>(null);
-
   const [formData, setFormData] = useState<any>({
     firstName: '',
     lastName: '',
@@ -276,7 +354,6 @@ const Profile = () => {
       },
     ],
   });
-
   const [originalFormData, setOriginalFormData] = useState<any>(null);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
 
@@ -323,7 +400,7 @@ const Profile = () => {
         setFormData(userData);
         setOriginalFormData(JSON.parse(JSON.stringify(userData)));
         setProfileData(response);
-        setFormErrors({}); // Clear errors when loading new data
+        setFormErrors({});
       }
     } catch (error) {
       console.log('Error fetching user profile:', error);
@@ -395,12 +472,15 @@ const Profile = () => {
   const headerOpacity = useRef(new Animated.Value(1)).current;
   const cardScale = useRef(new Animated.Value(1)).current;
 
+  // Side Menu Animation - Modified for left to right
   const sideMenuTranslateX = useRef(new Animated.Value(-width)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
+  // 360 Degree Car Image State
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
 
+  // Enhanced Pan Responder for 360° Car View
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -485,6 +565,7 @@ const Profile = () => {
     });
   }, []);
 
+  // Side Menu Functions - Modified for left to right animation
   const openSideMenu = () => {
     setSideMenuVisible(true);
     setExpandedSections({
@@ -530,6 +611,7 @@ const Profile = () => {
     });
   };
 
+  // Toggle individual sections
   const toggleSection = (section: 'vehicles' | 'orders' | 'settings') => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -537,6 +619,7 @@ const Profile = () => {
     }));
   };
 
+  // Utility Functions
   const saveUserProfileImage = (imageUri: string) => {};
 
   const getUserProfileImage = () => {
@@ -562,7 +645,6 @@ const Profile = () => {
     if (TokenSelector) {
       setEditForm({ ...userInfo });
       setEditProfileModal(true);
-      setFormErrors({}); // Clear errors when opening modal
     } else {
       setLogoutModalVisible(true);
     }
@@ -571,12 +653,13 @@ const Profile = () => {
   const validateFormData = (): boolean => {
     const errors: FormErrors = {};
     let isValid = true;
+    let date = new Date().getFullYear();
 
     // Validate first name
     if (!formData.firstName?.trim()) {
       errors.firstName = 'First name is required';
       isValid = false;
-    } else if (!validateName(formData.firstName)) {
+    } else if (!validateFirstName(formData.firstName)) {
       errors.firstName = 'First name must be at least 2 characters and contain only letters';
       isValid = false;
     }
@@ -585,8 +668,8 @@ const Profile = () => {
     if (!formData.lastName?.trim()) {
       errors.lastName = 'Last name is required';
       isValid = false;
-    } else if (!validateName(formData.lastName)) {
-      errors.lastName = 'Last name must be at least 1 character and contain only letters';
+    } else if (!validateLastName(formData.lastName)) {
+      errors.lastName = 'Last name must be at least 2 characters and contain only letters';
       isValid = false;
     }
 
@@ -600,8 +683,35 @@ const Profile = () => {
     }
 
     // Validate phone number if provided
-    if (formData.contact_info?.phoneNumber && !validatePhone(formData.contact_info.phoneNumber)) {
-      errors.phoneNumber = 'Please enter a valid 10-digit phone number';
+    const phoneValidation = validatePhone(formData.contact_info?.phoneNumber || '');
+    if (!phoneValidation.isValid) {
+      errors.phoneNumber = phoneValidation.error;
+      isValid = false;
+    }
+
+    const address1Error = validateAddress(formData.contact_info?.address1 || '');
+    if (address1Error) {
+      errors.address1 = address1Error;
+      isValid = false;
+    }
+
+    const address2Error = validateAddress(formData.contact_info.address2 || '');
+    if (address2Error) {
+      errors.address2 = address2Error;
+      isValid = false;
+    }
+
+    // Validate city
+    const cityError = validateCity(formData.contact_info?.city || '');
+    if (cityError) {
+      errors.city = cityError;
+      isValid = false;
+    }
+
+    // Validate state
+    const stateError = validateState(formData.contact_info?.state || '');
+    if (stateError) {
+      errors.state = stateError;
       isValid = false;
     }
 
@@ -611,14 +721,36 @@ const Profile = () => {
       formData.vehicleInfo.forEach((vehicle: any, index: number) => {
         const vehicleErrors: any = {};
 
-        if (vehicle.registerNumber && !validateRegistrationNumber(vehicle.registerNumber)) {
+        // Validate required fields for existing vehicles
+        if (!vehicle.registerNumber?.trim()) {
+          vehicleErrors.registerNumber = 'Register number is required';
+          isValid = false;
+        } else if (!validateRegistrationNumber(vehicle.registerNumber)) {
           vehicleErrors.registerNumber =
-            'Please enter a valid vehicle registration number (e.g., KA01AB1234)';
+            'Please enter a valid vehicle registration number (e.g., TN08SV1831)';
           isValid = false;
         }
 
-        if (vehicle.year && !validateVehicleYear(vehicle.year)) {
-          vehicleErrors.year = 'Please enter a valid vehicle year (1990 - current year + 1)';
+        if (!vehicle.company?.trim()) {
+          vehicleErrors.company = 'Car company is required';
+          isValid = false;
+        }
+
+        if (!vehicle.model?.trim()) {
+          vehicleErrors.model = 'Car model is required';
+          isValid = false;
+        }
+
+        if (!vehicle.year?.trim()) {
+          vehicleErrors.year = 'Model year is required';
+          isValid = false;
+        } else if (!validateVehicleYear(vehicle.year)) {
+          vehicleErrors.year = `Please enter a valid vehicle year (1990 - ${date + 1})`;
+          isValid = false;
+        }
+
+        if (!vehicle.fuleType?.trim()) {
+          vehicleErrors.fuleType = 'Fuel type is required';
           isValid = false;
         }
 
@@ -639,6 +771,7 @@ const Profile = () => {
   const validateNewVehicle = (): boolean => {
     const errors: FormErrors = {};
     let isValid = true;
+    let date = new Date().getFullYear();
 
     if (!formData.newVehicle) {
       errors.newVehicle = {
@@ -658,7 +791,7 @@ const Profile = () => {
         isValid = false;
       } else if (!validateRegistrationNumber(newVehicle.registerNumber)) {
         vehicleErrors.registerNumber =
-          'Please enter a valid vehicle registration number (e.g., KA01AB1234)';
+          'Please enter a valid vehicle registration number (e.g., TN08SV1831)';
         isValid = false;
       }
 
@@ -676,7 +809,7 @@ const Profile = () => {
         vehicleErrors.year = 'Model year is required';
         isValid = false;
       } else if (!validateVehicleYear(newVehicle.year)) {
-        vehicleErrors.year = 'Please enter a valid vehicle year (1990 - current year + 1)';
+        vehicleErrors.year = `Please enter a valid vehicle year (1990 - ${date})`;
         isValid = false;
       }
 
@@ -714,7 +847,6 @@ const Profile = () => {
     ]).start();
 
     try {
-      // Only send changed fields to optimize API call
       const updatedData: any = {};
 
       if (formData.firstName !== originalFormData.firstName) {
@@ -774,7 +906,6 @@ const Profile = () => {
     if (!validateNewVehicle()) {
       return;
     }
-
     try {
       const newVehicle = formData.newVehicle;
 
@@ -841,6 +972,7 @@ const Profile = () => {
 
       if (!result.canceled) {
         const localUri = result.assets[0].uri;
+        // prepare FormData
         const formData = new FormData();
         formData.append('file', {
           uri: localUri,
@@ -854,14 +986,13 @@ const Profile = () => {
 
           setFormData((prev: any) => ({ ...prev, image: uploadedUrl }));
           saveUserProfileImage(uploadedUrl);
-          toast.success('Success', 'Profile image updated successfully!');
         } else {
-          Alert.alert('Upload Failed', 'Could not upload image.');
+          toast.error('Upload Failed', 'Could not upload image.');
         }
       }
     } catch (error) {
       console.error('Error:', error);
-      Alert.alert('Error', 'Failed to upload image. Please try again.');
+      toast.error('Error', 'Failed to upload image. Please try again.');
     } finally {
       setPhotoUploadModal(false);
     }
@@ -885,6 +1016,7 @@ const Profile = () => {
       toast.success('Logged out', 'You have been successfully logged out');
       setIsLoading(false);
       setLogoutModalVisible(false);
+      setProfileData({});
     } catch (error) {
       toast.error('Logout failed', 'Could not complete logout. Please try again.');
       console.error('Logout error:', error);
@@ -905,7 +1037,6 @@ const Profile = () => {
     Linking.openURL(mailtoUrl).catch((err) => console.error('Failed to open email app:', err));
   };
 
-  // Helper function to clear specific error
   const clearError = (field: string) => {
     setFormErrors((prev) => {
       const newErrors = { ...prev };
@@ -914,7 +1045,6 @@ const Profile = () => {
     });
   };
 
-  // Helper function to clear vehicle error
   const clearVehicleError = (vehicleIndex: number, field: string) => {
     setFormErrors((prev: any) => {
       const newErrors = { ...prev };
@@ -933,7 +1063,7 @@ const Profile = () => {
 
   // Helper function to clear new vehicle error
   const clearNewVehicleError = (field: string) => {
-    setFormErrors((prev) => {
+    setFormErrors((prev: any) => {
       const newErrors = { ...prev };
       if (newErrors.newVehicle) {
         delete newErrors.newVehicle[field as keyof typeof newErrors.newVehicle];
@@ -944,7 +1074,6 @@ const Profile = () => {
       return newErrors;
     });
   };
-
   const MenuItem: React.FC<MenuItemProps> = ({
     title,
     subtitle,
@@ -1005,13 +1134,13 @@ const Profile = () => {
 
   const OrderItem = ({ order }: { order: Order }) => {
     const getStatusColor = () => {
-      switch (order.status) {
+      switch (order.status.toLowerCase()) {
         case 'pending':
           return COLORS1.warning;
-        case 'delivered':
+        case 'completed':
           return COLORS1.success;
         default:
-          return COLORS1.gray500;
+          return COLORS1.info;
       }
     };
 
@@ -1070,6 +1199,7 @@ const Profile = () => {
         </View>
         <Text style={styles.serviceDescription}>{service.description}</Text>
 
+        {/* Enhanced service details */}
         <View style={styles.serviceDetailsContainer}>
           {service.technician && (
             <View style={styles.serviceDetailItem}>
@@ -1125,6 +1255,7 @@ const Profile = () => {
     </TouchableOpacity>
   );
 
+  // Enhanced Car Status Component
   const CarStatusBar = ({ label, value, color, icon }: CarStatusProps) => {
     return (
       <View style={styles.carStatusBarContainer}>
@@ -1174,6 +1305,7 @@ const Profile = () => {
     </View>
   );
 
+  // Side Menu Content Render Functions
   const renderVehiclesContent = () => (
     <>
       <View style={styles.sectionHeader}>
@@ -1224,6 +1356,7 @@ const Profile = () => {
         )}
       </View>
 
+      {/* Enhanced Vehicle Tips Section */}
       {formData?.vehicleInfo?.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
@@ -1277,7 +1410,12 @@ const Profile = () => {
         <View style={styles.sectionIconContainer}>
           <ShoppingCart size={20} color={COLORS.primary} />
         </View>
-        <Text style={styles.sectionTitle}>My Orders</Text>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('BookingsScreen' as never);
+          }}>
+          <Text style={styles.sectionTitle}>My Orders</Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.card}>
         {orders ? (
@@ -1362,17 +1500,21 @@ const Profile = () => {
     </>
   );
 
+  // Add this state variable near your other useState declarations
   const [refreshing, setRefreshing] = useState(false);
 
+  // Add this refresh function after your existing functions
   const onRefresh = async () => {
     try {
       setRefreshing(true);
 
+      // Refresh user profile data
       if (TokenSelector) {
         await fetchUserProfile();
         await fetchOrders();
       }
 
+      // Optional: Add a small delay for better UX
       setTimeout(() => {
         setRefreshing(false);
       }, 500);
@@ -1389,6 +1531,7 @@ const Profile = () => {
         <View style={{}}></View>
         <View style={styles.container}>
           <LoadingAnimation visible={isLoading} />
+          {/* Enhanced Header with Professional Gradient */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.openDrawer()}>
               <Image
@@ -1412,10 +1555,10 @@ const Profile = () => {
                   }}
                   activeOpacity={0.8}>
                   <View style={styles.profileImageContainer}>
-                    {formData?.image ? (
+                    {profileData?.image ? (
                       <Image
-                        source={{ uri: getImageUrl(profileImageLogo) }}
-                        accessibilityLabel={`${formData?.firstName + ' ' + formData?.lastName || 'Customer'}`}
+                        source={{ uri: getImageUrl(profileData?.image) }}
+                        accessibilityLabel={`${profileData?.firstName + ' ' + profileData?.lastName || 'Customer'}`}
                         style={{
                           width: 100,
                           height: 100,
@@ -1435,13 +1578,13 @@ const Profile = () => {
                   <View style={styles.nameContainer}>
                     <Text style={styles.profileName}>
                       {(TokenSelector
-                        ? formData?.firstName != null &&
-                          formData?.firstName + ' ' + formData?.lastName
+                        ? profileData?.firstName != null &&
+                          profileData?.firstName + ' ' + profileData?.lastName
                         : '') || 'Customer'}
                     </Text>
                     {TokenSelector && <Verified size={16} color={COLORS1.success} />}
                   </View>
-                  <Text style={styles.profileEmail}>{userInfo.email}</Text>
+                  {TokenSelector && <Text style={styles.profileEmail}>{profileData?.email}</Text>}
                   <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
                     <Edit size={14} color={COLORS1.primary} />
                     <Text style={styles.editProfileText}>
@@ -1449,6 +1592,7 @@ const Profile = () => {
                     </Text>
                   </TouchableOpacity>
                 </View>
+                {/* Three Dot Menu Button */}
                 <TouchableOpacity
                   style={styles.menuButton}
                   onPress={openSideMenu}
@@ -1459,6 +1603,7 @@ const Profile = () => {
             </LinearGradient>
           </Animated.View>
 
+          {/* Profile Information Content */}
           <ScrollView
             style={styles.content}
             showsVerticalScrollIndicator={false}
@@ -1547,7 +1692,7 @@ const Profile = () => {
               <View style={{}}>
                 <View style={{ alignItems: 'center', justifyContent: 'center', height: 450 }}>
                   <Text style={{ ...FONTS.body4, color: COLORS.grey80 }}>
-                    Add Profile details to book services/spare parts.{' '}
+                    Add Profile details to book services/spare parts
                   </Text>
                 </View>
               </View>
@@ -1560,6 +1705,15 @@ const Profile = () => {
                     <Car size={20} color={COLORS1.primary} />
                   </View>
                   <Text style={styles.sectionTitle}>Vehicle Information</Text>
+                  <TouchableOpacity
+                    style={[styles.addButton, styles.fullWidthButton, { marginLeft: 45 }]}
+                    onPress={() => {
+                      setAddVehicleModal(true);
+                      setFormErrors({});
+                    }}
+                    activeOpacity={0.8}>
+                    <Plus size={16} color={COLORS.white} />
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.card}>
@@ -1582,8 +1736,7 @@ const Profile = () => {
                         onPress={() => {
                           setAddVehicleModal(true);
                           setFormErrors({});
-                        }}
-                        activeOpacity={0.8}>
+                        }}>
                         <Plus size={16} color={COLORS1.white} />
                         <Text style={styles.addButtonText}>Add Vehicle</Text>
                       </TouchableOpacity>
@@ -1620,11 +1773,14 @@ const Profile = () => {
                 </View>
               </View>
             )}
+
             <View style={{ marginTop: 60 }}></View>
           </ScrollView>
 
+          {/* Enhanced Side Menu with Individual Dropdowns - Left to Right */}
           {sideMenuVisible && (
             <View style={styles.sideMenuContainer}>
+              {/* Overlay */}
               <Animated.View style={[styles.sideMenuOverlay, { opacity: overlayOpacity }]}>
                 <TouchableOpacity
                   style={styles.overlayTouchable}
@@ -1633,8 +1789,10 @@ const Profile = () => {
                 />
               </Animated.View>
 
+              {/* Side Menu Panel - Modified for left positioning */}
               <Animated.View
                 style={[styles.sideMenuPanel, { transform: [{ translateX: sideMenuTranslateX }] }]}>
+                {/* Side Menu Header */}
                 <LinearGradient
                   colors={COLORS1.gradientPrimary}
                   style={styles.sideMenuHeader}
@@ -1646,7 +1804,9 @@ const Profile = () => {
                   </TouchableOpacity>
                 </LinearGradient>
 
+                {/* Individual Dropdown Sections */}
                 <ScrollView style={styles.sideMenuContent} showsVerticalScrollIndicator={false}>
+                  {/* Vehicles Dropdown */}
                   {TokenSelector && (
                     <>
                       <DropdownSection
@@ -1657,6 +1817,7 @@ const Profile = () => {
                         {renderVehiclesContent()}
                       </DropdownSection>
 
+                      {/* Orders Dropdown */}
                       <DropdownSection
                         title="Orders"
                         icon={<ShoppingCart size={22} color={COLORS.primary} />}
@@ -1667,6 +1828,7 @@ const Profile = () => {
                     </>
                   )}
 
+                  {/* Settings Dropdown */}
                   <DropdownSection
                     title="Settings"
                     icon={<Settings size={22} color={COLORS.primary} />}
@@ -1787,67 +1949,86 @@ const Profile = () => {
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Address 1</Text>
+                  <Text style={styles.fieldLabel}>Address 1 *</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.address1 && styles.textInputError]}
                     value={formData?.contact_info?.address1}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData.contact_info, address1: text },
-                      })
-                    }
+                      });
+                      if (formErrors.address1) clearError('address1');
+                    }}
                     placeholder="Enter your address 1"
                     placeholderTextColor={COLORS.primary_03}
+                    multiline={true}
+                    numberOfLines={2}
                   />
+                  {formErrors.address1 && (
+                    <Text style={styles.errorText}>{formErrors.address1}</Text>
+                  )}
                 </View>
 
+                {/* Address 2 Field */}
                 <View style={styles.formSection}>
                   <Text style={styles.fieldLabel}>Address 2</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.address2 && styles.textInputError]}
                     value={formData?.contact_info?.address2}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData.contact_info, address2: text },
-                      })
-                    }
-                    placeholder="Enter your address 2"
+                      });
+                      if (formErrors.address2) clearError('address2');
+                    }}
+                    placeholder="Enter your address 2 (optional)"
                     placeholderTextColor={COLORS.primary_03}
+                    multiline={true}
+                    numberOfLines={2}
                   />
+                  {formErrors.address2 && (
+                    <Text style={styles.errorText}>{formErrors.address2}</Text>
+                  )}
                 </View>
 
+                {/* City Field */}
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>City</Text>
+                  <Text style={styles.fieldLabel}>City *</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.city && styles.textInputError]}
                     value={formData?.contact_info?.city}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData.contact_info, city: text },
-                      })
-                    }
+                      });
+                      if (formErrors.city) clearError('city');
+                    }}
                     placeholder="Enter your city"
                     placeholderTextColor={COLORS.primary_03}
                   />
+                  {formErrors.city && <Text style={styles.errorText}>{formErrors.city}</Text>}
                 </View>
 
+                {/* State Field */}
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>State</Text>
+                  <Text style={styles.fieldLabel}>State *</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.state && styles.textInputError]}
                     value={formData?.contact_info?.state}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData.contact_info, state: text },
-                      })
-                    }
+                      });
+                      if (formErrors.state) clearError('state');
+                    }}
                     placeholder="Enter your state"
                     placeholderTextColor={COLORS.primary_03}
                   />
+                  {formErrors.state && <Text style={styles.errorText}>{formErrors.state}</Text>}
                 </View>
 
                 {/* Vehicle Information */}
@@ -1903,11 +2084,13 @@ const Profile = () => {
                           </Text>
                         )}
                       </View>
-
                       <View style={styles.formSection}>
-                        <Text style={styles.fieldLabel}>Car Company</Text>
+                        <Text style={styles.fieldLabel}>Car Company *</Text>
                         <TextInput
-                          style={styles.textInput}
+                          style={[
+                            styles.textInput,
+                            formErrors.vehicles?.[index]?.company && styles.textInputError,
+                          ]}
                           value={vehicle.company}
                           onChangeText={(text) => {
                             const updatedVehicleInfo = [...formData.vehicleInfo];
@@ -1916,16 +2099,26 @@ const Profile = () => {
                               ...formData,
                               vehicleInfo: updatedVehicleInfo,
                             });
+                            if (formErrors.vehicles?.[index]?.company) {
+                              clearVehicleError(index, 'company');
+                            }
                           }}
                           placeholder="Enter your car company"
                           placeholderTextColor={COLORS.primary_03}
                         />
+                        {formErrors.vehicles?.[index]?.company && (
+                          <Text style={styles.errorText}>{formErrors.vehicles[index].company}</Text>
+                        )}
                       </View>
 
+                      {/* Model Field */}
                       <View style={styles.formSection}>
-                        <Text style={styles.fieldLabel}>Car Model</Text>
+                        <Text style={styles.fieldLabel}>Car Model *</Text>
                         <TextInput
-                          style={styles.textInput}
+                          style={[
+                            styles.textInput,
+                            formErrors.vehicles?.[index]?.model && styles.textInputError,
+                          ]}
                           value={vehicle.model}
                           onChangeText={(text) => {
                             const updatedVehicleInfo = [...formData.vehicleInfo];
@@ -1934,44 +2127,26 @@ const Profile = () => {
                               ...formData,
                               vehicleInfo: updatedVehicleInfo,
                             });
+                            if (formErrors.vehicles?.[index]?.model) {
+                              clearVehicleError(index, 'model');
+                            }
                           }}
                           placeholder="Enter your car model"
                           placeholderTextColor={COLORS.primary_03}
                         />
-                      </View>
-
-                      <View style={styles.formSection}>
-                        <Text style={styles.fieldLabel}>Model Year</Text>
-                        <TextInput
-                          style={[
-                            styles.textInput,
-                            formErrors.vehicles?.[index]?.year && styles.textInputError,
-                          ]}
-                          value={vehicle.year}
-                          onChangeText={(text) => {
-                            const updatedVehicleInfo = [...formData.vehicleInfo];
-                            updatedVehicleInfo[index].year = text;
-                            setFormData({
-                              ...formData,
-                              vehicleInfo: updatedVehicleInfo,
-                            });
-                            if (formErrors.vehicles?.[index]?.year) {
-                              clearVehicleError(index, 'year');
-                            }
-                          }}
-                          placeholder="Enter your model year"
-                          placeholderTextColor={COLORS.primary_03}
-                          keyboardType="numeric"
-                        />
-                        {formErrors.vehicles?.[index]?.year && (
-                          <Text style={styles.errorText}>{formErrors.vehicles[index].year}</Text>
+                        {formErrors.vehicles?.[index]?.model && (
+                          <Text style={styles.errorText}>{formErrors.vehicles[index].model}</Text>
                         )}
                       </View>
 
+                      {/* Fuel Type Field */}
                       <View style={styles.formSection}>
-                        <Text style={styles.fieldLabel}>Fuel Type</Text>
+                        <Text style={styles.fieldLabel}>Fuel Type *</Text>
                         <TextInput
-                          style={styles.textInput}
+                          style={[
+                            styles.textInput,
+                            formErrors.vehicles?.[index]?.fuleType && styles.textInputError,
+                          ]}
                           value={vehicle.fuleType}
                           onChangeText={(text) => {
                             const updatedVehicleInfo = [...formData.vehicleInfo];
@@ -1980,10 +2155,18 @@ const Profile = () => {
                               ...formData,
                               vehicleInfo: updatedVehicleInfo,
                             });
+                            if (formErrors.vehicles?.[index]?.fuleType) {
+                              clearVehicleError(index, 'fuleType');
+                            }
                           }}
                           placeholder="Enter your car fuel type"
                           placeholderTextColor={COLORS.primary_03}
                         />
+                        {formErrors.vehicles?.[index]?.fuleType && (
+                          <Text style={styles.errorText}>
+                            {formErrors.vehicles[index].fuleType}
+                          </Text>
+                        )}
                       </View>
                     </View>
                   ))}
@@ -2196,6 +2379,222 @@ const Profile = () => {
             </View>
           </Modal>
 
+          {/* Vehicle Detail Modal */}
+          <Modal
+            visible={vehicleDetailModal}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setVehicleDetailModal(false)}>
+            {selectedVehicle && (
+              <View style={styles.modalContainer}>
+                <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
+                  <TouchableOpacity onPress={() => setVehicleDetailModal(false)}>
+                    <ArrowLeft size={24} color={COLORS1.white} />
+                  </TouchableOpacity>
+                  <Text style={[styles.modalTitle, { marginLeft: -25 }]}>
+                    {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleDeleteVehicle(selectedVehicle.id)}>
+                    <Trash2 size={20} color={COLORS1.error} />
+                  </TouchableOpacity>
+                </LinearGradient>
+
+                <ScrollView style={styles.modalContent}>
+                  {/* Enhanced 360 Degree Car View */}
+                  <View style={styles.car360Container}>
+                    <View style={styles.car360View} {...panResponder.panHandlers}>
+                      <Image
+                        source={{ uri: selectedVehicle.image360 }}
+                        style={styles.car360Image}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <View style={styles.car360Controls}>
+                      <TouchableOpacity style={styles.rotateButton} activeOpacity={0.8}>
+                        <RotateCcw size={20} color={COLORS1.white} />
+                        <Text style={styles.rotateButtonText}>360° View</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.car360Hint}>Swipe to rotate</Text>
+                  </View>
+
+                  {/* Enhanced Vehicle Health Dashboard */}
+                  <View style={styles.vehicleHealthSection}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 15 }]}>Vehicle Health</Text>
+                    <View style={styles.healthDashboard}>
+                      <CarStatusBar
+                        label="Overall Health"
+                        value={selectedVehicle.healthScore || 0}
+                        color={COLORS1.success}
+                        icon={<TrendingUp size={16} color={COLORS1.success} />}
+                      />
+                      <CarStatusBar
+                        label="Fuel Level"
+                        value={selectedVehicle.fuelLevel || 0}
+                        color={COLORS1.info}
+                        icon={<Gauge size={16} color={COLORS1.info} />}
+                      />
+                      <CarStatusBar
+                        label="Battery Health"
+                        value={selectedVehicle.batteryHealth || 0}
+                        color={COLORS1.primary}
+                        icon={<Zap size={16} color={COLORS1.primary} />}
+                      />
+                      <CarStatusBar
+                        label="Tire Health"
+                        value={selectedVehicle.tireHealth || 0}
+                        color={COLORS1.warning}
+                        icon={<AlertCircle size={16} color={COLORS1.warning} />}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Vehicle Information */}
+                  <View style={styles.vehicleInfoSection}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 5 }]}>Vehicle Details</Text>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>License Plate</Text>
+                      <Text style={styles.infoValue}>{selectedVehicle.plate}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Color</Text>
+                      <Text style={styles.infoValue}>{selectedVehicle.color}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Mileage</Text>
+                      <Text style={styles.infoValue}>{selectedVehicle.mileage} miles</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Engine Status</Text>
+                      <Text style={[styles.infoValue, { textTransform: 'capitalize' }]}>
+                        {selectedVehicle.engineStatus}
+                      </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Last Service</Text>
+                      <Text style={styles.infoValue}>{selectedVehicle.lastService}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Next Service</Text>
+                      <Text style={styles.infoValue}>{selectedVehicle.nextService}</Text>
+                    </View>
+                  </View>
+
+                  {/* Service History */}
+                  <View style={styles.serviceHistorySection}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 10 }]}>Service History</Text>
+                    {selectedVehicle.services.length > 0 ? (
+                      selectedVehicle.services.map((service: any) => (
+                        <ServiceItem key={service.id} service={service} />
+                      ))
+                    ) : (
+                      <View style={styles.emptyState}>
+                        <View style={styles.emptyIconContainer}>
+                          <Wrench size={48} color={COLORS1.gray300} />
+                        </View>
+                        <Text style={styles.emptyStateText}>No service history</Text>
+                        <Text style={styles.emptyStateSubtext}>
+                          Service records will appear here once you book services
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </ScrollView>
+              </View>
+            )}
+          </Modal>
+
+          {/* Order Detail Modal */}
+          <Modal
+            visible={orderDetailModal}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setOrderDetailModal(false)}>
+            {selectedOrder && (
+              <View style={styles.modalContainer}>
+                <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
+                  <TouchableOpacity onPress={() => setOrderDetailModal(false)}>
+                    <ArrowLeft size={24} color={COLORS1.white} />
+                  </TouchableOpacity>
+                  <Text style={styles.modalTitle}>Order #{selectedOrder.id}</Text>
+                  <View />
+                </LinearGradient>
+
+                <ScrollView style={styles.modalContent}>
+                  {/* Order Summary */}
+                  <View style={styles.orderSummarySection}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 5 }]}>Order Summary</Text>
+                    <View style={styles.orderSummaryRow}>
+                      <Text style={styles.orderSummaryLabel}>Order Date</Text>
+                      <Text style={styles.orderSummaryValue}>{selectedOrder.date}</Text>
+                    </View>
+                    <View style={styles.orderSummaryRow}>
+                      <Text style={styles.orderSummaryLabel}>Status</Text>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          {
+                            backgroundColor:
+                              selectedOrder.status === 'delivered'
+                                ? COLORS1.success
+                                : selectedOrder.status === 'shipped'
+                                  ? COLORS1.info
+                                  : COLORS1.warning,
+                          },
+                        ]}>
+                        <Text style={styles.statusText}>{selectedOrder.status}</Text>
+                      </View>
+                    </View>
+                    {selectedOrder.trackingNumber && (
+                      <View style={styles.orderSummaryRow}>
+                        <Text style={styles.orderSummaryLabel}>Tracking</Text>
+                        <TouchableOpacity style={styles.trackingButton}>
+                          <Text style={styles.trackingText}>{selectedOrder.trackingNumber}</Text>
+                          <ExternalLink size={16} color={COLORS1.primary} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    <View style={styles.orderSummaryRow}>
+                      <Text style={styles.orderSummaryLabel}>Total</Text>
+                      <Text style={styles.orderTotal}>{selectedOrder.total}</Text>
+                    </View>
+                    {selectedOrder.estimatedDelivery && (
+                      <View style={styles.orderSummaryRow}>
+                        <Text style={styles.orderSummaryLabel}>Delivery</Text>
+                        <Text style={[styles.orderSummaryValue, { color: COLORS1.primary }]}>
+                          {selectedOrder.estimatedDelivery}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Order Items */}
+                  <View style={styles.orderItemsSection}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 10 }]}>Items Ordered</Text>
+                    {selectedOrder.items.map((item: any) => (
+                      <View key={item.id} style={styles.orderItemCard}>
+                        <Image source={{ uri: item.image }} style={styles.orderItemImage} />
+                        <View style={styles.orderItemDetails}>
+                          <Text style={styles.orderItemName}>{item.name}</Text>
+                          <Text style={styles.orderItemPrice}>{item.price}</Text>
+                          <Text style={styles.orderItemQuantity}>Quantity: {item.quantity}</Text>
+                          {item.partNumber && (
+                            <Text style={styles.orderItemPartNumber}>
+                              Part #: {item.partNumber}
+                            </Text>
+                          )}
+                          {item.warranty && (
+                            <Text style={styles.orderItemWarranty}>Warranty: {item.warranty}</Text>
+                          )}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+            )}
+          </Modal>
+
           {/* Photo Upload Loading Modal */}
           <Modal visible={photoUploadModal} transparent={true} animationType="fade">
             <View style={styles.loadingOverlay}>
@@ -2206,6 +2605,154 @@ const Profile = () => {
             </View>
           </Modal>
 
+          {/* Privacy Policy Modal */}
+          <Modal
+            visible={privacyPolicyModal}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setPrivacyPolicyModal(false)}>
+            <View style={styles.modalContainer}>
+              <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setPrivacyPolicyModal(false)}>
+                  <X size={24} color={COLORS1.white} />
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, { marginLeft: -15 }]}>Privacy Policy</Text>
+                <View />
+              </LinearGradient>
+
+              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+                <Text style={styles.privacyText}>
+                  Last updated: January 2025{'\n\n'}
+                  We respect your privacy and are committed to protecting your personal data. This
+                  privacy policy explains how we collect, use, and safeguard your information when
+                  you use our services.{'\n\n'}
+                  <Text style={styles.privacySectionTitle}>Information We Collect{'\n'}</Text>•
+                  Personal identification information (name, email, phone number){'\n'}• Vehicle
+                  information (make, model, year, license plate)
+                  {'\n'}• Service history and preferences{'\n'}• Payment information (securely
+                  processed by third-party providers){'\n\n'}
+                  <Text style={styles.privacySectionTitle}>How We Use Your Information{'\n'}</Text>•
+                  To provide and maintain our services{'\n'}• To process transactions and send
+                  notifications{'\n'}• To improve our services and user experience{'\n'}• To
+                  communicate with you about your account and services
+                  {'\n\n'}
+                  <Text style={styles.privacySectionTitle}>Data Security{'\n'}</Text>
+                  We implement appropriate security measures to protect your personal information
+                  against unauthorized access, alteration, disclosure, or destruction.{'\n\n'}
+                  <Text style={styles.privacySectionTitle}>Contact Us{'\n'}</Text>
+                  If you have questions about this privacy policy, please contact us at
+                  privacy@autoservice.com.
+                </Text>
+              </ScrollView>
+            </View>
+          </Modal>
+
+          {/* Help Centre Modal */}
+          <Modal
+            visible={helpCentreModal}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setHelpCentreModal(false)}>
+            <View style={styles.modalContainer}>
+              <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setHelpCentreModal(false)}>
+                  <X size={24} color={COLORS1.white} />
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>Help Center</Text>
+                <View />
+              </LinearGradient>
+
+              <ScrollView style={styles.modalContent}>
+                <View style={styles.helpSection}>
+                  <Text style={styles.helpSectionTitle}>Frequently Asked Questions</Text>
+
+                  <View style={styles.faqItem}>
+                    <Text style={styles.faqQuestion}>How do I book a service?</Text>
+                    <Text style={styles.faqAnswer}>
+                      You can book a service by navigating to the Services tab and selecting the
+                      type of service you need. Choose your preferred date and time, and confirm
+                      your booking.
+                    </Text>
+                  </View>
+
+                  <View style={styles.faqItem}>
+                    <Text style={styles.faqQuestion}>How can I track my parts order?</Text>
+                    <Text style={styles.faqAnswer}>
+                      Go to the Orders tab in your profile to view all your orders. Click on any
+                      order to see detailed tracking information and current status.
+                    </Text>
+                  </View>
+
+                  <View style={styles.faqItem}>
+                    <Text style={styles.faqQuestion}>
+                      Can I cancel or reschedule my appointment?
+                    </Text>
+                    <Text style={styles.faqAnswer}>
+                      Yes, you can cancel or reschedule your appointment up to 24 hours before the
+                      scheduled time without any penalty. Contact us or use the app to make changes.
+                    </Text>
+                  </View>
+
+                  <View style={styles.faqItem}>
+                    <Text style={styles.faqQuestion}>What payment methods do you accept?</Text>
+                    <Text style={styles.faqAnswer}>
+                      We accept all major credit cards, debit cards, and digital payment methods
+                      including Apple Pay and Google Pay.
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.helpSection}>
+                  <Text style={styles.helpSectionTitle}>Contact Support</Text>
+                  <TouchableOpacity
+                    style={styles.contactButton}
+                    onPress={() => Linking.openURL(`tel:${phoneNumber}`)}>
+                    <Feather name="phone-call" size={22} color={COLORS.primary} />
+                    <Text style={styles.contactButtonText}>Call Support</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.contactButton} onPress={handleEmailPress}>
+                    <Mail size={22} color={COLORS.primary} />
+                    <Text style={styles.contactButtonText}>Email Us</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </Modal>
+
+          {/* Terms & Conditions Modal */}
+          <Modal
+            visible={termsModal}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setTermsModal(false)}>
+            <View style={styles.modalContainer}>
+              <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setTermsModal(false)}>
+                  <X size={24} color={COLORS1.white} />
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, { marginLeft: -25 }]}>Terms & Conditions</Text>
+                <View />
+              </LinearGradient>
+
+              <ScrollView style={styles.modalContent}>
+                <Text style={styles.termsHeader}>
+                  Last updated: January 2024{'\n\n'}
+                  Please read these Terms and Conditions carefully before using our service.
+                </Text>
+
+                {termsData.map((term) => (
+                  <TermsItem
+                    key={term.id}
+                    term={term}
+                    isExpanded={expandedTerm === term.id}
+                    onToggle={() => setExpandedTerm(expandedTerm === term.id ? null : term.id)}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+          </Modal>
+
           {/* Full Image Modal */}
           <Modal
             visible={imageModalVisible}
@@ -2213,6 +2760,7 @@ const Profile = () => {
             animationType="fade"
             onRequestClose={() => setImageModalVisible(false)}>
             <View style={styles.modalContainer1}>
+              {/* Close Button */}
               <TouchableOpacity
                 style={styles.closeButton1}
                 onPress={() => setImageModalVisible(false)}
@@ -2222,6 +2770,7 @@ const Profile = () => {
                 </View>
               </TouchableOpacity>
 
+              {/* Full Image */}
               <View style={styles.imageContainer}>
                 <Image
                   source={{ uri: getImageUrl(profileImageLogo) }}
@@ -2231,6 +2780,7 @@ const Profile = () => {
                 />
               </View>
 
+              {/* Background Overlay - Click to close */}
               <TouchableOpacity
                 style={styles.overlay}
                 activeOpacity={1}
@@ -2266,7 +2816,7 @@ const Profile = () => {
   );
 };
 
-// Enhanced Professional Styles with error styles
+// Enhanced Professional Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -2746,6 +3296,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  // Enhanced Side Menu Styles with Individual Dropdowns - Left to Right
   sideMenuContainer: {
     position: 'absolute',
     top: 0,
@@ -2797,6 +3348,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     marginLeft: 16,
   },
+  // Individual Dropdown Section Styles - Reduced height
   dropdownSection: {
     marginBottom: 1,
     borderBottomWidth: 1,
@@ -2910,6 +3462,7 @@ const styles = StyleSheet.create({
   },
   modalHeader: {
     flexDirection: 'row',
+    // justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 20,
@@ -2991,6 +3544,16 @@ const styles = StyleSheet.create({
     color: COLORS.primary_text,
     marginBottom: 10,
   },
+  textInputError: {
+    borderColor: COLORS1.error,
+    borderWidth: 1.5,
+  },
+  errorText: {
+    color: COLORS1.error,
+    marginTop: 4,
+    marginLeft: 4,
+    ...FONTS.body6,
+  },
   textInput: {
     borderWidth: 1,
     borderColor: COLORS.primary_04,
@@ -3005,16 +3568,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-  },
-  textInputError: {
-    borderColor: COLORS1.error,
-    borderWidth: 1.5,
-  },
-  errorText: {
-    color: COLORS1.error,
-    marginTop: 4,
-    marginLeft: 4,
-    ...FONTS.body6,
   },
   car360Container: {
     alignItems: 'center',
