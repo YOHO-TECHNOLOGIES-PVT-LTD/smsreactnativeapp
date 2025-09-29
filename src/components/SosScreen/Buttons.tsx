@@ -117,6 +117,7 @@ export default function RoadsideAssistanceScreen() {
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [userId, setuserId] = useState<any>('');
+  const [isUploadImages, setIsUploadImages] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -270,6 +271,7 @@ export default function RoadsideAssistanceScreen() {
         // Take only first 3 images
         const selected = result.assets.slice(0, 3);
         const uploadedUrls: string[] = [];
+        setIsUploadImages(true);
 
         for (let i = 0; i < selected.length; i++) {
           const file = selected[i];
@@ -292,7 +294,7 @@ export default function RoadsideAssistanceScreen() {
             console.log(`Error uploading image ${i + 1}:`, error);
           }
         }
-
+        setIsUploadImages(false);
         // Set the array of uploaded URLs to state
         if (uploadedUrls?.length > 0) {
           setImages(uploadedUrls);
@@ -674,7 +676,6 @@ export default function RoadsideAssistanceScreen() {
                     selectedValue={otherDetails.relationship}
                     onValueChange={(value) => {
                       handleOtherDetailsChange('relationship', value);
-                      
                     }}>
                     <Picker.Item label="Select Relationship" value="" />
                     <Picker.Item label="Friend" value="Friend" />
@@ -809,9 +810,12 @@ export default function RoadsideAssistanceScreen() {
           )}
 
           {/* Submit Button */}
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isLoading}>
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            disabled={isUploadImages}>
             <Text style={styles.submitButtonText}>
-              {isLoading ? 'SUBMITTING...' : 'REQUEST ASSISTANCE'}
+              {isUploadImages ? 'SUBMITTING...' : 'REQUEST ASSISTANCE'}
             </Text>
           </TouchableOpacity>
         </ScrollView>

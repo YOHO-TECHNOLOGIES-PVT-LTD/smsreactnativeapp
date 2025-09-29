@@ -437,6 +437,7 @@ const HomePage = () => {
           <AnimatedSearch />
         </View>
         <ScrollView
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -492,31 +493,27 @@ const HomePage = () => {
             </View>
             <Text style={styles.sectionSubtitle}>Original OEM parts with warranty</Text>
 
-           
-{spareParts?.length ? (
-  <ScrollView
-    style={styles.partsContainer1}
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    contentContainerStyle={{ paddingRight: 10 }}>
-    {spareParts?.slice(0, 10)?.map((item: any) => (
-      <SparePartsCard
-        key={item?._id}
-        part={item}
-      />
-    ))}
-  </ScrollView>
-) : (
-  <View
-    style={{
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: 10,
-    }}>
-    <Text style={{ ...FONTS.body5 }}>No spare parts available</Text>
-  </View>
-)}
+            {spareParts?.length ? (
+              <ScrollView
+                style={styles.partsContainer1}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 10 }}>
+                {spareParts?.slice(0, 10)?.map((item: any) => (
+                  <SparePartsCard key={item?._id} part={item} />
+                ))}
+              </ScrollView>
+            ) : (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 10,
+                }}>
+                <Text style={{ ...FONTS.body5 }}>No spare parts available</Text>
+              </View>
+            )}
           </View>
 
           {/* Special Offers */}
@@ -660,7 +657,7 @@ const HomePage = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.chatContainer}
                 keyboardVerticalOffset={80}>
-                <ScrollView style={{ padding: 15 }}>
+                <ScrollView style={{ padding: 15 }} showsVerticalScrollIndicator={false}>
                   {/* Full Name */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Full Name *</Text>

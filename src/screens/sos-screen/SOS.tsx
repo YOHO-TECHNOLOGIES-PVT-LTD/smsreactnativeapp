@@ -53,6 +53,7 @@ const SOS = () => {
       console.error('Error fetching user profile:', error);
     }
   };
+
   useEffect(() => {
     fetchUser();
   }, [dispatch]);
@@ -82,20 +83,16 @@ const SOS = () => {
       setFilteredIssues(filtered);
     }
   };
+
   const onRefresh = async () => {
     try {
       setRefreshing(true);
-      // Reset form state
       setValue('');
       setError(false);
       setSearchText('');
       setFilteredIssues([]);
       setShowSearchBar(false);
-
       await fetchUser();
-      // Optionally re-fetch data if you have API calls for issues or location
-      // await fetchIssues();
-      // await fetchLocation();
     } catch (error) {
       console.error('Error during refresh:', error);
     } finally {
