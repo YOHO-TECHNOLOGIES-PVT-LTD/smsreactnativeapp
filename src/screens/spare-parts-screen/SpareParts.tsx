@@ -1,5 +1,5 @@
 import { Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONTS, icons } from '~/constants';
 import SparePartsPage from '~/components/SpareParts/SparePartsPage';
@@ -11,6 +11,8 @@ import { AppDispatch } from '~/store';
 import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 import { selectCartItems } from '~/features/booking-cart/redux/selectors';
 import { selectToken } from '~/features/token/redux/selectors';
+import { selectProfile } from '~/features/profile/reducers/selector';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 
 const SpareParts = () => {
   const navigation = useNavigation<any>();
@@ -19,6 +21,8 @@ const SpareParts = () => {
   const cartItems = useSelector(selectCartItems);
   const TokenSelector = useSelector(selectToken);
   const [cartCount, setCartCount] = useState(0);
+  const profileData = useSelector(selectProfile);
+  const didFetch = useRef(false);
 
   const getAllSparePartsDetails = async () => {
     try {
@@ -34,10 +38,15 @@ const SpareParts = () => {
 
   useEffect(() => {
     getAllSparePartsDetails();
-    if (TokenSelector) {
-      dispatch(getBookingCartItems());
-    }
   }, [dispatch]);
+
+  useEffect(() => {
+    if (TokenSelector && !didFetch.current) {
+      dispatch(getBookingCartItems());
+      dispatch(getProfileDetailsThunk({}));
+      didFetch.current = true;
+    }
+  }, [TokenSelector]);
 
   useEffect(() => {
     const getCartCount = () => {
@@ -55,7 +64,7 @@ const SpareParts = () => {
       }
     };
     setCartCount(getCartCount() ?? 0);
-  }, [dispatch, cartItems]);
+  }, [cartItems]);
 
   return (
     <>
@@ -106,7 +115,7 @@ const SpareParts = () => {
           spareParts={spareParts}
           onRefresh={() => {
             getAllSparePartsDetails();
-            dispatch(getBookingCartItems());
+            TokenSelector && !didFetch.current && dispatch(getBookingCartItems());
           }}
         />
       </SafeAreaView>

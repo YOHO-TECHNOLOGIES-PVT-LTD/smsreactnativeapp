@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -16,9 +16,12 @@ import SosButtons from '~/components/SosScreen/Buttons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign } from '@expo/vector-icons';
 import PhoneDialerButton from '~/components/PhoneDialerButton';
-import { getUserProfileDetails } from '~/features/profile/service';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectProfile } from '~/features/profile/reducers/selector';
+import { selectToken } from '~/features/token/redux/selectors';
+import { getToken } from '~/features/token/redux/thunks';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 
 const issuesList = [
   'Battery Discharged',
@@ -41,12 +44,14 @@ const SOS = () => {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<any>();
   const dispatch = useDispatch<any>();
+  const profileData = useSelector(selectProfile);
+  const tokenSelector = useSelector(selectToken);
+  const didFetch = useRef(false);
 
   const fetchUser = async () => {
     try {
-      const userResponse = await getUserProfileDetails();
-      if (userResponse) {
-        const mobileNumber = userResponse?.contact_info?.phoneNumber || '';
+      if (profileData) {
+        const mobileNumber = profileData?.contact_info?.phoneNumber || '';
         setValue(mobileNumber);
       }
     } catch (error) {
@@ -56,7 +61,22 @@ const SOS = () => {
 
   useEffect(() => {
     fetchUser();
+  }, [profileData]);
+
+  useEffect(() => {
+    try {
+      dispatch(getToken());
+    } catch (error: any) {
+      console.error(error.message);
+    }
   }, [dispatch]);
+
+  useEffect(() => {
+    if (tokenSelector && !didFetch.current) {
+      dispatch(getProfileDetailsThunk({}));
+      didFetch.current = true;
+    }
+  }, [tokenSelector]);
 
   const handleChange = (text: any) => {
     if (/^\d*$/.test(text)) {
@@ -188,11 +208,12 @@ const SOS = () => {
             <View style={styles.Textcontainer}>
               <TextInput
                 style={styles.input}
-                placeholder="+91-9876543210"
+                placeholder="Enter your phone number"
                 value={value}
                 onChangeText={handleChange}
                 keyboardType="numeric"
                 maxLength={10}
+                editable={profileData?.contact_info?.phoneNumber ? false : true}
               />
             </View>
             <SosButtons />

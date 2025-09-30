@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -23,9 +23,10 @@ import * as Location from 'expo-location';
 import { AppDispatch } from '~/store';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
-import { getUserProfileDetails } from '~/features/profile/service';
 import { uploadSingleFileorImage } from '~/features/common/service';
 import { getImageUrl } from '~/utils/imageUtils';
+import { selectProfile } from '~/features/profile/reducers/selector';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 
 interface Issues {
   id: String;
@@ -119,23 +120,22 @@ export default function RoadsideAssistanceScreen() {
   const [userId, setuserId] = useState<any>('');
   const [isUploadImages, setIsUploadImages] = useState(false);
   const didFetch = useRef(false);
+  const profileData = useSelector(selectProfile);
+
+  useEffect(() => {
+    if (profileData) {
+      setUser(profileData);
+      setuserId(profileData?._id);
+      if (profileData?.vehicleInfo?.length > 0) {
+        setVehicleList(profileData?.vehicleInfo);
+        setSelectedVehicle(profileData?.vehicleInfo[0]);
+      }
+    }
+  }, [profileData]);
 
   useEffect(() => {
     if (TokenSelector && !didFetch.current) {
-      const fetchUser = async () => {
-        try {
-          const userResponse = await getUserProfileDetails();
-          setUser(userResponse);
-          setuserId(userResponse?._id);
-          if (userResponse?.vehicleInfo?.length > 0) {
-            setVehicleList(userResponse?.vehicleInfo);
-            setSelectedVehicle(userResponse?.vehicleInfo[0]);
-          }
-        } catch (error) {
-          console.error('Error fetching user details:', error);
-        }
-      };
-      fetchUser();
+      dispatch(getProfileDetailsThunk({}));
       didFetch.current = true;
     }
   }, [TokenSelector]);
@@ -289,7 +289,7 @@ export default function RoadsideAssistanceScreen() {
             const uploadResponse = await uploadSingleFileorImage({ userId: userId }, formData);
 
             if (uploadResponse?.data?.image) {
-              uploadedUrls.push(uploadResponse.data.image);
+              uploadedUrls.push(uploadResponse?.data?.image);
             } else {
               console.log(`Upload failed for image ${i + 1}:`, file.fileName);
             }
@@ -390,7 +390,7 @@ export default function RoadsideAssistanceScreen() {
     if (activeTab === 'own') {
       payload.name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
       payload.phone = user.contact_info?.phoneNumber || '';
-      payload.bloodGroup = user.bloodGroup || '';
+      // payload.bloodGroup = user.bloodGroup || '';
       payload.carModel = selectedVehicle
         ? `${selectedVehicle.company || ''} - ${selectedVehicle.model || ''}`
         : '';
@@ -404,11 +404,9 @@ export default function RoadsideAssistanceScreen() {
       payload.additionalNotes = otherDetails.additionalNotes;
       payload.location = otherDetails.location;
     }
-    // console.log("payload",payload)
 
     try {
       const response = await postSOSData(payload);
-      // console.log("response",response)
 
       if (response) {
         toast.success('Success', response?.message || 'SOS details sent successfully!');
@@ -438,19 +436,24 @@ export default function RoadsideAssistanceScreen() {
   const onRefresh = async () => {
     try {
       setRefreshing(true);
-      const userResponse = await getUserProfileDetails();
-      setUser(userResponse);
-
-      if (userResponse?.vehicleInfo?.length > 0) {
-        setVehicleList(userResponse.vehicleInfo);
-        setSelectedVehicle(userResponse.vehicleInfo[0]);
-      } else {
-        setVehicleList([]);
-        setSelectedVehicle(null);
+      if (TokenSelector && !didFetch.current) {
+        dispatch(getProfileDetailsThunk({}));
+        didFetch.current = true;
+      }
+      if (profileData) {
+        setUser(profileData);
+        if (profileData?.vehicleInfo?.length > 0) {
+          setVehicleList(profileData?.vehicleInfo);
+          setSelectedVehicle(profileData?.vehicleInfo[0]);
+        } else {
+          setVehicleList([]);
+          setSelectedVehicle(null);
+        }
       }
       if (modalVisible) {
         await fetchLocation();
       }
+      setRefreshing(false);
     } catch (error) {
       console.error('Error refreshing:', error);
     } finally {
@@ -732,7 +735,13 @@ export default function RoadsideAssistanceScreen() {
 
                 {/* Button with text on top */}
                 <View style={{ alignItems: 'center', marginLeft: 10 }}>
-                  <Text style={{ ...FONTS.body5, marginBottom: 4, color: COLORS.primary }}>
+                  <Text
+                    style={{
+                      ...FONTS.body5,
+                      marginBottom: 4,
+                      color: COLORS.primary,
+                      fontWeight: 500,
+                    }}>
                     Current
                   </Text>
                   <TouchableOpacity

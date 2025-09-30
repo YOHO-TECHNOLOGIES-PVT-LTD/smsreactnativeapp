@@ -58,25 +58,24 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserProfileDetails, updateUserProfileDetails } from '~/features/profile/service';
-import { COLORS, FONTS, icons, screens } from '~/constants';
+import { COLORS, FONTS, icons } from '~/constants';
 import toast from '~/utils/toast';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import AnimatedUserDummy from '~/components/profile/AnimatedUserDummy';
 import LoadingAnimation from '~/components/LoadingAnimation';
-import PhoneDialerButton from '~/components/PhoneDialerButton';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken, logout } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllBookingsCartItems } from '~/features/bookings/service';
-import { formatDate, formatDateandmonth, formatDateMonthandYear } from '../../utils/formatDate';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { formatDateMonthandYear } from '../../utils/formatDate';
 import * as Linking from 'expo-linking';
 import { Feather } from '@expo/vector-icons';
 import { uploadSingleFileorImage } from '~/features/common/service';
 import { getImageUrl } from '~/utils/imageUtils';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 
 const { width, height } = Dimensions.get('window');
 
@@ -373,7 +372,6 @@ const Profile = () => {
     try {
       const response: any = await getUserProfileDetails({});
       if (response) {
-        await AsyncStorage.setItem('userId', response?._id);
         setProfileImageLogo(response?.image);
         const userData = {
           firstName: response?.firstName,
@@ -423,6 +421,7 @@ const Profile = () => {
   useEffect(() => {
     if (TokenSelector && !didFetch.current) {
       fetchUserProfile();
+      dispatch(getProfileDetailsThunk({}));
       fetchOrders();
       didFetch.current = true;
     }
@@ -470,6 +469,7 @@ const Profile = () => {
       .fill(0)
       .map(() => new Animated.Value(1))
   ).current;
+
   const headerOpacity = useRef(new Animated.Value(1)).current;
   const cardScale = useRef(new Animated.Value(1)).current;
 
@@ -890,6 +890,7 @@ const Profile = () => {
           setEditProfileModal(false);
           setFormErrors({});
           fetchUserProfile();
+          dispatch(getProfileDetailsThunk({}));
           toast.success('Success', 'Profile updated successfully!');
         }
       } else {
@@ -1522,6 +1523,7 @@ const Profile = () => {
       // Refresh user profile data
       if (TokenSelector) {
         await fetchUserProfile();
+        dispatch(getProfileDetailsThunk({}));
         await fetchOrders();
       }
 

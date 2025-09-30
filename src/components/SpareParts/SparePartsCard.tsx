@@ -39,7 +39,6 @@ type SparePart = {
 const { width } = Dimensions.get('window');
 
 const SparePartsCard = ({ part }: any) => {
-  
   const [error, setError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);

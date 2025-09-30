@@ -27,6 +27,8 @@ import { logout } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import { selectToken } from '~/features/token/redux/selectors';
 import AnimatedUserDummy from '~/components/profile/AnimatedUserDummy';
+import { selectProfile } from '~/features/profile/reducers/selector';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 
 type CustomDrawerItemProps = {
   label: string;
@@ -128,27 +130,16 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
   const dispatch = useDispatch<AppDispatch>();
   const selectedTab = useSelector((state: RootState) => state.tabReducer.selectedTab);
   const [error, setError] = useState(false);
-  const [profileData, setProfileData] = useState<any>({});
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const tokenSelector = useSelector(selectToken);
   const didFetch = useRef(false);
-
-  const fetchProfile = async () => {
-    try {
-      const response: any = await getUserProfileDetails({});
-      setProfileData(response);
-      setError(false);
-    } catch (error) {
-      console.log(error);
-      setError(true);
-    }
-  };
+  const profileData = useSelector(selectProfile);
 
   useEffect(() => {
     if (tokenSelector && !didFetch.current) {
-      fetchProfile();
+      dispatch(getProfileDetailsThunk({}));
       didFetch.current = true;
     }
   }, [tokenSelector]);
@@ -156,7 +147,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetchProfile();
+      await dispatch(getProfileDetailsThunk({}));
     } catch (error) {
       toast.error('Refresh failed', 'Could not refresh profile data');
     } finally {

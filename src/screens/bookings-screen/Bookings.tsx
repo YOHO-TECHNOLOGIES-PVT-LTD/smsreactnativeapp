@@ -9,7 +9,7 @@ import {
   StatusBar,
   ScrollView,
 } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { COLORS, FONTS, icons, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import BookingCard from '~/components/Bookings/BookingCard';
@@ -22,6 +22,7 @@ import { getToken } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import { selectCartItems } from '~/features/booking-cart/redux/selectors';
 import { RefreshControl } from 'react-native';
+import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 
 interface Product {
   _id: string;
@@ -80,6 +81,7 @@ const Bookings = () => {
   const cartItems = useSelector(selectCartItems);
   const [cartCount, setCartCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const didFetch = useRef(false);
 
   useEffect(() => {
     try {
@@ -93,38 +95,42 @@ const Bookings = () => {
     }
   }, [dispatch]);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = tokenSelector && (await getAllBookingsCartItems({}));
-        if (response?.success) {
-          const allOrders = [
-            ...(response.productConfirm || []),
-            ...(response.serviceConfirm || []),
-          ];
-          setOrders(allOrders);
-        }
-      } catch (error) {
-        console.log('Error fetching orders:', error);
+  const fetchOrders = async () => {
+    try {
+      const response = tokenSelector && (await getAllBookingsCartItems({}));
+      if (response?.success) {
+        const allOrders = [...(response.productConfirm || []), ...(response.serviceConfirm || [])];
+        setOrders(allOrders);
       }
-    };
-    if (tokenSelector) {
-      fetchOrders();
+    } catch (error) {
+      console.log('Error fetching orders:', error);
     }
-    const getCartCount = () => {
-      if (cartItems?.length == 1) {
-        return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
-      } else if (cartItems?.length > 1) {
-        return (
-          Number(cartItems[0]?.products?.length) +
-          Number(cartItems[0]?.services?.length) +
-          Number(cartItems[1]?.products?.length) +
-          Number(cartItems[1]?.services?.length)
-        );
-      }
-    };
+  };
+
+  const getCartCount = () => {
+    if (cartItems?.length == 1) {
+      return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
+    } else if (cartItems?.length > 1) {
+      return (
+        Number(cartItems[0]?.products?.length) +
+        Number(cartItems[0]?.services?.length) +
+        Number(cartItems[1]?.products?.length) +
+        Number(cartItems[1]?.services?.length)
+      );
+    }
+  };
+
+  useEffect(() => {
     setCartCount(getCartCount() ?? 0);
-  }, [dispatch]);
+  }, [tokenSelector, cartItems]);
+
+  useEffect(() => {
+    if (tokenSelector && !didFetch.current) {
+      dispatch(getBookingCartItems());
+      fetchOrders();
+      didFetch.current = true;
+    }
+  }, [tokenSelector]);
 
   const filteredOrders = orders?.filter((order: any) => {
     const matchesTab =
@@ -145,11 +151,8 @@ const Bookings = () => {
     if (!tokenSelector) return;
     setRefreshing(true);
     try {
-      const response = await getAllBookingsCartItems({});
-      if (response?.success) {
-        const allOrders = [...(response.productConfirm || []), ...(response.serviceConfirm || [])];
-        setOrders(allOrders);
-      }
+      fetchOrders();
+      dispatch(getBookingCartItems());
     } catch (error) {
       console.log('Error refreshing orders:', error);
     } finally {

@@ -217,7 +217,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
         if (activeTab === 'Spare Parts') {
           // Find the current spare cart ID dynamically
           const spareCart = bookingCarts?.find(
-            (cart) => cart?.products && cart?.products.length > 0
+            (cart) => cart?.products && cart?.products?.length > 0
           );
 
           if (!spareCart?._id) {
@@ -226,7 +226,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
           }
 
           const response = await deleteBookingCartProduct({
-            cartId: spareCart._id,
+            cartId: spareCart?._id,
             productId: itemId,
           });
 

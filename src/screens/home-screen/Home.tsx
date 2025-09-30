@@ -33,11 +33,12 @@ import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllSpareParts } from '~/features/spare-parts/service';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
-import { getUserProfileDetails } from '~/features/profile/service';
 import { getImageUrl } from '~/utils/imageUtils';
 import { RefreshControl } from 'react-native';
 import { createEnquiry } from '~/features/home/service';
 import SparePartsCard from '~/components/SpareParts/SparePartsCard';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
+import { selectProfile } from '~/features/profile/reducers/selector';
 
 const carlogos = [
   icons.carlogo1,
@@ -66,24 +67,8 @@ const HomePage = () => {
   const [spareParts, setSpareParts] = useState([]);
   const [serviceCategories, setServiceCategories] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const profileData = useSelector(selectProfile);
   const didFetch = useRef(false);
-  const [profileData, setProfileData] = useState<{
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    contact_info: {
-      phoneNumber: string;
-    };
-    vehicleInfo: string;
-  }>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    contact_info: {
-      phoneNumber: '',
-    },
-    vehicleInfo: '',
-  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -146,22 +131,22 @@ const HomePage = () => {
     }
   }, [dispatch]);
 
-  // const handleClaimOffer = () => {
-  //   setShowOfferApplied(true);
-  //   setTimeout(() => {
-  //     setShowOfferApplied(false);
-  //   }, 3000);
-  //   toast.success('Offer Applied', 'Your offer has been successfully applied!');
-  // };
+  useEffect(() => {
+    if (tokenSelector && !didFetch.current) {
+      dispatch(getProfileDetailsThunk({}));
+      didFetch.current = true;
+    }
+  }, [tokenSelector]);
 
   const handleChatNow = () => {
     setShowChatModal(true);
     if (profileData) {
       setFormData({
         ...formData,
-        fullName: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
-        email: profileData.email || '',
-        phoneNumber: profileData.contact_info?.phoneNumber || '',
+        fullName:
+          `${profileData?.firstName.trim() || ''} ${profileData?.lastName.trim() || ''}`.trim(),
+        email: profileData?.email || '',
+        phoneNumber: profileData?.contact_info?.phoneNumber || '',
       });
     }
   };
@@ -181,17 +166,6 @@ const HomePage = () => {
     } finally {
       setIsLoading(false);
       setLogoutModalVisible(false);
-    }
-  };
-
-  const fetchUserProfile = async () => {
-    try {
-      const response: any = await getUserProfileDetails({});
-      if (response) {
-        setProfileData(response);
-      }
-    } catch (error) {
-      console.log(error);
     }
   };
 
@@ -234,13 +208,6 @@ const HomePage = () => {
     fetchAllServices();
     fetchAllOffers();
   }, [dispatch]);
-
-  useEffect(() => {
-    if (tokenSelector && !didFetch.current) {
-      fetchUserProfile();
-      didFetch.current = true;
-    }
-  }, [tokenSelector]);
 
   const validateForm = () => {
     let isValid = true;
@@ -361,6 +328,7 @@ const HomePage = () => {
       setIsLoading(false);
     }
   };
+
   const onRefresh = async () => {
     try {
       setRefreshing(true);
@@ -368,7 +336,7 @@ const HomePage = () => {
       await fetchAllServices();
       await fetchAllOffers();
       if (tokenSelector) {
-        await fetchUserProfile();
+        await dispatch(getProfileDetailsThunk({}));
       }
     } catch (error) {
       console.log('Error while refreshing:', error);

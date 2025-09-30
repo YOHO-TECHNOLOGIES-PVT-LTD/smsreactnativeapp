@@ -9,18 +9,15 @@ import {
   StatusBar,
   ScrollView,
   Modal,
-  Dimensions,
   TextInput,
   ImageBackground,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { setSelectedTab } from '~/store/tab/tabSlice';
 import { useDispatch, useSelector } from 'react-redux';
-import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
-import { Ionicons, AntDesign, Foundation, MaterialIcons } from '@expo/vector-icons';
-import { Clock, Wrench, Car, ShoppingCart } from 'lucide-react-native';
+import { COLORS, FONTS, icons } from '~/constants';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Clock } from 'lucide-react-native';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { addBookingCartItem } from '~/features/booking-cart/service';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,8 +30,9 @@ import LoadingAnimation from '~/components/LoadingAnimation';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 import { selectCartItems } from '~/features/booking-cart/redux/selectors';
-import { getUserProfileDetails } from '~/features/profile/service';
 import { getImageUrl } from '~/utils/imageUtils';
+import { selectProfile } from '~/features/profile/reducers/selector';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 
 type ServiceCategory = {
   uuid: string;
@@ -90,10 +88,11 @@ const Services = () => {
   const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
   const cartItems = useSelector(selectCartItems);
   const [cartCount, setCartCount] = useState(0);
-  const [profileData, setprofileData] = useState<ProfileData>();
   const [selectedVehicleIndex, setSelectedVehicleIndex] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState<false | 'start' | 'end'>(false);
+  const profileData = useSelector(selectProfile);
+  const didFetch = useRef(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -118,6 +117,14 @@ const Services = () => {
       setIsLoading(false);
     }
   }, [dispatch]);
+
+  useEffect(() => {
+    if (TokenSelector && !didFetch.current) {
+      dispatch(getProfileDetailsThunk({}));
+      dispatch(getBookingCartItems());
+      didFetch.current = true;
+    }
+  }, [TokenSelector]);
 
   const currentCategory =
     serviceCategories.find((cat) => cat.category_name === activeNavItem) || serviceCategories[0];
@@ -154,23 +161,8 @@ const Services = () => {
     }
   };
 
-  const fetchUserProfile = async () => {
-    try {
-      const response: any = TokenSelector && (await getUserProfileDetails({}));
-      if (response) {
-        setprofileData(response);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
-    dispatch(getBookingCartItems());
     fetchAllServices();
-    if (TokenSelector) {
-      fetchUserProfile();
-    }
   }, [dispatch]);
 
   useEffect(() => {
@@ -422,7 +414,7 @@ const Services = () => {
                 <View style={styles.vehicleSelection}>
                   <Text style={styles.sectionTitle}>Select Your Vehicle</Text>
                   <View style={styles.dropdownContainer}>
-                    {profileData?.vehicleInfo?.map((vehicle, index) => (
+                    {profileData?.vehicleInfo?.map((vehicle: any, index: any) => (
                       <TouchableOpacity
                         key={index}
                         style={[
@@ -542,7 +534,7 @@ const Services = () => {
                 <View style={styles.vehicleSelection}>
                   <Text style={styles.sectionTitle}>Select Your Vehicle</Text>
                   <View style={styles.dropdownContainer}>
-                    {profileData?.vehicleInfo?.map((vehicle, index) => (
+                    {profileData?.vehicleInfo?.map((vehicle: any, index: any) => (
                       <TouchableOpacity
                         key={index}
                         style={[
@@ -551,8 +543,8 @@ const Services = () => {
                         ]}
                         onPress={() => setSelectedVehicleIndex(index)}>
                         <Text style={styles.vehicleOptionText}>
-                          {vehicle.year} {vehicle.company} {vehicle.model} ({vehicle.registerNumber}
-                          )
+                          {vehicle?.year} {vehicle?.company} {vehicle?.model} (
+                          {vehicle?.registerNumber})
                         </Text>
                         {selectedVehicleIndex === index && (
                           <Ionicons name="checkmark" size={20} color={COLORS.primary} />
@@ -620,9 +612,9 @@ const Services = () => {
       setRefreshing(true);
       await fetchAllServices();
       if (TokenSelector) {
-        await fetchUserProfile();
+        await dispatch(getProfileDetailsThunk({}));
+        await dispatch(getBookingCartItems());
       }
-      dispatch(getBookingCartItems());
       // Reset time states on refresh
       setStartTime('');
       setEndTime('');

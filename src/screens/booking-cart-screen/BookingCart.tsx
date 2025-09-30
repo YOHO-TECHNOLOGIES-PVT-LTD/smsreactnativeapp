@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -29,6 +29,7 @@ const Settings = () => {
   const [refreshing, setRefreshing] = useState(false);
   const tokenSelector = useSelector(selectToken);
   const dispatch = useDispatch<AppDispatch>();
+  const didFetch = useRef(false);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -56,19 +57,20 @@ const Settings = () => {
     }
   }, [dispatch]);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    if (tokenSelector) {
-      await fetchAllBookingCarts();
-    }
-    setRefreshing(false);
-  }, [dispatch]);
-
   useEffect(() => {
+    if (tokenSelector && !didFetch.current) {
+      fetchAllBookingCarts();
+      didFetch.current = true;
+    }
+  }, [tokenSelector]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
     if (tokenSelector) {
       fetchAllBookingCarts();
     }
-  }, [dispatch]);
+    setRefreshing(false);
+  };
 
   return (
     <>
@@ -107,7 +109,6 @@ const Settings = () => {
             </View>
           ) : (
             <ScrollView
-              // style={{ flex: 1 }}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
               refreshControl={

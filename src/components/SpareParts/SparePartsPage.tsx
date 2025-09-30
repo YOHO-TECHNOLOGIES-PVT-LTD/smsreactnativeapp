@@ -34,7 +34,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts, onRefresh }
     if (onRefresh) {
       setRefreshing(true);
       try {
-        await onRefresh();
+        onRefresh();
       } catch (error) {
         console.error('Error refreshing spare parts:', error);
       } finally {
@@ -151,7 +151,6 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts, onRefresh }
 
       {/* Main Content - Grid Layout */}
       <View style={styles.cardContainer}>
-        {/* {filteredParts.length > 0 ? ( */}
         <FlatList
           showsVerticalScrollIndicator={false}
           data={filteredParts?.length > 0 || searchQuery.trim() !== '' ? filteredParts : []}
@@ -177,20 +176,11 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts, onRefresh }
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={[COLORS.primary]} // Android
-              tintColor={COLORS.primary} // iOS
+              colors={[COLORS.primary]} 
+              tintColor={COLORS.primary}
             />
           }
         />
-        {/* ) : (
-          <View style={styles.noResultsContainer}>
-            <Text style={styles.noResultsText}>
-              {searchQuery.trim() !== ''
-                ? 'No products found matching your search'
-                : 'No products available in this category'}
-            </Text>
-          </View> */}
-        {/* )} */}
       </View>
       <View style={{ marginTop: 35 }}></View>
     </View>
