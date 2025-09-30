@@ -563,7 +563,7 @@ const HomePage = () => {
           </View>
 
           {/* Original Spare parnter */}
-          <View style={styles.spareparnterConatiner}>
+          {/* <View style={styles.spareparnterConatiner}>
             <View>
               <Text style={{ ...FONTS.h3, fontWeight: 500, color: COLORS.primary_text }}>
                 Authorized Spare Parts
@@ -583,7 +583,7 @@ const HomePage = () => {
                 </View>
               ))}
             </ScrollView>
-          </View>
+          </View> */}
 
           {/* Footer CTA */}
           <View style={styles.footerCta}>
