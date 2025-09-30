@@ -464,6 +464,7 @@ const Profile = () => {
       .fill(0)
       .map(() => new Animated.Value(0))
   ).current;
+
   const fadeAnims = useRef(
     Array(8)
       .fill(0)
@@ -1074,6 +1075,7 @@ const Profile = () => {
       return newErrors;
     });
   };
+
   const MenuItem: React.FC<MenuItemProps> = ({
     title,
     subtitle,

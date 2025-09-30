@@ -103,8 +103,7 @@ const Services = () => {
       setSelectedVehicleIndex(null);
       setSelectedBookingType('general');
 
-      return () => {
-      };
+      return () => {};
     }, [])
   );
 
@@ -707,7 +706,7 @@ const Services = () => {
           </ScrollView>
 
           {/* Search Input */}
-          <View style={{ marginVertical: 5, marginHorizontal: 15, marginTop: 5 }}>
+          <View style={{ marginHorizontal: 15 }}>
             <View style={styles.searchContainer}>
               <View style={styles.searchIcon}>
                 <Ionicons name="search" size={22} color={COLORS.grey} />
@@ -1227,6 +1226,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    marginTop: 175,
   },
   noResultsText: {
     ...FONTS.body3,

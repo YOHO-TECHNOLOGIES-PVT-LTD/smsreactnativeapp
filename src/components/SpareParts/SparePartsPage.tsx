@@ -285,6 +285,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    marginTop: 180,
   },
   noResultsText: {
     ...FONTS.body3,

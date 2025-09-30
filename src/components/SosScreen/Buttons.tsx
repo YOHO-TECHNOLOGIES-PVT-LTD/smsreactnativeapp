@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -118,24 +118,27 @@ export default function RoadsideAssistanceScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [userId, setuserId] = useState<any>('');
   const [isUploadImages, setIsUploadImages] = useState(false);
+  const didFetch = useRef(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userResponse = await getUserProfileDetails();
-        setUser(userResponse);
-        setuserId(userResponse._id);
-        if (userResponse?.vehicleInfo?.length > 0) {
-          setVehicleList(userResponse.vehicleInfo);
-          setSelectedVehicle(userResponse.vehicleInfo[0]);
+    if (TokenSelector && !didFetch.current) {
+      const fetchUser = async () => {
+        try {
+          const userResponse = await getUserProfileDetails();
+          setUser(userResponse);
+          setuserId(userResponse?._id);
+          if (userResponse?.vehicleInfo?.length > 0) {
+            setVehicleList(userResponse?.vehicleInfo);
+            setSelectedVehicle(userResponse?.vehicleInfo[0]);
+          }
+        } catch (error) {
+          console.error('Error fetching user details:', error);
         }
-      } catch (error) {
-        console.error('Error fetching user details:', error);
-      }
-    };
-
-    fetchUser();
-  }, [dispatch]);
+      };
+      fetchUser();
+      didFetch.current = true;
+    }
+  }, [TokenSelector]);
 
   useEffect(() => {
     try {
