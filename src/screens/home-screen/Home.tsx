@@ -924,10 +924,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   seeAll: {
-    color: COLORS.primary_text,
+    color: "white",
     ...FONTS.h6,
     fontWeight: '500',
-    textDecorationLine: 'underline',
+     backgroundColor:COLORS.primary_01,
+     borderRadius:8,
+     padding:6
   },
   offersContainer: {
     flexDirection: 'row',

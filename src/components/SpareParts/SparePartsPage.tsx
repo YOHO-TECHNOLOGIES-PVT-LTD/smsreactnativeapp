@@ -218,11 +218,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     width: '100%',
+    paddingVertical:2,
+   
   },
   activeHorizontalNavText: {
-    color: COLORS.primary,
+    color:"white",
     ...FONTS.h6,
-    textDecorationLine: 'underline',
+    // textDecorationLine: 'underline',
+     backgroundColor:COLORS.primary_01,
+    paddingHorizontal:4,
+    paddingVertical:2,
+    borderRadius:10
+  
   },
   image: {
     width: 65,
