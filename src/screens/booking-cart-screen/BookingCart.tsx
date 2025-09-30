@@ -37,7 +37,7 @@ const Settings = () => {
         setIsLoading(true);
         await dispatch(getToken());
       } catch (error: any) {
-        console.error(error.message);
+        console.log(error.message);
       } finally {
         setIsLoading(false);
       }
@@ -45,7 +45,7 @@ const Settings = () => {
     fetchToken();
   }, [dispatch]);
 
-  const fetchAllBookingCarts = useCallback(async () => {
+  const fetchAllBookingCarts = async () => {
     try {
       setIsLoading(true);
       const response = tokenSelector ? await getAllBookingCartItems({}) : [];
@@ -55,7 +55,7 @@ const Settings = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch]);
+  };
 
   useEffect(() => {
     if (tokenSelector && !didFetch.current) {

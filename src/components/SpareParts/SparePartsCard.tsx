@@ -475,15 +475,15 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   activeTab: {
-    backgroundColor:COLORS.primary_01,
-     borderRadius:10
+    backgroundColor: COLORS.primary_01,
+    borderRadius: 10,
   },
   tabText: {
     ...FONTS.body3,
     color: COLORS.primary_01,
   },
   activeTabText: {
-    color: "white",
+    color: 'white',
     fontWeight: 'bold',
   },
   tabContentContainer: {

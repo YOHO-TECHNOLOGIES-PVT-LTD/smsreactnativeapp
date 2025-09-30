@@ -888,7 +888,7 @@ const styles = StyleSheet.create({
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     marginVertical: 15,
   },
   serviceItem: {
