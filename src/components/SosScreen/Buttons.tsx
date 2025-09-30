@@ -410,7 +410,7 @@ export default function RoadsideAssistanceScreen() {
         setModalVisible(false);
 
         // Reset form
-        setOtherDetails({
+        setOtherDetails ({
           name: '',
           phone: '',
           relationship: '',
