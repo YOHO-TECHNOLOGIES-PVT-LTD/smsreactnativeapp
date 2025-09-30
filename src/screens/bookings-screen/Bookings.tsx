@@ -141,8 +141,12 @@ const Bookings = () => {
   });
 
   const totalOrders = orders?.length;
-  const completedOrders = orders?.filter((order) => order?.status === 'completed')?.length;
-  const pendingOrders = orders?.filter((order) => order?.status === 'pending' || 'Pending')?.length;
+  const completedOrders = orders?.filter(
+    (order) => order?.status.toLowerCase() === 'completed'
+  )?.length;
+  const pendingOrders = orders?.filter(
+    (order) => order?.status.toLowerCase() === 'pending'
+  )?.length;
   const dispatchOrders = orders?.filter(
     (order) => order?.status === 'Dispatched to Courier'
   )?.length;

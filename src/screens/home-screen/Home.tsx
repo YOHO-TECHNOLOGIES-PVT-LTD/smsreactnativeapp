@@ -39,6 +39,7 @@ import { createEnquiry } from '~/features/home/service';
 import SparePartsCard from '~/components/SpareParts/SparePartsCard';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 import { selectProfile } from '~/features/profile/reducers/selector';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const carlogos = [
   icons.carlogo1,
@@ -429,7 +430,10 @@ const HomePage = () => {
                   <TouchableOpacity
                     key={item.id}
                     style={styles.serviceItem1}
-                    onPress={() => dispatch(setSelectedTab(screens.services))}>
+                    onPress={async () => {
+                      await AsyncStorage.setItem('activeService', item?.category_name);
+                      dispatch(setSelectedTab(screens.services));
+                    }}>
                     <Image
                       source={require('../../assets/loading1.png')}
                       style={{ width: 55, height: 55 }}
@@ -924,12 +928,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   seeAll: {
-    color: "white",
+    color: 'white',
     ...FONTS.h6,
     fontWeight: '500',
-     backgroundColor:COLORS.primary_01,
-     borderRadius:8,
-     padding:6
+    backgroundColor: COLORS.primary_01,
+    borderRadius: 8,
+    padding: 6,
   },
   offersContainer: {
     flexDirection: 'row',

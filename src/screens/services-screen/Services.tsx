@@ -33,6 +33,7 @@ import { selectCartItems } from '~/features/booking-cart/redux/selectors';
 import { getImageUrl } from '~/utils/imageUtils';
 import { selectProfile } from '~/features/profile/reducers/selector';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ServiceCategory = {
   uuid: string;
@@ -148,11 +149,28 @@ const Services = () => {
   const fetchAllServices = async () => {
     try {
       const categories = await getAllServiceCategories({});
-      if (categories) {
+      if (categories && categories.length > 0) {
         setServiceCategories(categories);
-        if (categories?.length > 0) {
-          setActiveNavItem(categories[0]?.category_name);
-          setFilteredParts(categories[0]?.services);
+
+        // Read storage AFTER categories are loaded
+        const activeCategory = await AsyncStorage.getItem('activeService');
+
+        if (activeCategory) {
+          const foundCategory = categories?.find(
+            (cat: any) => cat.category_name === activeCategory
+          );
+
+          if (foundCategory) {
+            setActiveNavItem(foundCategory?.category_name);
+            setFilteredParts(foundCategory?.services);
+            AsyncStorage.removeItem('activeService');
+          } else {
+            setActiveNavItem(categories?.[0]?.category_name);
+            setFilteredParts(categories?.[0]?.services);
+          }
+        } else {
+          setActiveNavItem(categories?.[0]?.category_name);
+          setFilteredParts(categories?.[0]?.services);
         }
       }
     } catch (error) {
@@ -194,13 +212,11 @@ const Services = () => {
 
   const handleAddtoCart = async (vehicleIndex: number | null) => {
     if (!selectedService?.uuid) {
-      console.log('Error: No service selected');
       toast.error('Error', 'Please select a service.');
       return;
     }
 
     if (selectedVehicleIndex === null) {
-      console.log('Error: No vehicle selected');
       toast.error('Error', 'Please select a vehicle.');
       return;
     }
@@ -208,13 +224,11 @@ const Services = () => {
     // Enhanced validation for schedule booking
     if (selectedBookingType === 'schedule') {
       if (!selectedDate) {
-        console.log('Error: Date not selected');
         toast.error('Error', 'Please select a date.');
         return;
       }
 
       if (!startTime || !endTime) {
-        console.log('Error: Time not selected');
         toast.error('Error', 'Please select both start and end time.');
         return;
       }
@@ -224,7 +238,6 @@ const Services = () => {
       const [endHours, endMinutes] = endTime.split(':').map(Number);
 
       if (endHours < startHours || (endHours === startHours && endMinutes <= startMinutes)) {
-        console.log('Error: End time must be after start time');
         toast.error('Error', 'End time must be after start time.');
         return;
       }
@@ -260,7 +273,6 @@ const Services = () => {
         setStartTime('');
         setEndTime('');
       } else {
-        console.log('Error: Booking failed');
         toast.error('Error', 'Something went wrong. Try again.');
       }
     } catch (error) {
@@ -963,17 +975,16 @@ const styles = StyleSheet.create({
     ...FONTS.h6,
     fontWeight: '500',
     color: '#666',
-    paddingVertical:2,
-    paddingHorizontal:4,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
   },
   activeCategoryText: {
-    color: "white",
+    color: 'white',
     // textDecorationLine: 'underline',
-    backgroundColor:COLORS.primary_01,
-    paddingHorizontal:4,
-    paddingVertical:2,
-    borderRadius:10
-  
+    backgroundColor: COLORS.primary_01,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
   servicesContainer: {
     padding: 15,
@@ -1116,7 +1127,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGrey,
     marginBottom: 16,
-   
   },
   tab: {
     paddingVertical: 10,
@@ -1124,15 +1134,15 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   activeTab: {
-     backgroundColor:COLORS.primary_01,
-     borderRadius:10
+    backgroundColor: COLORS.primary_01,
+    borderRadius: 10,
   },
   tabText: {
     ...FONTS.body3,
     color: COLORS.primary_01,
   },
   activeTabText: {
-     color: "white",
+    color: 'white',
     fontWeight: 'bold',
   },
   tabContentContainer: {

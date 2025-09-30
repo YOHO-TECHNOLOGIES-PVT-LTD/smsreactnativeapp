@@ -30,7 +30,7 @@ import { CloudSnow } from 'lucide-react-native';
 import { getImageUrl } from '~/utils/imageUtils';
 
 type BookingType = 'spare' | 'service';
-type OrderStatus = 'pending' | 'Confirm Order' | 'Dispatched to Courier';
+type OrderStatus = 'pending' | 'completed' | 'Dispatched to Courier';
 
 interface Product {
   id: string;
@@ -94,7 +94,8 @@ const OrderDetailsModal: React.FC<{
   order: BookingCardData;
 }> = ({ visible, onClose, order }) => {
   const isService = !!order?.services;
-  const isDispatched = order?.status === 'Dispatched to Courier';
+  const isDispatched = order?.status === 'Dispatched to Courier' || order?.status === 'completed';
+
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDownloadInvoice = async () => {
@@ -178,12 +179,6 @@ const OrderDetailsModal: React.FC<{
         {/* Fixed Order Summary Section */}
         <View style={styles.fixedOrderSummary}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
-          {/* <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Order ID:</Text>
-            <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
-              {order?.slipId }
-            </Text>
-          </View> */}
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Order Date:</Text>
             <Text style={styles.summaryValue}>{formatDateandTime(order?.createdAt)}</Text>
@@ -324,7 +319,7 @@ const OrderDetailsModal: React.FC<{
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            {(order.status === 'Confirm Order' || order.status === 'Dispatched to Courier') && (
+            {(order.status === 'completed' || order.status === 'Dispatched to Courier') && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.downloadButton]}
                 onPress={handleDownloadInvoice}
@@ -340,7 +335,7 @@ const OrderDetailsModal: React.FC<{
               </TouchableOpacity>
             )}
 
-            {isDispatched && (
+            {isDispatched && !isService && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.trackButton]}
                 onPress={handleViewTrackSlip}
@@ -396,7 +391,10 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   }));
 
   const statusColor =
-    data?.status === 'pending' || 'Pending' ? COLORS.error : COLORS.success_lightgreen;
+    data?.status.toLowerCase() === 'completed' ||
+    data.status.toLowerCase() === 'dispatched to courier'
+      ? COLORS.success_lightgreen
+      : COLORS.error;
   const statusText =
     data?.status === 'Dispatched to Courier'
       ? data?.status.substring(0, 10)
@@ -420,7 +418,8 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
               style={styles.image}
             />
             <View style={styles.statusContainer}>
-              {data.status !== 'pending' || 'Pending' ? (
+              {data.status.toLowerCase() === 'completed' ||
+              data.status.toLowerCase() === 'dispatched to courier' ? (
                 <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
               ) : (
                 <Image source={icons.clock} style={styles.statusIcon} tintColor={statusColor} />

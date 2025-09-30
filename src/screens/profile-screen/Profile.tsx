@@ -76,6 +76,7 @@ import { Feather } from '@expo/vector-icons';
 import { uploadSingleFileorImage } from '~/features/common/service';
 import { getImageUrl } from '~/utils/imageUtils';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -372,6 +373,7 @@ const Profile = () => {
     try {
       const response: any = await getUserProfileDetails({});
       if (response) {
+        await AsyncStorage.setItem('userId', response?._id);
         setProfileImageLogo(response?.image);
         const userData = {
           firstName: response?.firstName,
@@ -1029,7 +1031,7 @@ const Profile = () => {
   };
 
   const handleEmailPress = () => {
-    const email = 'support@example.com';
+    const email = 'support@sms.com';
     const subject = 'Support Request';
     const body = 'Hello, I need help with...';
     const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(
