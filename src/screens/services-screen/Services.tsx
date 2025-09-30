@@ -971,10 +971,17 @@ const styles = StyleSheet.create({
     ...FONTS.h6,
     fontWeight: '500',
     color: '#666',
+    paddingVertical:2,
+    paddingHorizontal:4,
   },
   activeCategoryText: {
-    color: COLORS.primary,
-    textDecorationLine: 'underline',
+    color: "white",
+    // textDecorationLine: 'underline',
+    backgroundColor:COLORS.primary_01,
+    paddingHorizontal:4,
+    paddingVertical:2,
+    borderRadius:10
+  
   },
   servicesContainer: {
     padding: 15,
@@ -1117,22 +1124,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGrey,
     marginBottom: 16,
+   
   },
   tab: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     marginRight: 8,
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.primary,
+     backgroundColor:COLORS.primary_01,
+     borderRadius:10
   },
   tabText: {
     ...FONTS.body3,
     color: COLORS.primary_01,
   },
   activeTabText: {
-    color: COLORS.primary,
+     color: "white",
     fontWeight: 'bold',
   },
   tabContentContainer: {

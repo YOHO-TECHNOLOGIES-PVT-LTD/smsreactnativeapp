@@ -471,20 +471,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tab: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     marginRight: 8,
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.primary,
+    backgroundColor:COLORS.primary_01,
+     borderRadius:10
   },
   tabText: {
     ...FONTS.body3,
     color: COLORS.primary_01,
   },
   activeTabText: {
-    color: COLORS.primary,
+    color: "white",
     fontWeight: 'bold',
   },
   tabContentContainer: {
