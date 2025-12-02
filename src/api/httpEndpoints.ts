@@ -88,4 +88,8 @@ export const API_END_POINTS = {
     getProductInvoice: '/api/customer/invoice/product/:uuid',
     getServiceInvoice: '/api/customer/invoice/service/:uuid',
   },
+  upload: {
+    post: '/api/image/singlefile/:userId',
+    postMultiImage: '/api/image/multiplefile/:userId'
+  },
 };

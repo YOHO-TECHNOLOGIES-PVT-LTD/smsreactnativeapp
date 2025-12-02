@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   Easing,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import {
   User,
@@ -31,60 +32,53 @@ import {
   MapPin,
   Bell,
   Clock,
-  Truck,
-  Tag,
-  CreditCard,
-  Shield,
   Settings,
   LogOut,
   X,
   Camera,
-  ChevronRight,
   RotateCcw,
   Trash2,
   HelpCircle,
   FileText,
   MessageCircle,
-  Star,
   ArrowLeft,
   ExternalLink,
   Lock,
   ChevronDown,
   ChevronUp,
-  Calendar,
-  Award,
   Zap,
   AlertCircle,
   Info,
   TrendingUp,
-  Activity,
   Gauge,
   MoreVertical,
   MapPinHouse,
   Building2,
-  BookUser,
-  Fuel,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserProfileDetails, updateUserProfileDetails } from '~/features/profile/service';
-import { COLORS, FONTS, icons, screens } from '~/constants';
+import { COLORS, FONTS, icons } from '~/constants';
 import toast from '~/utils/toast';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import AnimatedUserDummy from '~/components/profile/AnimatedUserDummy';
 import LoadingAnimation from '~/components/LoadingAnimation';
-import PhoneDialerButton from '~/components/PhoneDialerButton';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken, logout } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllBookingsCartItems } from '~/features/bookings/service';
-import { formatDateandmonth, formatDateMonthandYear } from '../../utils/formatDate';
+import { formatDateMonthandYear } from '../../utils/formatDate';
+import * as Linking from 'expo-linking';
+import { Feather } from '@expo/vector-icons';
+import { uploadSingleFileorImage } from '~/features/common/service';
+import { getImageUrl } from '~/utils/imageUtils';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const COLORS1 = {
   // Primary colors1 - Refined Deep Crimson Theme
@@ -107,7 +101,6 @@ const COLORS1 = {
   cardWarning: '#FFFBEB',
   cardError: '#FEF2F2',
   cardInfo: '#EFF6FF',
-
   primaryinfo: ['#2563EB', '#3B82F6'],
 
   // Status colors1
@@ -150,12 +143,13 @@ const COLORS1 = {
 
 // Enhanced Type Definitions
 interface Vehicle {
-  id: string;
+  id: string | number;
   registerNumber: string;
   model: string;
   year: string;
   fuleType: string;
   company: string;
+  make?: string;
 }
 
 interface Service {
@@ -214,35 +208,115 @@ interface CarStatusProps {
   icon: React.ReactNode;
 }
 
-interface FormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  image?: string;
-  contact_info: {
-    city: string;
-    state: string;
-    phoneNumber: string;
-    address1: string;
-    address2: string;
-    [key: string]: string;
-  };
-  vehicleInfo: Array<{
-    registerNumber: string;
-    model: string;
-    year: string;
-    company: string;
-    fuleType: string;
-    [key: string]: string;
+// Validation functions
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePhone = (phone: string): { isValid: boolean; error?: string } => {
+  if (!phone?.trim()) {
+    return { isValid: false, error: 'Phone number is required' };
+  }
+
+  const cleanedPhone = phone.replace(/\D/g, '');
+  const phoneRegex = /^[6-9]\d{9}$/;
+
+  if (cleanedPhone.length !== 10) {
+    return { isValid: false, error: 'Phone number must be exactly 10 digits' };
+  }
+
+  if (!phoneRegex.test(cleanedPhone)) {
+    return {
+      isValid: false,
+      error: 'Please enter a valid 10-digit phone number starting with 6-9',
+    };
+  }
+
+  return { isValid: true };
+};
+
+const validateFirstName = (name: string): boolean => {
+  return name.trim().length >= 2 && /^[a-zA-Z\s]+$/.test(name);
+};
+
+const validateLastName = (name: string): boolean => {
+  return name.trim().length >= 1 && /^[a-zA-Z\s]+$/.test(name);
+};
+
+const validateAddress = (address: string): string => {
+  if (!address?.trim()) {
+    return 'Address is required';
+  }
+  if (address.trim().length < 5) {
+    return 'Address must be at least 5 characters long';
+  }
+  if (address.trim().length > 200) {
+    return 'Address must be less than 200 characters';
+  }
+  return '';
+};
+
+const validateCity = (city: string): string => {
+  if (!city?.trim()) {
+    return 'City is required';
+  }
+  if (city.trim().length < 3) {
+    return 'City must be at least 3 characters long';
+  }
+  if (!/^[a-zA-Z\s\-]+$/.test(city)) {
+    return 'City can only contain letters, spaces, and hyphens';
+  }
+  return '';
+};
+
+const validateState = (state: string): string => {
+  if (!state?.trim()) {
+    return 'State is required';
+  }
+  if (state.trim().length < 2) {
+    return 'State must be at least 2 characters long';
+  }
+  if (!/^[a-zA-Z\s\-]+$/.test(state)) {
+    return 'State can only contain letters, spaces, and hyphens';
+  }
+  return '';
+};
+
+const validateVehicleYear = (year: string): boolean => {
+  const currentYear = new Date().getFullYear();
+  const yearNum = parseInt(year);
+  return !isNaN(yearNum) && yearNum >= 1990 && yearNum <= currentYear + 1;
+};
+
+const validateRegistrationNumber = (regNumber: string): boolean => {
+  return /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,2}[0-9]{1,4}$/.test(regNumber.toUpperCase());
+};
+
+// Error interface
+interface FormErrors {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  vehicles?: Array<{
+    registerNumber?: string;
+    company?: string;
+    model?: string;
+    year?: string;
+    fuleType?: string;
   }>;
   newVehicle?: {
-    registerNumber: string;
-    model: string;
-    year: string;
-    company: string;
-    fuleType: string;
+    registerNumber?: string;
+    company?: string;
+    model?: string;
+    year?: string;
+    fuleType?: string;
   };
-  [key: string]: any;
 }
 
 const Profile = () => {
@@ -250,12 +324,15 @@ const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [profileData, setProfileData] = useState<any>({});
+  const [profileImageLogo, setProfileImageLogo] = useState<any>('');
+  const phoneNumber = '+91-9876543210';
+  const didFetch = useRef(false);
   const [bookingOrders, setBookingOrders] = useState<{
     serviceConfirm?: any[];
     productConfirm?: any[];
     success?: boolean;
   } | null>(null);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<any>({
     firstName: '',
     lastName: '',
     email: '',
@@ -277,6 +354,8 @@ const Profile = () => {
       },
     ],
   });
+  const [originalFormData, setOriginalFormData] = useState<any>(null);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     try {
@@ -295,7 +374,8 @@ const Profile = () => {
       const response: any = await getUserProfileDetails({});
       if (response) {
         await AsyncStorage.setItem('userId', response?._id);
-        setFormData({
+        setProfileImageLogo(response?.image);
+        const userData = {
           firstName: response?.firstName,
           lastName: response?.lastName,
           email: response?.email,
@@ -316,8 +396,11 @@ const Profile = () => {
               year: '',
             },
           ],
-        });
+        };
+        setFormData(userData);
+        setOriginalFormData(JSON.parse(JSON.stringify(userData)));
         setProfileData(response);
+        setFormErrors({});
       }
     } catch (error) {
       console.log('Error fetching user profile:', error);
@@ -338,11 +421,13 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    if (TokenSelector) {
+    if (TokenSelector && !didFetch.current) {
       fetchUserProfile();
+      dispatch(getProfileDetailsThunk({}));
       fetchOrders();
+      didFetch.current = true;
     }
-  }, [dispatch, TokenSelector]);
+  }, [TokenSelector]);
 
   const [userInfo, setUserInfo] = useState({
     name: '',
@@ -353,130 +438,40 @@ const Profile = () => {
     notifications: '',
   });
 
-  const [notifications, setNotifications] = useState({
-    serviceReminders: true,
-    promotions: false,
-    orderUpdates: true,
-    appUpdates: true,
-    specialOffers: false,
-  });
-
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
-    {
-      id: 1,
-      make: 'Toyota',
-      model: 'Camry',
-      year: '2020',
-      plate: 'ABC-123',
-      color: 'Silver',
-      mileage: '45,000',
-      image360: 'https://images.unsplash.com/photo-1549924231-f129b911e442?w=400',
-      services: [
-        {
-          id: 1,
-          type: 'Oil Change',
-          date: '2024-01-15',
-          cost: '$45',
-          description: 'Regular oil change and filter replacement',
-          status: 'completed',
-          technician: 'Mike Johnson',
-          location: 'Downtown Auto Service',
-          duration: '45 min',
-        },
-        {
-          id: 2,
-          type: 'Brake Service',
-          date: '2024-02-20',
-          cost: '$180',
-          description: 'Brake pad replacement and fluid check',
-          status: 'completed',
-          technician: 'Sarah Williams',
-          location: 'Downtown Auto Service',
-          duration: '2 hours',
-        },
-        {
-          id: 3,
-          type: 'Tire Rotation',
-          date: '2024-06-01',
-          cost: '$35',
-          description: 'Scheduled tire rotation service',
-          status: 'scheduled',
-          technician: 'David Miller',
-          location: 'Downtown Auto Service',
-          duration: '30 min',
-        },
-      ],
-      lastService: '2024-02-20',
-      nextService: '2024-06-01',
-      healthScore: 92,
-      fuelLevel: 75,
-      batteryHealth: 95,
-      tireHealth: 88,
-      engineStatus: 'excellent',
-    },
-    {
-      id: 2,
-      make: 'Honda',
-      model: 'Civic',
-      year: '2019',
-      plate: 'XYZ-789',
-      color: 'Blue',
-      mileage: '32,000',
-      image360: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400',
-      services: [
-        {
-          id: 4,
-          type: 'Engine Tune-up',
-          date: '2024-01-10',
-          cost: '$200',
-          description: 'Complete engine diagnostic and tune-up',
-          status: 'completed',
-          technician: 'Robert Chen',
-          location: 'Eastside Auto Care',
-          duration: '3 hours',
-        },
-      ],
-      lastService: '2024-01-10',
-      nextService: '2024-07-10',
-      healthScore: 87,
-      fuelLevel: 45,
-      batteryHealth: 82,
-      tireHealth: 90,
-      engineStatus: 'good',
-    },
-  ]);
-
   const [orders, setOrders] = useState<Order[]>([]);
   const [editProfileModal, setEditProfileModal] = useState(false);
   const [addVehicleModal, setAddVehicleModal] = useState(false);
   const [vehicleDetailModal, setVehicleDetailModal] = useState(false);
   const [orderDetailModal, setOrderDetailModal] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [photoUploadModal, setPhotoUploadModal] = useState(false);
   const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false);
   const [helpCentreModal, setHelpCentreModal] = useState(false);
   const [termsModal, setTermsModal] = useState(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [isLoading, setIsLoading] = useState(false);
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
+  const [editForm, setEditForm] = useState({ ...userInfo });
+  const [imageModalVisible, setImageModalVisible] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     vehicles: false,
     orders: false,
     settings: false,
   });
-  const [editForm, setEditForm] = useState({ ...userInfo });
 
   const slideAnims = useRef(
     Array(8)
       .fill(0)
       .map(() => new Animated.Value(0))
   ).current;
+
   const fadeAnims = useRef(
     Array(8)
       .fill(0)
       .map(() => new Animated.Value(1))
   ).current;
+
   const headerOpacity = useRef(new Animated.Value(1)).current;
   const cardScale = useRef(new Animated.Value(1)).current;
 
@@ -628,9 +623,7 @@ const Profile = () => {
   };
 
   // Utility Functions
-  const saveUserProfileImage = (imageUri: string) => {
-    // console.log('Saving profile image to local storage:', imageUri);
-  };
+  const saveUserProfileImage = (imageUri: string) => {};
 
   const getUserProfileImage = () => {
     return null;
@@ -660,10 +653,189 @@ const Profile = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    if (formData?.image) {
-      saveUserProfileImage(formData?.image);
+  const validateFormData = (): boolean => {
+    const errors: FormErrors = {};
+    let isValid = true;
+    let date = new Date().getFullYear();
+
+    // Validate first name
+    if (!formData.firstName?.trim()) {
+      errors.firstName = 'First name is required';
+      isValid = false;
+    } else if (!validateFirstName(formData.firstName)) {
+      errors.firstName = 'First name must be at least 2 characters and contain only letters';
+      isValid = false;
     }
+
+    // Validate last name
+    if (!formData.lastName?.trim()) {
+      errors.lastName = 'Last name is required';
+      isValid = false;
+    } else if (!validateLastName(formData.lastName)) {
+      errors.lastName = 'Last name must be at least 2 characters and contain only letters';
+      isValid = false;
+    }
+
+    // Validate email
+    if (!formData.email?.trim()) {
+      errors.email = 'Email is required';
+      isValid = false;
+    } else if (!validateEmail(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    // Validate phone number if provided
+    const phoneValidation = validatePhone(formData.contact_info?.phoneNumber || '');
+    if (!phoneValidation.isValid) {
+      errors.phoneNumber = phoneValidation.error;
+      isValid = false;
+    }
+
+    const address1Error = validateAddress(formData.contact_info?.address1 || '');
+    if (address1Error) {
+      errors.address1 = address1Error;
+      isValid = false;
+    }
+
+    const address2Error = validateAddress(formData.contact_info.address2 || '');
+    if (address2Error) {
+      errors.address2 = address2Error;
+      isValid = false;
+    }
+
+    // Validate city
+    const cityError = validateCity(formData.contact_info?.city || '');
+    if (cityError) {
+      errors.city = cityError;
+      isValid = false;
+    }
+
+    // Validate state
+    const stateError = validateState(formData.contact_info?.state || '');
+    if (stateError) {
+      errors.state = stateError;
+      isValid = false;
+    }
+
+    // Validate existing vehicles
+    if (Array.isArray(formData.vehicleInfo)) {
+      errors.vehicles = [];
+      formData.vehicleInfo.forEach((vehicle: any, index: number) => {
+        const vehicleErrors: any = {};
+
+        // Validate required fields for existing vehicles
+        if (!vehicle.registerNumber?.trim()) {
+          vehicleErrors.registerNumber = 'Register number is required';
+          isValid = false;
+        } else if (!validateRegistrationNumber(vehicle.registerNumber)) {
+          vehicleErrors.registerNumber =
+            'Please enter a valid vehicle registration number (e.g., TN08SV1831)';
+          isValid = false;
+        }
+
+        if (!vehicle.company?.trim()) {
+          vehicleErrors.company = 'Car company is required';
+          isValid = false;
+        }
+
+        if (!vehicle.model?.trim()) {
+          vehicleErrors.model = 'Car model is required';
+          isValid = false;
+        }
+
+        if (!vehicle.year?.trim()) {
+          vehicleErrors.year = 'Model year is required';
+          isValid = false;
+        } else if (!validateVehicleYear(vehicle.year)) {
+          vehicleErrors.year = `Please enter a valid vehicle year (1990 - ${date + 1})`;
+          isValid = false;
+        }
+
+        if (!vehicle.fuleType?.trim()) {
+          vehicleErrors.fuleType = 'Fuel type is required';
+          isValid = false;
+        }
+
+        if (Object.keys(vehicleErrors).length > 0) {
+          errors.vehicles![index] = vehicleErrors;
+        }
+      });
+
+      if (errors.vehicles?.length === 0) {
+        delete errors.vehicles;
+      }
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
+  const validateNewVehicle = (): boolean => {
+    const errors: FormErrors = {};
+    let isValid = true;
+    let date = new Date().getFullYear();
+
+    if (!formData.newVehicle) {
+      errors.newVehicle = {
+        registerNumber: 'All fields are required',
+        company: 'All fields are required',
+        model: 'All fields are required',
+        year: 'All fields are required',
+        fuleType: 'All fields are required',
+      };
+      isValid = false;
+    } else {
+      const newVehicle = formData.newVehicle;
+      const vehicleErrors: any = {};
+
+      if (!newVehicle.registerNumber?.trim()) {
+        vehicleErrors.registerNumber = 'Register number is required';
+        isValid = false;
+      } else if (!validateRegistrationNumber(newVehicle.registerNumber)) {
+        vehicleErrors.registerNumber =
+          'Please enter a valid vehicle registration number (e.g., TN08SV1831)';
+        isValid = false;
+      }
+
+      if (!newVehicle.company?.trim()) {
+        vehicleErrors.company = 'Car company is required';
+        isValid = false;
+      }
+
+      if (!newVehicle.model?.trim()) {
+        vehicleErrors.model = 'Car model is required';
+        isValid = false;
+      }
+
+      if (!newVehicle.year?.trim()) {
+        vehicleErrors.year = 'Model year is required';
+        isValid = false;
+      } else if (!validateVehicleYear(newVehicle.year)) {
+        vehicleErrors.year = `Please enter a valid vehicle year (1990 - ${date})`;
+        isValid = false;
+      }
+
+      if (!newVehicle.fuleType?.trim()) {
+        vehicleErrors.fuleType = 'Fuel type is required';
+        isValid = false;
+      }
+
+      if (Object.keys(vehicleErrors).length > 0) {
+        errors.newVehicle = vehicleErrors;
+        isValid = false;
+      }
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
+  const handleSaveProfile = async () => {
+    if (!validateFormData()) {
+      return;
+    }
+
     Animated.sequence([
       Animated.timing(headerOpacity, {
         toValue: 0.8,
@@ -678,41 +850,89 @@ const Profile = () => {
     ]).start();
 
     try {
-      const response: any = await updateUserProfileDetails(formData);
-      if (response) {
+      const updatedData: any = {};
+
+      if (formData.firstName !== originalFormData.firstName) {
+        updatedData.firstName = formData.firstName;
+      }
+      if (formData.lastName !== originalFormData.lastName) {
+        updatedData.lastName = formData.lastName;
+      }
+      if (formData.email !== originalFormData.email) {
+        updatedData.email = formData.email;
+      }
+      if (formData.image !== originalFormData.image) {
+        updatedData.image = formData.image;
+      }
+
+      // Check contact info changes
+      const contactInfoChanged: any = {};
+      Object.keys(formData.contact_info).forEach((key) => {
+        if (formData.contact_info[key] !== originalFormData.contact_info[key]) {
+          contactInfoChanged[key] = formData.contact_info[key];
+        }
+      });
+
+      if (Object.keys(contactInfoChanged).length > 0) {
+        updatedData.contact_info = {
+          ...originalFormData.contact_info,
+          ...contactInfoChanged,
+        };
+      }
+
+      // Check vehicle info changes
+      if (JSON.stringify(formData.vehicleInfo) !== JSON.stringify(originalFormData.vehicleInfo)) {
+        updatedData.vehicleInfo = formData.vehicleInfo;
+      }
+
+      // Only make API call if there are actual changes
+      if (Object.keys(updatedData).length > 0) {
+        const response: any = await updateUserProfileDetails(updatedData);
+        if (response) {
+          setEditProfileModal(false);
+          setFormErrors({});
+          fetchUserProfile();
+          dispatch(getProfileDetailsThunk({}));
+          toast.success('Success', 'Profile updated successfully!');
+        }
+      } else {
         setEditProfileModal(false);
-        fetchUserProfile();
-        toast.success('Success', 'Profile updated successfully!');
+        setFormErrors({});
+        toast.info('Info', 'No changes detected');
       }
     } catch (error) {
       console.log(error);
+      toast.error('Error', 'Failed to update profile');
     }
   };
 
   const handleAddVehicle = async () => {
+    if (!validateNewVehicle()) {
+      return;
+    }
     try {
-      if (!formData.newVehicle) {
-        toast.error('Error', 'Please fill all required fields');
-        return;
-      }
-      const newVehicle = {
-        registerNumber: formData.newVehicle.registerNumber,
-        model: formData.newVehicle.model,
-        company: formData.newVehicle.company,
-        fuleType: formData.newVehicle.fuleType,
-        year: formData.newVehicle.year,
+      const newVehicle = formData.newVehicle;
+
+      const vehicleData = {
+        registerNumber: newVehicle.registerNumber,
+        model: newVehicle.model,
+        company: newVehicle.company,
+        fuleType: newVehicle.fuleType,
+        year: newVehicle.year,
       };
 
       const response: any = await updateUserProfileDetails({
         ...formData,
-        vehicleInfo: [...(formData.vehicleInfo || []), newVehicle],
+        vehicleInfo: [...(formData.vehicleInfo || []), vehicleData],
       });
+
       if (response) {
         setAddVehicleModal(false);
-        setFormData((prev) => ({
+        setFormData((prev: any) => ({
           ...prev,
           newVehicle: undefined,
         }));
+        setFormErrors({});
         fetchUserProfile();
         toast.success('Success', 'Vehicle added successfully!');
       }
@@ -728,20 +948,21 @@ const Profile = () => {
     setVehicleDetailModal(true);
   };
 
-  const handleDeleteVehicle = (vehicleId: number) => {
+  const handleDeleteVehicle = (vehicleId: any) => {
     Alert.alert('Delete Vehicle', 'Are you sure you want to delete this vehicle?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: () => {
-          // setVehicles(vehicles.filter((v) => v.id !== vehicleId));
           setVehicleDetailModal(false);
           toast.success('Success', 'Vehicle deleted successfully');
         },
       },
     ]);
   };
+
+  const OBJECT_ID = profileData._id;
 
   const pickImage = async () => {
     setPhotoUploadModal(true);
@@ -754,33 +975,28 @@ const Profile = () => {
       });
 
       if (!result.canceled) {
-        const newImageUri = result.assets[0].uri;
-        setFormData({ ...formData, image: newImageUri });
-        saveUserProfileImage(newImageUri);
+        const localUri = result.assets[0].uri;
+        // prepare FormData
+        const formData = new FormData();
+        formData.append('file', {
+          uri: localUri,
+          type: 'image/jpeg',
+          name: 'profile.jpg',
+        } as any);
+
+        const uploadResponse = await uploadSingleFileorImage({ userId: OBJECT_ID }, formData);
+        if (uploadResponse?.data.image) {
+          const uploadedUrl = uploadResponse.data.image;
+
+          setFormData((prev: any) => ({ ...prev, image: uploadedUrl }));
+          saveUserProfileImage(uploadedUrl);
+        } else {
+          toast.error('Upload Failed', 'Could not upload image.');
+        }
       }
     } catch (error) {
+      console.error('Error:', error);
       toast.error('Error', 'Failed to upload image. Please try again.');
-    } finally {
-      setPhotoUploadModal(false);
-    }
-  };
-
-  const takePhoto = async () => {
-    setPhotoUploadModal(true);
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        const newImageUri = result.assets[0].uri;
-        setFormData({ ...formData, image: newImageUri });
-        saveUserProfileImage(newImageUri);
-      }
-    } catch (error) {
-      toast.error('Error', 'Failed to take photo. Please try again.');
     } finally {
       setPhotoUploadModal(false);
     }
@@ -789,7 +1005,6 @@ const Profile = () => {
   const handlePhotoUpload = () => {
     if (TokenSelector) {
       Alert.alert('Upload Photo', 'Choose photo source', [
-        { text: 'Take Photo', onPress: takePhoto },
         { text: 'Choose from Gallery', onPress: pickImage },
         { text: 'Cancel', style: 'cancel', onPress: () => setPhotoUploadModal(false) },
       ]);
@@ -805,6 +1020,7 @@ const Profile = () => {
       toast.success('Logged out', 'You have been successfully logged out');
       setIsLoading(false);
       setLogoutModalVisible(false);
+      setProfileData({});
     } catch (error) {
       toast.error('Logout failed', 'Could not complete logout. Please try again.');
       console.error('Logout error:', error);
@@ -812,6 +1028,55 @@ const Profile = () => {
       setIsLoading(false);
       setLogoutModalVisible(false);
     }
+  };
+
+  const handleEmailPress = () => {
+    const email = 'support@sms.com';
+    const subject = 'Support Request';
+    const body = 'Hello, I need help with...';
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+
+    Linking.openURL(mailtoUrl).catch((err) => console.error('Failed to open email app:', err));
+  };
+
+  const clearError = (field: string) => {
+    setFormErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[field as keyof FormErrors];
+      return newErrors;
+    });
+  };
+
+  const clearVehicleError = (vehicleIndex: number, field: string) => {
+    setFormErrors((prev: any) => {
+      const newErrors = { ...prev };
+      if (newErrors.vehicles && newErrors.vehicles[vehicleIndex]) {
+        delete newErrors.vehicles[vehicleIndex][field];
+        if (Object.keys(newErrors.vehicles[vehicleIndex]).length === 0) {
+          delete newErrors.vehicles[vehicleIndex];
+        }
+        if (newErrors.vehicles.length === 0 || Object.keys(newErrors.vehicles).length === 0) {
+          delete newErrors.vehicles;
+        }
+      }
+      return newErrors;
+    });
+  };
+
+  // Helper function to clear new vehicle error
+  const clearNewVehicleError = (field: string) => {
+    setFormErrors((prev: any) => {
+      const newErrors = { ...prev };
+      if (newErrors.newVehicle) {
+        delete newErrors.newVehicle[field as keyof typeof newErrors.newVehicle];
+        if (Object.keys(newErrors.newVehicle).length === 0) {
+          delete newErrors.newVehicle;
+        }
+      }
+      return newErrors;
+    });
   };
 
   const MenuItem: React.FC<MenuItemProps> = ({
@@ -845,7 +1110,7 @@ const Profile = () => {
     );
   };
 
-  const VehicleItem: React.FC<VehicleItemProps> = ({ vehicle, onPress }) => {
+  const VehicleItem = ({ vehicle, onPress }: any) => {
     if (!vehicle || !Array.isArray(vehicle)) {
       return null;
     }
@@ -874,13 +1139,13 @@ const Profile = () => {
 
   const OrderItem = ({ order }: { order: Order }) => {
     const getStatusColor = () => {
-      switch (order.status) {
+      switch (order.status.toLowerCase()) {
         case 'pending':
           return COLORS1.warning;
-        case 'delivered':
+        case 'completed':
           return COLORS1.success;
         default:
-          return COLORS1.gray500;
+          return COLORS1.info;
       }
     };
 
@@ -969,21 +1234,6 @@ const Profile = () => {
     );
   };
 
-  const Switch = ({
-    checked,
-    onChange,
-  }: {
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-  }) => (
-    <TouchableOpacity
-      style={[styles.switch, { backgroundColor: checked ? COLORS1.primary : COLORS1.gray300 }]}
-      onPress={() => onChange(!checked)}
-      activeOpacity={0.8}>
-      <View style={[styles.switchThumb, { transform: [{ translateX: checked ? 20 : 2 }] }]} />
-    </TouchableOpacity>
-  );
-
   const TermsItem = ({
     term,
     isExpanded,
@@ -1058,7 +1308,7 @@ const Profile = () => {
 
       {isExpanded && <View style={styles.dropdownSectionContent}>{children}</View>}
     </View>
-  )
+  );
 
   // Side Menu Content Render Functions
   const renderVehiclesContent = () => (
@@ -1072,7 +1322,10 @@ const Profile = () => {
         </View>
         <TouchableOpacity
           style={[styles.addButton, styles.fullWidthButton]}
-          onPress={() => setAddVehicleModal(true)}
+          onPress={() => {
+            setAddVehicleModal(true);
+            setFormErrors({});
+          }}
           activeOpacity={0.8}>
           <Plus size={16} color={COLORS.white} />
         </TouchableOpacity>
@@ -1096,7 +1349,10 @@ const Profile = () => {
             </Text>
             <TouchableOpacity
               style={[styles.addButton, styles.fullWidthButton]}
-              onPress={() => setAddVehicleModal(true)}
+              onPress={() => {
+                setAddVehicleModal(true);
+                setFormErrors({});
+              }}
               activeOpacity={0.8}>
               <Plus size={16} color={COLORS1.white} />
               <Text style={styles.addButtonText}>Add Vehicle</Text>
@@ -1106,7 +1362,7 @@ const Profile = () => {
       </View>
 
       {/* Enhanced Vehicle Tips Section */}
-      {vehicles.length > 0 && (
+      {formData?.vehicleInfo?.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <View style={styles.sectionIconContainer}>
@@ -1159,18 +1415,31 @@ const Profile = () => {
         <View style={styles.sectionIconContainer}>
           <ShoppingCart size={20} color={COLORS.primary} />
         </View>
-        <Text style={styles.sectionTitle}>My Orders</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 85,
+          }}>
+          <Text style={styles.sectionTitle}>My Orders</Text>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('BookingsScreen' as never);
+            }}>
+            <Text style={{ ...FONTS.body5, fontWeight: 500, color: COLORS.primary }}>View All</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.card}>
         {orders ? (
-          orders.map((order, index) => (
+          orders?.slice(-3)?.map((order, index) => (
             <View key={index}>
               <OrderItem order={order} />
               <View style={styles.separator} />
             </View>
           ))
         ) : (
-          // <></>
           <View style={styles.emptyState}>
             <View style={styles.emptyIconContainer}>
               <ShoppingCart size={48} color={COLORS1.gray300} />
@@ -1185,120 +1454,6 @@ const Profile = () => {
 
   const renderSettingsContent = () => (
     <>
-      <View style={styles.section}>
-        <View style={styles.sectionTitleContainer}>
-          <View style={styles.sectionIconContainer}>
-            <Bell size={20} color={COLORS.primary} />
-          </View>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-        </View>
-        <View style={styles.card}>
-          {TokenSelector && (
-            <>
-              <MenuItem
-                title="Service Reminders"
-                subtitle="Get notified about upcoming maintenance"
-                icon={<Clock size={20} color={COLORS.primary} />}
-                rightElement={
-                  <Switch
-                    checked={notifications.serviceReminders}
-                    onChange={(value) =>
-                      setNotifications((prev) => ({ ...prev, serviceReminders: value }))
-                    }
-                  />
-                }
-                showArrow={false}
-                onPress={() => {
-                  toast.info('No updates', 'Features not available right now');
-                }}
-              />
-              <View style={styles.separator} />
-              <MenuItem
-                title="Order Updates"
-                subtitle="Track your spare parts orders"
-                icon={<Truck size={20} color={COLORS.primary} />}
-                rightElement={
-                  <Switch
-                    checked={notifications.orderUpdates}
-                    onChange={(value) =>
-                      setNotifications((prev) => ({ ...prev, orderUpdates: value }))
-                    }
-                  />
-                }
-                showArrow={false}
-                onPress={() => {
-                  toast.info('No updates', 'Features not available right now');
-                }}
-              />
-              <View style={styles.separator} />
-            </>
-          )}
-          <MenuItem
-            title="Promotions & Offers"
-            subtitle="Receive special deals and discounts"
-            icon={<Tag size={20} color={COLORS.primary} />}
-            rightElement={
-              <Switch
-                checked={notifications.promotions}
-                onChange={(value) => setNotifications((prev) => ({ ...prev, promotions: value }))}
-              />
-            }
-            showArrow={false}
-            onPress={() => {
-              toast.info('No updates', 'Features not available right now');
-            }}
-          />
-          <View style={styles.separator} />
-          <MenuItem
-            title="App Updates"
-            subtitle="Get notified about new features"
-            icon={<Settings size={20} color={COLORS.primary} />}
-            rightElement={
-              <Switch
-                checked={notifications.appUpdates}
-                onChange={(value) => setNotifications((prev) => ({ ...prev, appUpdates: value }))}
-              />
-            }
-            showArrow={false}
-            onPress={() => {
-              toast.info('No updates', 'Features not available right now');
-            }}
-          />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionTitleContainer}>
-          <View style={styles.sectionIconContainer}>
-            <Settings size={20} color={COLORS.primary} />
-          </View>
-          <Text style={styles.sectionTitle}>App Settings</Text>
-        </View>
-        <View style={styles.card}>
-          {TokenSelector && (
-            <>
-              <MenuItem
-                title="Payment Methods"
-                subtitle="Manage your payment options"
-                icon={<CreditCard size={20} color={COLORS.primary} />}
-                onPress={() => {
-                  toast.info('No updates', 'Features not available right now');
-                }}
-              />
-              <View style={styles.separator} />
-            </>
-          )}
-          <MenuItem
-            title="App Preferences"
-            subtitle="Customize your app experience"
-            icon={<Settings size={20} color={COLORS.primary} />}
-            onPress={() => {
-              toast.info('No updates', 'Features not available right now');
-            }}
-          />
-        </View>
-      </View>
-
       <View style={styles.section}>
         <View style={styles.sectionTitleContainer}>
           <View style={styles.sectionIconContainer}>
@@ -1327,15 +1482,6 @@ const Profile = () => {
             icon={<Lock size={20} color={COLORS1.primary} />}
             onPress={() => setPrivacyPolicyModal(true)}
           />
-          <View style={styles.separator} />
-          <MenuItem
-            title="Rate Our App"
-            subtitle="Share your feedback"
-            icon={<Star size={20} color={COLORS1.primary} />}
-            onPress={() => {
-              toast.info('No updates', 'Features not available right now');
-            }}
-          />
         </View>
       </View>
 
@@ -1356,28 +1502,6 @@ const Profile = () => {
             />
             <View style={styles.separator} />
             <MenuItem
-              title="Delete Account"
-              subtitle="Permanently delete your account"
-              icon={<Trash2 size={20} color={COLORS1.primary} />}
-              onPress={() => {
-                Alert.alert(
-                  'Delete Account',
-                  'Are you sure you want to permanently delete your account?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Delete',
-                      style: 'destructive',
-                      onPress: () => {
-                        toast.success('Deleted', 'Account deleted successfully!');
-                      },
-                    },
-                  ]
-                );
-              }}
-            />
-            <View style={styles.separator} />
-            <MenuItem
               title="Logout"
               subtitle="Sign out of your account"
               icon={<LogOut size={20} color={COLORS1.primary} />}
@@ -1390,6 +1514,31 @@ const Profile = () => {
     </>
   );
 
+  // Add this state variable near your other useState declarations
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Add this refresh function after your existing functions
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      setProfileData({});
+      // Refresh user profile data
+      if (TokenSelector) {
+        await fetchUserProfile();
+        dispatch(getProfileDetailsThunk({}));
+        await fetchOrders();
+      }
+
+      // Optional: Add a small delay for better UX
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 500);
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      setRefreshing(false);
+    }
+  };
+
   return (
     <>
       <StatusBar backgroundColor={COLORS1.black} barStyle="light-content" />
@@ -1399,10 +1548,12 @@ const Profile = () => {
           <LoadingAnimation visible={isLoading} />
           {/* Enhanced Header with Professional Gradient */}
           <View style={styles.header}>
-            <Image
-              source={require('../../assets/home/LOGO.png')}
-              style={{ width: 145, height: 25 }}
-            />
+            <TouchableOpacity onPress={() => navigation.openDrawer()}>
+              <Image
+                source={require('../../assets/home/LOGO.png')}
+                style={{ width: 145, height: 25 }}
+              />
+            </TouchableOpacity>
           </View>
           <Animated.View style={{ opacity: headerOpacity, marginTop: 10, paddingHorizontal: 15 }}>
             <LinearGradient
@@ -1411,12 +1562,18 @@ const Profile = () => {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}>
               <View style={styles.profileSection}>
-                <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (formData?.image) {
+                      setImageModalVisible(true);
+                    }
+                  }}
+                  activeOpacity={0.8}>
                   <View style={styles.profileImageContainer}>
-                    {formData?.image ? (
+                    {profileData?.image ? (
                       <Image
-                        source={{ uri: formData?.image }}
-                        accessibilityLabel={`${formData?.firstName + ' ' + formData?.lastName || 'Customer'}`}
+                        source={{ uri: getImageUrl(profileData?.image) }}
+                        accessibilityLabel={`${profileData?.firstName + ' ' + profileData?.lastName || 'Customer'}`}
                         style={{
                           width: 100,
                           height: 100,
@@ -1430,22 +1587,19 @@ const Profile = () => {
                         <AnimatedUserDummy />
                       </View>
                     )}
-                    <View style={styles.cameraIcon}>
-                      <Camera size={12} color={COLORS1.white} />
-                    </View>
                   </View>
                 </TouchableOpacity>
                 <View style={styles.profileInfo}>
                   <View style={styles.nameContainer}>
                     <Text style={styles.profileName}>
                       {(TokenSelector
-                        ? formData?.firstName != null &&
-                          formData?.firstName + ' ' + formData?.lastName
-                        : '') ?? 'Customer'}
+                        ? profileData?.firstName != null &&
+                          profileData?.firstName + ' ' + profileData?.lastName
+                        : '') || 'Customer'}
                     </Text>
                     {TokenSelector && <Verified size={16} color={COLORS1.success} />}
                   </View>
-                  <Text style={styles.profileEmail}>{userInfo.email}</Text>
+                  {TokenSelector && <Text style={styles.profileEmail}>{profileData?.email}</Text>}
                   <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
                     <Edit size={14} color={COLORS1.primary} />
                     <Text style={styles.editProfileText}>
@@ -1465,7 +1619,19 @@ const Profile = () => {
           </Animated.View>
 
           {/* Profile Information Content */}
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[COLORS1.primary]}
+                tintColor={COLORS1.primary}
+                title="Refreshing..."
+                titleColor={COLORS1.primary}
+              />
+            }>
             {TokenSelector ? (
               <View style={styles.section}>
                 <View style={styles.sectionTitleContainer}>
@@ -1541,7 +1707,7 @@ const Profile = () => {
               <View style={{}}>
                 <View style={{ alignItems: 'center', justifyContent: 'center', height: 450 }}>
                   <Text style={{ ...FONTS.body4, color: COLORS.grey80 }}>
-                    Add Profile details to book services/spare parts.{' '}
+                    Add Profile details to book services/spare parts
                   </Text>
                 </View>
               </View>
@@ -1554,13 +1720,22 @@ const Profile = () => {
                     <Car size={20} color={COLORS1.primary} />
                   </View>
                   <Text style={styles.sectionTitle}>Vehicle Information</Text>
+                  <TouchableOpacity
+                    style={[styles.addButton, styles.fullWidthButton, { marginLeft: 45 }]}
+                    onPress={() => {
+                      setAddVehicleModal(true);
+                      setFormErrors({});
+                    }}
+                    activeOpacity={0.8}>
+                    <Plus size={16} color={COLORS.white} />
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.card}>
                   {Array.isArray(formData?.vehicleInfo) && formData?.vehicleInfo?.length > 0 ? (
                     <VehicleItem
                       vehicle={formData?.vehicleInfo}
-                      onPress={(vehicle) => {
+                      onPress={(vehicle: any) => {
                         setSelectedVehicle(vehicle);
                         setVehicleDetailModal(true);
                       }}
@@ -1573,8 +1748,10 @@ const Profile = () => {
                       <Text style={styles.emptyStateText}>No vehicles added yet</Text>
                       <TouchableOpacity
                         style={[styles.addButton, styles.fullWidthButton]}
-                        onPress={() => setAddVehicleModal(true)}
-                        activeOpacity={0.8}>
+                        onPress={() => {
+                          setAddVehicleModal(true);
+                          setFormErrors({});
+                        }}>
                         <Plus size={16} color={COLORS1.white} />
                         <Text style={styles.addButtonText}>Add Vehicle</Text>
                       </TouchableOpacity>
@@ -1612,48 +1789,6 @@ const Profile = () => {
               </View>
             )}
 
-            {/* Enhanced Recent Activity Section */}
-            {/* {TokenSelector && (
-              <View style={styles.section}>
-                <View style={styles.sectionTitleContainer}>
-                  <View style={styles.sectionIconContainer}>
-                    <Activity size={20} color={COLORS1.primary} />
-                  </View>
-                  <Text style={styles.sectionTitle}>Recent Activity</Text>
-                </View>
-                <View style={styles.card}>
-                  <View style={styles.activityItem}>
-                    <View style={[styles.activityIcon, { backgroundColor: COLORS1.cardInfo }]}>
-                      <Wrench size={16} color={COLORS.primary} />
-                    </View>
-                    <View style={styles.activityContent}>
-                      <Text style={styles.activityTitle}>Oil Change Completed</Text>
-                      <Text style={styles.activitySubtitle}>Toyota Camry • 3 days ago</Text>
-                    </View>
-                  </View>
-                  <View style={styles.separator} />
-                  <View style={styles.activityItem}>
-                    <View style={[styles.activityIcon, { backgroundColor: COLORS1.cardInfo }]}>
-                      <ShoppingCart size={16} color={COLORS.primary} />
-                    </View>
-                    <View style={styles.activityContent}>
-                      <Text style={styles.activityTitle}>Order Delivered</Text>
-                      <Text style={styles.activitySubtitle}>Order #1 • 5 days ago</Text>
-                    </View>
-                  </View>
-                  <View style={styles.separator} />
-                  <View style={styles.activityItem}>
-                    <View style={[styles.activityIcon, { backgroundColor: COLORS1.cardInfo }]}>
-                      <Calendar size={16} color={COLORS.primary} />
-                    </View>
-                    <View style={styles.activityContent}>
-                      <Text style={styles.activityTitle}>Service Scheduled</Text>
-                      <Text style={styles.activitySubtitle}>Tire Rotation • June 1, 2024</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            )} */}
             <View style={{ marginTop: 60 }}></View>
           </ScrollView>
 
@@ -1721,26 +1856,33 @@ const Profile = () => {
             </View>
           )}
 
-          {/* All Enhanced Modals */}
           {/* Edit Profile Modal */}
           <Modal
             visible={editProfileModal}
             animationType="slide"
             presentationStyle="pageSheet"
-            onRequestClose={() => setEditProfileModal(false)}>
+            onRequestClose={() => {
+              setEditProfileModal(false);
+              setFormErrors({});
+            }}>
             <View style={styles.modalContainer}>
               <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => setEditProfileModal(false)}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEditProfileModal(false);
+                    setFormData({ ...formData, image: profileImageLogo });
+                    setFormErrors({});
+                  }}>
                   <X size={24} color={COLORS1.white} />
                 </TouchableOpacity>
                 <Text style={styles.modalTitle}>Edit Profile</Text>
               </LinearGradient>
 
-              <ScrollView style={styles.modalContent}>
+              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.photoSection}>
                   <TouchableOpacity onPress={handlePhotoUpload} activeOpacity={0.8}>
                     <View style={styles.editProfileImageContainer}>
-                      <Image source={{ uri: formData?.image }} style={styles.editProfileImage} />
+                      <Image src={getImageUrl(formData?.image)} style={styles.editProfileImage} />
                       <View style={styles.editCameraIcon}>
                         <Camera size={16} color={COLORS1.white} />
                       </View>
@@ -1750,121 +1892,163 @@ const Profile = () => {
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>First Name</Text>
+                  <Text style={styles.fieldLabel}>First Name *</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.firstName && styles.textInputError]}
                     value={formData?.firstName}
-                    onChangeText={(name) => setFormData({ ...formData, firstName: name })}
+                    onChangeText={(name) => {
+                      setFormData({ ...formData, firstName: name });
+                      if (formErrors.firstName) clearError('firstName');
+                    }}
                     placeholder="Enter your first name"
                     placeholderTextColor={COLORS.primary_03}
                   />
-                </View>
-                <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Last Name</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData?.lastName}
-                    onChangeText={(name) => setFormData({ ...formData, lastName: name })}
-                    placeholder="Enter your last name"
-                    placeholderTextColor={COLORS.primary_03}
-                  />
+                  {formErrors.firstName && (
+                    <Text style={styles.errorText}>{formErrors.firstName}</Text>
+                  )}
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Email Address</Text>
+                  <Text style={styles.fieldLabel}>Last Name *</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.lastName && styles.textInputError]}
+                    value={formData?.lastName}
+                    onChangeText={(name) => {
+                      setFormData({ ...formData, lastName: name });
+                      if (formErrors.lastName) clearError('lastName');
+                    }}
+                    placeholder="Enter your last name"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                  {formErrors.lastName && (
+                    <Text style={styles.errorText}>{formErrors.lastName}</Text>
+                  )}
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Email Address *</Text>
+                  <TextInput
+                    style={[styles.textInput, formErrors.email && styles.textInputError]}
                     value={formData?.email}
-                    onChangeText={(text) => setFormData({ ...formData, email: text })}
+                    onChangeText={(text) => {
+                      setFormData({ ...formData, email: text });
+                      if (formErrors.email) clearError('email');
+                    }}
                     placeholder="Enter your email"
                     placeholderTextColor={COLORS.primary_03}
                     keyboardType="email-address"
                     autoCapitalize="none"
                   />
+                  {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
                 </View>
 
                 <View style={styles.formSection}>
                   <Text style={styles.fieldLabel}>Phone Number</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.phoneNumber && styles.textInputError]}
                     value={formData?.contact_info?.phoneNumber}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData?.contact_info, phoneNumber: text },
-                      })
-                    }
+                      });
+                      if (formErrors.phoneNumber) clearError('phoneNumber');
+                    }}
                     placeholder="Enter your phone number"
                     placeholderTextColor={COLORS.primary_03}
                     keyboardType="phone-pad"
                   />
+                  {formErrors.phoneNumber && (
+                    <Text style={styles.errorText}>{formErrors.phoneNumber}</Text>
+                  )}
                 </View>
 
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>Address 1</Text>
+                  <Text style={styles.fieldLabel}>Address 1 *</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.address1 && styles.textInputError]}
                     value={formData?.contact_info?.address1}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData.contact_info, address1: text },
-                      })
-                    }
+                      });
+                      if (formErrors.address1) clearError('address1');
+                    }}
                     placeholder="Enter your address 1"
                     placeholderTextColor={COLORS.primary_03}
+                    multiline={true}
+                    numberOfLines={2}
                   />
+                  {formErrors.address1 && (
+                    <Text style={styles.errorText}>{formErrors.address1}</Text>
+                  )}
                 </View>
 
+                {/* Address 2 Field */}
                 <View style={styles.formSection}>
                   <Text style={styles.fieldLabel}>Address 2</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.address2 && styles.textInputError]}
                     value={formData?.contact_info?.address2}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData.contact_info, address2: text },
-                      })
-                    }
-                    placeholder="Enter your email"
+                      });
+                      if (formErrors.address2) clearError('address2');
+                    }}
+                    placeholder="Enter your address 2 (optional)"
                     placeholderTextColor={COLORS.primary_03}
+                    multiline={true}
+                    numberOfLines={2}
                   />
+                  {formErrors.address2 && (
+                    <Text style={styles.errorText}>{formErrors.address2}</Text>
+                  )}
                 </View>
 
+                {/* City Field */}
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>City</Text>
+                  <Text style={styles.fieldLabel}>City *</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.city && styles.textInputError]}
                     value={formData?.contact_info?.city}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData.contact_info, city: text },
-                      })
-                    }
+                      });
+                      if (formErrors.city) clearError('city');
+                    }}
                     placeholder="Enter your city"
                     placeholderTextColor={COLORS.primary_03}
                   />
+                  {formErrors.city && <Text style={styles.errorText}>{formErrors.city}</Text>}
                 </View>
 
+                {/* State Field */}
                 <View style={styles.formSection}>
-                  <Text style={styles.fieldLabel}>State</Text>
+                  <Text style={styles.fieldLabel}>State *</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.state && styles.textInputError]}
                     value={formData?.contact_info?.state}
-                    onChangeText={(text) =>
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         contact_info: { ...formData.contact_info, state: text },
-                      })
-                    }
+                      });
+                      if (formErrors.state) clearError('state');
+                    }}
                     placeholder="Enter your state"
                     placeholderTextColor={COLORS.primary_03}
                   />
+                  {formErrors.state && <Text style={styles.errorText}>{formErrors.state}</Text>}
                 </View>
+
+                {/* Vehicle Information */}
                 {Array.isArray(formData?.vehicleInfo) &&
-                  formData?.vehicleInfo?.map((vehicle, index) => (
+                  formData?.vehicleInfo?.map((vehicle: any, index: any) => (
                     <View key={index}>
                       <View
                         style={{
@@ -1886,10 +2070,14 @@ const Profile = () => {
                           Vehicle {index + 1}
                         </Text>
                       </View>
+
                       <View style={styles.formSection}>
                         <Text style={styles.fieldLabel}>Register Number</Text>
                         <TextInput
-                          style={styles.textInput}
+                          style={[
+                            styles.textInput,
+                            formErrors.vehicles?.[index]?.registerNumber && styles.textInputError,
+                          ]}
                           value={vehicle.registerNumber}
                           onChangeText={(text) => {
                             const updatedVehicleInfo = [...formData.vehicleInfo];
@@ -1898,16 +2086,26 @@ const Profile = () => {
                               ...formData,
                               vehicleInfo: updatedVehicleInfo,
                             });
+                            if (formErrors.vehicles?.[index]?.registerNumber) {
+                              clearVehicleError(index, 'registerNumber');
+                            }
                           }}
                           placeholder="Enter your register number"
                           placeholderTextColor={COLORS.primary_03}
                         />
+                        {formErrors.vehicles?.[index]?.registerNumber && (
+                          <Text style={styles.errorText}>
+                            {formErrors.vehicles[index].registerNumber}
+                          </Text>
+                        )}
                       </View>
-
                       <View style={styles.formSection}>
-                        <Text style={styles.fieldLabel}>Car Company</Text>
+                        <Text style={styles.fieldLabel}>Car Company *</Text>
                         <TextInput
-                          style={styles.textInput}
+                          style={[
+                            styles.textInput,
+                            formErrors.vehicles?.[index]?.company && styles.textInputError,
+                          ]}
                           value={vehicle.company}
                           onChangeText={(text) => {
                             const updatedVehicleInfo = [...formData.vehicleInfo];
@@ -1916,16 +2114,26 @@ const Profile = () => {
                               ...formData,
                               vehicleInfo: updatedVehicleInfo,
                             });
+                            if (formErrors.vehicles?.[index]?.company) {
+                              clearVehicleError(index, 'company');
+                            }
                           }}
                           placeholder="Enter your car company"
                           placeholderTextColor={COLORS.primary_03}
                         />
+                        {formErrors.vehicles?.[index]?.company && (
+                          <Text style={styles.errorText}>{formErrors.vehicles[index].company}</Text>
+                        )}
                       </View>
 
+                      {/* Model Field */}
                       <View style={styles.formSection}>
-                        <Text style={styles.fieldLabel}>Car Model</Text>
+                        <Text style={styles.fieldLabel}>Car Model *</Text>
                         <TextInput
-                          style={styles.textInput}
+                          style={[
+                            styles.textInput,
+                            formErrors.vehicles?.[index]?.model && styles.textInputError,
+                          ]}
                           value={vehicle.model}
                           onChangeText={(text) => {
                             const updatedVehicleInfo = [...formData.vehicleInfo];
@@ -1934,32 +2142,26 @@ const Profile = () => {
                               ...formData,
                               vehicleInfo: updatedVehicleInfo,
                             });
+                            if (formErrors.vehicles?.[index]?.model) {
+                              clearVehicleError(index, 'model');
+                            }
                           }}
                           placeholder="Enter your car model"
                           placeholderTextColor={COLORS.primary_03}
                         />
+                        {formErrors.vehicles?.[index]?.model && (
+                          <Text style={styles.errorText}>{formErrors.vehicles[index].model}</Text>
+                        )}
                       </View>
+
+                      {/* Fuel Type Field */}
                       <View style={styles.formSection}>
-                        <Text style={styles.fieldLabel}>Model Year</Text>
+                        <Text style={styles.fieldLabel}>Fuel Type *</Text>
                         <TextInput
-                          style={styles.textInput}
-                          value={vehicle.year}
-                          onChangeText={(text) => {
-                            const updatedVehicleInfo = [...formData.vehicleInfo];
-                            updatedVehicleInfo[index].year = text;
-                            setFormData({
-                              ...formData,
-                              vehicleInfo: updatedVehicleInfo,
-                            });
-                          }}
-                          placeholder="Enter your model year"
-                          placeholderTextColor={COLORS.primary_03}
-                        />
-                      </View>
-                      <View style={styles.formSection}>
-                        <Text style={styles.fieldLabel}>Fuel Type</Text>
-                        <TextInput
-                          style={styles.textInput}
+                          style={[
+                            styles.textInput,
+                            formErrors.vehicles?.[index]?.fuleType && styles.textInputError,
+                          ]}
                           value={vehicle.fuleType}
                           onChangeText={(text) => {
                             const updatedVehicleInfo = [...formData.vehicleInfo];
@@ -1968,10 +2170,18 @@ const Profile = () => {
                               ...formData,
                               vehicleInfo: updatedVehicleInfo,
                             });
+                            if (formErrors.vehicles?.[index]?.fuleType) {
+                              clearVehicleError(index, 'fuleType');
+                            }
                           }}
                           placeholder="Enter your car fuel type"
                           placeholderTextColor={COLORS.primary_03}
                         />
+                        {formErrors.vehicles?.[index]?.fuleType && (
+                          <Text style={styles.errorText}>
+                            {formErrors.vehicles[index].fuleType}
+                          </Text>
+                        )}
                       </View>
                     </View>
                   ))}
@@ -1998,111 +2208,163 @@ const Profile = () => {
             visible={addVehicleModal}
             animationType="slide"
             presentationStyle="pageSheet"
-            onRequestClose={() => setAddVehicleModal(false)}>
+            onRequestClose={() => {
+              setAddVehicleModal(false);
+              setFormErrors({});
+            }}>
             <View style={styles.modalContainer}>
               <LinearGradient colors={COLORS1.gradientPrimary} style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => setAddVehicleModal(false)}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setAddVehicleModal(false);
+                    setFormErrors({});
+                  }}>
                   <X size={24} color={COLORS1.white} />
                 </TouchableOpacity>
                 <Text style={styles.modalTitle}>Add Vehicle</Text>
               </LinearGradient>
 
-              <ScrollView style={styles.modalContent}>
-                {/* Create a new vehicle form instead of mapping existing ones */}
+              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
                 <View>
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Register Number *</Text>
                     <TextInput
-                      style={styles.textInput}
+                      style={[
+                        styles.textInput,
+                        formErrors.newVehicle?.registerNumber && styles.textInputError,
+                      ]}
                       value={formData.newVehicle?.registerNumber || ''}
-                      onChangeText={(text) =>
+                      onChangeText={(text) => {
                         setFormData({
                           ...formData,
                           newVehicle: {
                             ...(formData.newVehicle || {}),
                             registerNumber: text,
                           },
-                        })
-                      }
-                      placeholder="Enter your register number"
+                        });
+                        if (formErrors.newVehicle?.registerNumber) {
+                          clearNewVehicleError('registerNumber');
+                        }
+                      }}
+                      placeholder="Enter vehicle register number"
                       placeholderTextColor={COLORS.primary_03}
                     />
+                    {formErrors.newVehicle?.registerNumber && (
+                      <Text style={styles.errorText}>{formErrors.newVehicle.registerNumber}</Text>
+                    )}
                   </View>
 
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Car Company *</Text>
                     <TextInput
-                      style={styles.textInput}
+                      style={[
+                        styles.textInput,
+                        formErrors.newVehicle?.company && styles.textInputError,
+                      ]}
                       value={formData.newVehicle?.company || ''}
-                      onChangeText={(text) =>
+                      onChangeText={(text) => {
                         setFormData({
                           ...formData,
                           newVehicle: {
                             ...(formData.newVehicle || {}),
                             company: text,
                           },
-                        })
-                      }
-                      placeholder="Enter your car company"
+                        });
+                        if (formErrors.newVehicle?.company) {
+                          clearNewVehicleError('company');
+                        }
+                      }}
+                      placeholder="Enter car company"
                       placeholderTextColor={COLORS.primary_03}
                     />
+                    {formErrors.newVehicle?.company && (
+                      <Text style={styles.errorText}>{formErrors.newVehicle.company}</Text>
+                    )}
                   </View>
 
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Car Model *</Text>
                     <TextInput
-                      style={styles.textInput}
+                      style={[
+                        styles.textInput,
+                        formErrors.newVehicle?.model && styles.textInputError,
+                      ]}
                       value={formData.newVehicle?.model || ''}
-                      onChangeText={(text) =>
+                      onChangeText={(text) => {
                         setFormData({
                           ...formData,
                           newVehicle: {
                             ...(formData.newVehicle || {}),
                             model: text,
                           },
-                        })
-                      }
-                      placeholder="Enter your car model"
+                        });
+                        if (formErrors.newVehicle?.model) {
+                          clearNewVehicleError('model');
+                        }
+                      }}
+                      placeholder="Enter car model"
                       placeholderTextColor={COLORS.primary_03}
                     />
+                    {formErrors.newVehicle?.model && (
+                      <Text style={styles.errorText}>{formErrors.newVehicle.model}</Text>
+                    )}
                   </View>
 
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Model Year *</Text>
                     <TextInput
-                      style={styles.textInput}
+                      style={[
+                        styles.textInput,
+                        formErrors.newVehicle?.year && styles.textInputError,
+                      ]}
                       value={formData.newVehicle?.year || ''}
-                      onChangeText={(text) =>
+                      onChangeText={(text) => {
                         setFormData({
                           ...formData,
                           newVehicle: {
                             ...(formData.newVehicle || {}),
                             year: text,
                           },
-                        })
-                      }
-                      placeholder="Enter your model year"
+                        });
+                        if (formErrors.newVehicle?.year) {
+                          clearNewVehicleError('year');
+                        }
+                      }}
+                      placeholder="Enter model year"
                       placeholderTextColor={COLORS.primary_03}
+                      keyboardType="numeric"
                     />
+                    {formErrors.newVehicle?.year && (
+                      <Text style={styles.errorText}>{formErrors.newVehicle.year}</Text>
+                    )}
                   </View>
 
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Fuel Type *</Text>
                     <TextInput
-                      style={styles.textInput}
+                      style={[
+                        styles.textInput,
+                        formErrors.newVehicle?.fuleType && styles.textInputError,
+                      ]}
                       value={formData.newVehicle?.fuleType || ''}
-                      onChangeText={(text) =>
+                      onChangeText={(text) => {
                         setFormData({
                           ...formData,
                           newVehicle: {
                             ...(formData.newVehicle || {}),
                             fuleType: text,
                           },
-                        })
-                      }
-                      placeholder="Enter your car fuel type"
+                        });
+                        if (formErrors.newVehicle?.fuleType) {
+                          clearNewVehicleError('fuleType');
+                        }
+                      }}
+                      placeholder="Enter fuel type"
                       placeholderTextColor={COLORS.primary_03}
                     />
+                    {formErrors.newVehicle?.fuleType && (
+                      <Text style={styles.errorText}>{formErrors.newVehicle.fuleType}</Text>
+                    )}
                   </View>
                 </View>
 
@@ -2237,7 +2499,7 @@ const Profile = () => {
                   <View style={styles.serviceHistorySection}>
                     <Text style={[styles.sectionTitle, { marginBottom: 10 }]}>Service History</Text>
                     {selectedVehicle.services.length > 0 ? (
-                      selectedVehicle.services.map((service) => (
+                      selectedVehicle.services.map((service: any) => (
                         <ServiceItem key={service.id} service={service} />
                       ))
                     ) : (
@@ -2324,7 +2586,7 @@ const Profile = () => {
                   {/* Order Items */}
                   <View style={styles.orderItemsSection}>
                     <Text style={[styles.sectionTitle, { marginBottom: 10 }]}>Items Ordered</Text>
-                    {selectedOrder.items.map((item) => (
+                    {selectedOrder.items.map((item: any) => (
                       <View key={item.id} style={styles.orderItemCard}>
                         <Image source={{ uri: item.image }} style={styles.orderItemImage} />
                         <View style={styles.orderItemDetails}>
@@ -2457,15 +2719,14 @@ const Profile = () => {
 
                 <View style={styles.helpSection}>
                   <Text style={styles.helpSectionTitle}>Contact Support</Text>
-                  <TouchableOpacity style={styles.contactButton}>
-                    <MessageCircle size={22} color={COLORS.primary} />
-                    <Text style={styles.contactButtonText}>Live Chat</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.contactButton}>
-                    <PhoneDialerButton />
+                  <TouchableOpacity
+                    style={styles.contactButton}
+                    onPress={() => Linking.openURL(`tel:${phoneNumber}`)}>
+                    <Feather name="phone-call" size={22} color={COLORS.primary} />
                     <Text style={styles.contactButtonText}>Call Support</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.contactButton}>
+
+                  <TouchableOpacity style={styles.contactButton} onPress={handleEmailPress}>
                     <Mail size={22} color={COLORS.primary} />
                     <Text style={styles.contactButtonText}>Email Us</Text>
                   </TouchableOpacity>
@@ -2504,6 +2765,42 @@ const Profile = () => {
                   />
                 ))}
               </ScrollView>
+            </View>
+          </Modal>
+
+          {/* Full Image Modal */}
+          <Modal
+            visible={imageModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setImageModalVisible(false)}>
+            <View style={styles.modalContainer1}>
+              {/* Close Button */}
+              <TouchableOpacity
+                style={styles.closeButton1}
+                onPress={() => setImageModalVisible(false)}
+                activeOpacity={0.7}>
+                <View style={styles.closeIconContainer}>
+                  <Image source={icons.cross} style={styles.closeIcon} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Full Image */}
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{ uri: getImageUrl(profileImageLogo) }}
+                  style={styles.fullImage}
+                  resizeMode="contain"
+                  accessibilityLabel={`Full size profile image of ${formData?.firstName + ' ' + formData?.lastName || 'Customer'}`}
+                />
+              </View>
+
+              {/* Background Overlay - Click to close */}
+              <TouchableOpacity
+                style={styles.overlay}
+                activeOpacity={1}
+                onPress={() => setImageModalVisible(false)}
+              />
             </View>
           </Modal>
 
@@ -2563,6 +2860,8 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: COLORS1.shadowStrong,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -2577,9 +2876,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS1.primary,
   },
   placeholderImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: COLORS1.white,
     justifyContent: 'center',
     alignItems: 'center',
@@ -3130,6 +3429,52 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS1.cardPrimary,
   },
+  modalContainer1: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
+  },
+  closeButton1: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    zIndex: 10,
+  },
+  closeIconContainer: {
+    width: 30,
+    height: 30,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary_02,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary_02,
+  },
+  closeIcon: {
+    width: 10,
+    height: 10,
+    tintColor: COLORS.white,
+  },
+  imageContainer: {
+    width: width * 0.9,
+    height: height * 0.7,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
   modalHeader: {
     flexDirection: 'row',
     // justifyContent: 'space-between',
@@ -3213,6 +3558,16 @@ const styles = StyleSheet.create({
     fontWeight: 500,
     color: COLORS.primary_text,
     marginBottom: 10,
+  },
+  textInputError: {
+    borderColor: COLORS1.error,
+    borderWidth: 1.5,
+  },
+  errorText: {
+    color: COLORS1.error,
+    marginTop: 4,
+    marginLeft: 4,
+    ...FONTS.body6,
   },
   textInput: {
     borderWidth: 1,
@@ -3616,4 +3971,4 @@ const styles = StyleSheet.create({
   fullWidthButton: {},
 });
 
-export default Profile
+export default Profile;

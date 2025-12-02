@@ -9,17 +9,15 @@ import {
   StatusBar,
   ScrollView,
   Modal,
-  Dimensions,
   TextInput,
   ImageBackground,
-  Alert,
+  RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { setSelectedTab } from '~/store/tab/tabSlice';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { COLORS, FONTS, icons, screens, SIZES } from '~/constants';
-import { Ionicons, AntDesign, Foundation, MaterialIcons } from '@expo/vector-icons';
-import { Clock, Wrench, Car, ShoppingCart } from 'lucide-react-native';
+import { COLORS, FONTS, icons } from '~/constants';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Clock } from 'lucide-react-native';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { addBookingCartItem } from '~/features/booking-cart/service';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,7 +30,10 @@ import LoadingAnimation from '~/components/LoadingAnimation';
 import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 import { selectCartItems } from '~/features/booking-cart/redux/selectors';
-import { getUserProfileDetails } from '~/features/profile/service';
+import { getImageUrl } from '~/utils/imageUtils';
+import { selectProfile } from '~/features/profile/reducers/selector';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ServiceCategory = {
   uuid: string;
@@ -55,7 +56,6 @@ type Service = {
 };
 
 interface ProfileData {
-  // ... other profile fields ...
   vehicleInfo: Array<{
     _id: string;
     registerNumber: string;
@@ -67,7 +67,7 @@ interface ProfileData {
 }
 
 const Services = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const dispatch = useDispatch<AppDispatch>();
   const [error, setError] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState<string>('');
@@ -82,16 +82,30 @@ const Services = () => {
   const [selectedBookingType, setSelectedBookingType] = useState<'general' | 'schedule'>('general');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [startTime, setStartTime] = useState('00:00');
-  const [endTime, setEndTime] = useState('00:00');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const TokenSelector = useSelector(selectToken);
   const [isLoading, setIsLoading] = useState(false);
   const [signUpConfirmModalVisible, setSignUpConfirmModalVisible] = useState(false);
   const cartItems = useSelector(selectCartItems);
   const [cartCount, setCartCount] = useState(0);
-  const [profileData, setprofileData] = useState<ProfileData>();
   const [selectedVehicleIndex, setSelectedVehicleIndex] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState<false | 'start' | 'end'>(false);
+  const profileData = useSelector(selectProfile);
+  const didFetch = useRef(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setStartTime('');
+      setEndTime('');
+      setSelectedDate(new Date());
+      setSelectedVehicleIndex(null);
+      setSelectedBookingType('general');
+
+      return () => {};
+    }, [])
+  );
 
   useEffect(() => {
     try {
@@ -104,6 +118,14 @@ const Services = () => {
       setIsLoading(false);
     }
   }, [dispatch]);
+
+  useEffect(() => {
+    if (TokenSelector && !didFetch.current) {
+      dispatch(getProfileDetailsThunk({}));
+      dispatch(getBookingCartItems());
+      didFetch.current = true;
+    }
+  }, [TokenSelector]);
 
   const currentCategory =
     serviceCategories.find((cat) => cat.category_name === activeNavItem) || serviceCategories[0];
@@ -127,11 +149,28 @@ const Services = () => {
   const fetchAllServices = async () => {
     try {
       const categories = await getAllServiceCategories({});
-      if (categories) {
+      if (categories && categories.length > 0) {
         setServiceCategories(categories);
-        if (categories?.length > 0) {
-          setActiveNavItem(categories[0]?.category_name);
-          setFilteredParts(categories[0]?.services);
+
+        // Read storage AFTER categories are loaded
+        const activeCategory = await AsyncStorage.getItem('activeService');
+
+        if (activeCategory) {
+          const foundCategory = categories?.find(
+            (cat: any) => cat.category_name === activeCategory
+          );
+
+          if (foundCategory) {
+            setActiveNavItem(foundCategory?.category_name);
+            setFilteredParts(foundCategory?.services);
+            AsyncStorage.removeItem('activeService');
+          } else {
+            setActiveNavItem(categories?.[0]?.category_name);
+            setFilteredParts(categories?.[0]?.services);
+          }
+        } else {
+          setActiveNavItem(categories?.[0]?.category_name);
+          setFilteredParts(categories?.[0]?.services);
         }
       }
     } catch (error) {
@@ -140,24 +179,11 @@ const Services = () => {
     }
   };
 
-  const fetchUserProfile = async () => {
-    try {
-      const response: any = TokenSelector && (await getUserProfileDetails({}));
-      if (response) {
-        setprofileData(response);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  useEffect(() => {
+    fetchAllServices();
+  }, [dispatch]);
 
   useEffect(() => {
-    dispatch(getBookingCartItems());
-    fetchAllServices();
-    if (TokenSelector) {
-      fetchUserProfile();
-    }
-
     const getCartCount = () => {
       if (cartItems?.length == 1) {
         return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
@@ -171,54 +197,87 @@ const Services = () => {
       }
     };
     setCartCount(getCartCount() ?? 0);
-  }, [dispatch, TokenSelector]);
+  }, [dispatch, cartItems]);
+
+  // Reset booking modal states when it opens/closes
+  useEffect(() => {
+    if (bookingModalVisible) {
+      // Reset time states when booking modal opens
+      setStartTime('');
+      setEndTime('');
+      setSelectedDate(new Date());
+      setSelectedVehicleIndex(null);
+    }
+  }, [bookingModalVisible]);
 
   const handleAddtoCart = async (vehicleIndex: number | null) => {
-    if (TokenSelector) {
-      if (!selectedService?.uuid) {
-        console.log('Missing required service data');
+    if (!selectedService?.uuid) {
+      toast.error('Error', 'Please select a service.');
+      return;
+    }
+
+    if (selectedVehicleIndex === null) {
+      toast.error('Error', 'Please select a vehicle.');
+      return;
+    }
+
+    // Enhanced validation for schedule booking
+    if (selectedBookingType === 'schedule') {
+      if (!selectedDate) {
+        toast.error('Error', 'Please select a date.');
         return;
       }
-      if (selectedVehicleIndex === null) {
-        toast.error('Select Car', 'Please select a car');
+
+      if (!startTime || !endTime) {
+        toast.error('Error', 'Please select both start and end time.');
         return;
       }
-      try {
-        const data = {
-          service: selectedService?._id,
-          type: 'service',
-          requestType: selectedBookingType,
-          schedule_date:
-            selectedDate.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            }) || null,
-          preferredTime: {
-            startTime,
-            endTime,
-          },
-          vehicle: selectedVehicleIndex,
-        };
-        const response = await addBookingCartItem(data);
-        if (response) {
-          toast.success('Booked', `${selectedService?.service_name} has been booked`);
-          setAdded(true);
-          setBookingModalVisible(false);
-          setModalVisible(false);
-          setSelectedDate(new Date());
-          setSelectedVehicleIndex(null);
-        } else {
-          setBookingModalVisible(false);
-          setModalVisible(false);
-          setSelectedDate(new Date());
-          setSelectedVehicleIndex(null);
-          toast.error('Error', 'Something went wrong, try again.');
-        }
-      } catch (error) {
-        console.log('Error adding to cart:', error);
+
+      // Validate that end time is after start time
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+
+      if (endHours < startHours || (endHours === startHours && endMinutes <= startMinutes)) {
+        toast.error('Error', 'End time must be after start time.');
+        return;
       }
+    }
+
+    try {
+      const data = {
+        service: selectedService._id,
+        type: 'service',
+        requestType: selectedBookingType,
+        schedule_date:
+          selectedBookingType === 'schedule'
+            ? selectedDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            : null,
+        preferredTime: selectedBookingType === 'schedule' ? { startTime, endTime } : null,
+        vehicle: selectedVehicleIndex,
+      };
+
+      const response = await addBookingCartItem(data);
+
+      if (response) {
+        toast.success('Booked', `${selectedService?.service_name} has been booked`);
+        setAdded(true);
+        setBookingModalVisible(false);
+        setModalVisible(false);
+        setSelectedDate(new Date());
+        setSelectedVehicleIndex(null);
+        setStartTime('');
+        setEndTime('');
+      } else {
+        toast.error('Error', 'Something went wrong. Try again.');
+      }
+    } catch (error) {
+      console.log('Error adding to cart:', error);
+      toast.error('Error', 'Failed to add service to cart.');
     }
   };
 
@@ -284,14 +343,28 @@ const Services = () => {
       animationType="slide"
       transparent={false}
       visible={bookingModalVisible}
-      onRequestClose={() => setBookingModalVisible(false)}>
+      onRequestClose={() => {
+        setBookingModalVisible(false);
+        // Reset states when modal closes
+        setStartTime('');
+        setEndTime('');
+        setSelectedDate(new Date());
+        setSelectedVehicleIndex(null);
+      }}>
       <ScrollView style={styles.modalContainer}>
         <View style={styles.modalContent1}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 }}>
             <View style={{}}>
               <TouchableOpacity
                 style={styles.backButton1}
-                onPress={() => setBookingModalVisible(false)}>
+                onPress={() => {
+                  setBookingModalVisible(false);
+                  // Reset states when modal closes via back button
+                  setStartTime('');
+                  setEndTime('');
+                  setSelectedDate(new Date());
+                  setSelectedVehicleIndex(null);
+                }}>
                 <Ionicons name="arrow-back" size={26} color={COLORS.primary} />
               </TouchableOpacity>
             </View>
@@ -305,7 +378,12 @@ const Services = () => {
                 styles.bookingTypeButton,
                 selectedBookingType === 'general' && styles.selectedBookingType,
               ]}
-              onPress={() => setSelectedBookingType('general')}>
+              onPress={() => {
+                setSelectedBookingType('general');
+                // Reset time when switching to general service
+                setStartTime('');
+                setEndTime('');
+              }}>
               <Text
                 style={[
                   styles.bookingTypeText,
@@ -344,11 +422,11 @@ const Services = () => {
                 <Text style={styles.detailText}>Working Hours: 9:00 AM - 5:00 PM</Text>
               </View>
               {/* Vehicle Selection Dropdown */}
-              {(profileData?.vehicleInfo?.length ?? 0) > 0 && (
+              {(profileData?.vehicleInfo?.length ?? 0) > 0 ? (
                 <View style={styles.vehicleSelection}>
                   <Text style={styles.sectionTitle}>Select Your Vehicle</Text>
                   <View style={styles.dropdownContainer}>
-                    {profileData?.vehicleInfo?.map((vehicle, index) => (
+                    {profileData?.vehicleInfo?.map((vehicle: any, index: any) => (
                       <TouchableOpacity
                         key={index}
                         style={[
@@ -366,6 +444,18 @@ const Services = () => {
                       </TouchableOpacity>
                     ))}
                   </View>
+                </View>
+              ) : (
+                <View style={{ marginTop: 15 }}>
+                  <Text
+                    style={{
+                      color: 'red',
+                      fontStyle: 'italic',
+                      ...FONTS.body5,
+                      textAlign: 'center',
+                    }}>
+                    Add the car details in profile page and start book a service
+                  </Text>
                 </View>
               )}
             </View>
@@ -400,40 +490,63 @@ const Services = () => {
                 />
               )}
 
+              {/* Time Selection */}
               <View style={styles.timeSelection}>
                 <Text style={styles.timeLabel}>Preferred Time:</Text>
                 <View style={styles.timeInputContainer}>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={startTime}
-                    onChangeText={setStartTime}
-                    placeholder="Start time"
-                  />
-                  {showTimePicker && (
-                    <DateTimePicker
-                      value={selectedDate}
-                      mode="date"
-                      display="default"
-                      onChange={onDateChange}
-                      minimumDate={new Date()}
-                    />
-                  )}
+                  {/* Start Time */}
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setShowTimePicker('start')}>
+                    <MaterialIcons name="access-time" size={20} color={COLORS.primary} />
+                    <Text style={styles.dateText}>{startTime ? startTime : 'Pick Start Time'}</Text>
+                  </TouchableOpacity>
+
                   <Text style={styles.timeSeparator}>-</Text>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={endTime}
-                    onChangeText={setEndTime}
-                    placeholder="End time"
-                  />
+
+                  {/* End Time */}
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setShowTimePicker('end')}>
+                    <MaterialIcons name="access-time" size={20} color={COLORS.primary} />
+                    <Text style={styles.dateText}>{endTime ? endTime : 'Pick End Time'}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
+              {/* Show Time Picker */}
+              {showTimePicker && (
+                <DateTimePicker
+                  value={new Date()}
+                  mode="time"
+                  display="default"
+                  onChange={(event, selected) => {
+                    if (event.type === 'dismissed') {
+                      setShowTimePicker(false);
+                      return;
+                    }
+                    const hours = selected?.getHours() ?? 0;
+                    const minutes = selected?.getMinutes() ?? 0;
+                    const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes
+                      .toString()
+                      .padStart(2, '0')}`;
+
+                    if (showTimePicker === 'start') {
+                      setStartTime(formattedTime);
+                    } else {
+                      setEndTime(formattedTime);
+                    }
+                    setShowTimePicker(false);
+                  }}
+                />
+              )}
+
               {/* Vehicle Selection Dropdown */}
-              {(profileData?.vehicleInfo?.length ?? 0) > 0 && (
+              {(profileData?.vehicleInfo?.length ?? 0) > 0 ? (
                 <View style={styles.vehicleSelection}>
                   <Text style={styles.sectionTitle}>Select Your Vehicle</Text>
                   <View style={styles.dropdownContainer}>
-                    {profileData?.vehicleInfo?.map((vehicle, index) => (
+                    {profileData?.vehicleInfo?.map((vehicle: any, index: any) => (
                       <TouchableOpacity
                         key={index}
                         style={[
@@ -442,8 +555,8 @@ const Services = () => {
                         ]}
                         onPress={() => setSelectedVehicleIndex(index)}>
                         <Text style={styles.vehicleOptionText}>
-                          {vehicle.year} {vehicle.company} {vehicle.model} ({vehicle.registerNumber}
-                          )
+                          {vehicle?.year} {vehicle?.company} {vehicle?.model} (
+                          {vehicle?.registerNumber})
                         </Text>
                         {selectedVehicleIndex === index && (
                           <Ionicons name="checkmark" size={20} color={COLORS.primary} />
@@ -452,6 +565,20 @@ const Services = () => {
                     ))}
                   </View>
                 </View>
+              ) : (
+                <>
+                  <View style={{ marginTop: 15 }}>
+                    <Text
+                      style={{
+                        color: 'red',
+                        fontStyle: 'italic',
+                        ...FONTS.body5,
+                        textAlign: 'center',
+                      }}>
+                      Add the car details in profile page and start book a service
+                    </Text>
+                  </View>
+                </>
               )}
 
               <View style={styles.noteContainer}>
@@ -467,7 +594,8 @@ const Services = () => {
           <TouchableOpacity
             style={[
               styles.bookButton,
-              selectedVehicleIndex === null && {
+              (selectedVehicleIndex === null ||
+                (selectedBookingType === 'schedule' && (!startTime || !endTime))) && {
                 opacity: 0.6,
               },
             ]}
@@ -478,7 +606,10 @@ const Services = () => {
                 setSignUpConfirmModalVisible(true);
               }
             }}
-            disabled={selectedVehicleIndex === null}>
+            disabled={
+              selectedVehicleIndex === null ||
+              (selectedBookingType === 'schedule' && (!startTime || !endTime))
+            }>
             <Text style={styles.bookButtonText}>
               {selectedBookingType === 'general' ? 'BOOK NOW' : 'PRE-BOOK SERVICE'}
             </Text>
@@ -488,16 +619,37 @@ const Services = () => {
     </Modal>
   );
 
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchAllServices();
+      if (TokenSelector) {
+        await dispatch(getProfileDetailsThunk({}));
+        await dispatch(getBookingCartItems());
+      }
+      // Reset time states on refresh
+      setStartTime('');
+      setEndTime('');
+      setSelectedDate(new Date());
+    } catch (error) {
+      console.error('Error refreshing services:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       <SafeAreaView edges={['top']} style={[styles.container, { paddingVertical: 10 }]}>
         <LoadingAnimation visible={isLoading} />
         <View style={styles.header}>
-          <Image
-            source={require('../../assets/home/LOGO.png')}
-            style={{ width: 145, height: 25 }}
-          />
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Image
+              source={require('../../assets/home/LOGO.png')}
+              style={{ width: 145, height: 25 }}
+            />
+          </TouchableOpacity>
           <View style={styles.headerIcons}>
             <TouchableOpacity onPress={() => navigation.navigate('BookingsScreen' as never)}>
               <Image
@@ -537,7 +689,11 @@ const Services = () => {
                   setSearchQuery('');
                 }}>
                 <Image
-                  source={{ uri: category?.image }}
+                  source={
+                    category?.image
+                      ? { uri: getImageUrl(category?.image) }
+                      : require('../../assets/service.png')
+                  }
                   style={styles.categoryImage}
                   alt="Category Image"
                 />
@@ -554,7 +710,7 @@ const Services = () => {
           </ScrollView>
 
           {/* Search Input */}
-          <View style={{ marginVertical: 5, marginHorizontal: 15, marginTop: 5 }}>
+          <View style={{ marginHorizontal: 15 }}>
             <View style={styles.searchContainer}>
               <View style={styles.searchIcon}>
                 <Ionicons name="search" size={22} color={COLORS.grey} />
@@ -595,7 +751,11 @@ const Services = () => {
                   setModalVisible(true);
                 }}>
                 <ImageBackground
-                  source={{ uri: item?.image }}
+                  source={
+                    item?.image
+                      ? { uri: getImageUrl(item?.image) }
+                      : require('../../assets/service.png')
+                  }
                   style={styles.serviceImage}
                   resizeMode="cover">
                   <View style={styles.serviceDuration}>
@@ -610,15 +770,6 @@ const Services = () => {
                   </Text>
                   <Text style={styles.servicePrice}>₹{item.price.toLocaleString('en-IN')}</Text>
                 </View>
-                {/* <View style={styles.bottomRow}>
-                  {renderStars(item?.rating)}
-                  <View
-                    style={[styles.stockBadge, item?.isavailable ? styles.inStock : styles.outOfStock]}>
-                    <Text style={styles.stockText}>
-                      {item?.inStock ? 'In Stock' : 'Out of Stock'}
-                    </Text>
-                  </View>
-                </View> */}
               </TouchableOpacity>
             )}
             keyExtractor={(item) => item.uuid}
@@ -630,6 +781,13 @@ const Services = () => {
                     : 'No services available in this category'}
                 </Text>
               </View>
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[COLORS.primary]}
+              />
             }
           />
         </View>
@@ -648,7 +806,11 @@ const Services = () => {
             </View>
 
             <Image
-              source={{ uri: selectedService?.image }}
+              source={
+                selectedService?.image
+                  ? { uri: getImageUrl(selectedService?.image) }
+                  : require('../../assets/service.png')
+              }
               style={styles.modalImage}
               resizeMode="cover"
             />
@@ -706,8 +868,12 @@ const Services = () => {
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => {
-                  setModalVisible(false);
-                  setBookingModalVisible(true);
+                  if (TokenSelector) {
+                    setModalVisible(false);
+                    setBookingModalVisible(true);
+                  } else {
+                    setSignUpConfirmModalVisible(true);
+                  }
                 }}>
                 <Text style={styles.addButtonText}>BOOK SERVICE</Text>
               </TouchableOpacity>
@@ -801,16 +967,24 @@ const styles = StyleSheet.create({
     height: 65,
     borderRadius: 50,
     marginBottom: 5,
-    backgroundColor: COLORS.primary_04,
+    // backgroundColor: COLORS.primary_04,
+    borderColor: COLORS.primary_04,
+    borderWidth: 1,
   },
   categoryText: {
     ...FONTS.h6,
     fontWeight: '500',
     color: '#666',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
   },
   activeCategoryText: {
-    color: COLORS.primary,
-    textDecorationLine: 'underline',
+    color: 'white',
+    // textDecorationLine: 'underline',
+    backgroundColor: COLORS.primary_01,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
   servicesContainer: {
     padding: 15,
@@ -955,20 +1129,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tab: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     marginRight: 8,
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.primary,
+    backgroundColor: COLORS.primary_01,
+    borderRadius: 10,
   },
   tabText: {
     ...FONTS.body3,
     color: COLORS.primary_01,
   },
   activeTabText: {
-    color: COLORS.primary,
+    color: 'white',
     fontWeight: 'bold',
   },
   tabContentContainer: {
@@ -1062,6 +1236,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    marginTop: 175,
   },
   noResultsText: {
     ...FONTS.body3,

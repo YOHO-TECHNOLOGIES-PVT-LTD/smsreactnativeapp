@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from 'react-native';
 import { COLORS, FONTS } from '~/constants/index';
 import MarinaMap from '~/components/SosScreen/MarinaMap';
@@ -15,10 +16,67 @@ import SosButtons from '~/components/SosScreen/Buttons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign } from '@expo/vector-icons';
 import PhoneDialerButton from '~/components/PhoneDialerButton';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectProfile } from '~/features/profile/reducers/selector';
+import { selectToken } from '~/features/token/redux/selectors';
+import { getToken } from '~/features/token/redux/thunks';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
+
+const issuesList = [
+  'Battery Discharged',
+  'Accident',
+  'Fuel Problem',
+  'Lost/Locked Keys',
+  'Flat tyre',
+  'Engine Overtheating',
+  'Coolant Leakage',
+  'Brake Problem',
+  'Clutch Problem',
+];
 
 const SOS = () => {
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [filteredIssues, setFilteredIssues] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation<any>();
+  const dispatch = useDispatch<any>();
+  const profileData = useSelector(selectProfile);
+  const tokenSelector = useSelector(selectToken);
+  const didFetch = useRef(false);
+
+  const fetchUser = async () => {
+    try {
+      if (profileData) {
+        const mobileNumber = profileData?.contact_info?.phoneNumber || '';
+        setValue(mobileNumber);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, [profileData]);
+
+  useEffect(() => {
+    try {
+      dispatch(getToken());
+    } catch (error: any) {
+      console.error(error.message);
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (tokenSelector && !didFetch.current) {
+      dispatch(getProfileDetailsThunk({}));
+      didFetch.current = true;
+    }
+  }, [tokenSelector]);
 
   const handleChange = (text: any) => {
     if (/^\d*$/.test(text)) {
@@ -34,10 +92,39 @@ const SOS = () => {
     }
   };
 
+  const handleSearchTextChange = (text: string) => {
+    setSearchText(text);
+    if (text.trim() === '') {
+      setFilteredIssues([]);
+    } else {
+      const filtered = issuesList.filter((issue) =>
+        issue.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredIssues(filtered);
+    }
+  };
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      setValue('');
+      setError(false);
+      setSearchText('');
+      setFilteredIssues([]);
+      setShowSearchBar(false);
+      await fetchUser();
+    } catch (error) {
+      console.error('Error during refresh:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
       <SafeAreaView edges={['top']} style={[styles.container, { paddingVertical: 10 }]}>
+        {/* Navbar */}
         <View
           style={{
             flexDirection: 'row',
@@ -51,35 +138,82 @@ const SOS = () => {
             shadowRadius: 4,
             elevation: 3,
           }}>
-          <Image
-            source={require('../../assets/home/LOGO.png')}
-            style={{ width: 145, height: 25 }}
-          />
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Image
+              source={require('../../assets/home/LOGO.png')}
+              style={{ width: 145, height: 25 }}
+            />
+          </TouchableOpacity>
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowSearchBar((prev) => !prev)}>
               <AntDesign name="search1" size={24} color={COLORS.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={{ marginRight: 8 }}>
-              {/* <Feather name="phone-call" size={22} color={COLORS.primary} /> */}
               <PhoneDialerButton />
             </TouchableOpacity>
           </View>
         </View>
-        {/* Display Google Map */}
-        <ScrollView style={[styles.container, { position: 'relative' }]}>
+
+        {/* Search Bar below Navbar */}
+        {showSearchBar && (
+          <View style={styles.searchWrapper}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search issues..."
+              value={searchText}
+              onChangeText={handleSearchTextChange}
+              autoFocus
+            />
+            <TouchableOpacity
+              onPress={() => {
+                setShowSearchBar(false);
+                setSearchText('');
+                setFilteredIssues([]);
+              }}>
+              <AntDesign name="close" size={20} color={COLORS.primary} style={{ marginLeft: 10 }} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {showSearchBar && (
+          <View style={styles.filteredList}>
+            {filteredIssues.length > 0 ? (
+              filteredIssues.map((item, index) => (
+                <Text key={index} style={styles.issueText}>
+                  {item}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.noServiceText}>No issues available</Text>
+            )}
+          </View>
+        )}
+
+        {/* Main Content */}
+        <ScrollView
+          style={[styles.container, { position: 'relative' }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+            />
+          }>
           <View style={styles.mapContainer}>
             <MarinaMap />
           </View>
-          <View style={{}}>
+
+          <View>
             <Text style={{ ...FONTS.body4, paddingTop: 20, paddingLeft: 10 }}>Mobile Number:</Text>
             <View style={styles.Textcontainer}>
               <TextInput
                 style={styles.input}
-                placeholder="+91-9876543210"
+                placeholder="Enter your phone number"
                 value={value}
                 onChangeText={handleChange}
                 keyboardType="numeric"
                 maxLength={10}
+                editable={profileData?.contact_info?.phoneNumber ? false : true}
               />
             </View>
             <SosButtons />
@@ -111,5 +245,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     ...FONTS.body4,
     marginTop: 10,
+  },
+  searchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 15,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.white,
+    borderRadius: 25,
+    borderWidth: 0.3,
+    borderColor: COLORS.grey,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    ...FONTS.body4,
+    color: COLORS.primary,
+  },
+  filteredList: {
+    marginHorizontal: 20,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 10,
+  },
+  issueText: {
+    paddingVertical: 8,
+    paddingHorizontal: 5,
+    fontSize: 14,
+    color: COLORS.primary,
+    borderBottomWidth: 0.3,
+    borderBottomColor: COLORS.grey,
+  },
+  noServiceText: {
+    paddingVertical: 8,
+    fontSize: 14,
+    color: 'gray',
+    textAlign: 'center',
   },
 });

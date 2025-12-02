@@ -20,10 +20,7 @@ import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '../CustomLogoutModal';
-
-type Props = {
-  part: SparePart;
-};
+import { getImageUrl } from '~/utils/imageUtils';
 
 type SparePart = {
   uuid: string;
@@ -41,7 +38,7 @@ type SparePart = {
 
 const { width } = Dimensions.get('window');
 
-const SparePartsCard = ({ part }: Props) => {
+const SparePartsCard = ({ part }: any) => {
   const [error, setError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -66,32 +63,52 @@ const SparePartsCard = ({ part }: Props) => {
   }, [dispatch]);
 
   const handleAddtoCart = async (part: SparePart) => {
-    if (TokenSelector) {
-      if (!part?.uuid || !part?.price) {
-        console.error('Missing required part data');
-        return;
-      }
-      try {
-        const data = {
-          uuid: part?.uuid,
-          products: {
-            productId: part?._id,
-            quantity,
-            price: part?.price,
-          },
-          type: 'spare',
-        };
-        const response = await addBookingCartItem(data);
-        if (response) {
+    // Prevent multiple calls
+    if (isLoading) {
+      return;
+    }
+
+    if (!part?.uuid || !part?.price) {
+      console.error('Missing required part data');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const data = {
+        uuid: part.uuid,
+        products: {
+          productId: part._id,
+          quantity: quantity,
+          price: part.price,
+        },
+        type: 'spare',
+      };
+
+      const response = await addBookingCartItem(data);
+
+      if (response) {
+        toast.success('Added', `${part.productName} is added to cart`);
+        setAdded(true);
+
+        // Reset after success
+        setTimeout(() => {
           setModalVisible(false);
           setQuantity(1);
-          toast.success('Added', `${part?.productName} is added to cart`);
-          setAdded(true);
-        }
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error adding to cart:', error);
+          setAdded(false);
+        }, 2000);
+      } else {
+        toast.error('Error', 'Failed to add to cart');
       }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Error', 'Failed to add to cart');
+    } finally {
+      setIsLoading(false);
+      setModalVisible(false);
+      setQuantity(1);
+      setAdded(false);
     }
   };
 
@@ -145,7 +162,9 @@ const SparePartsCard = ({ part }: Props) => {
       <Pressable style={styles.card} onPress={() => setModalVisible(true)}>
         {/* Image at the top */}
         <Image
-          source={{ uri: part?.image }}
+          source={
+            part?.image ? { uri: getImageUrl(part?.image) } : require('../../assets/spareparts.png')
+          }
           style={styles.cardImage}
           resizeMode="cover"
           onError={() => setError(true)}
@@ -184,7 +203,15 @@ const SparePartsCard = ({ part }: Props) => {
         <ScrollView style={styles.modalContainer}>
           {/* Image with back button */}
           <View style={styles.modalImageContainer}>
-            <Image source={{ uri: part?.image }} style={styles.modalImage} resizeMode="cover" />
+            <Image
+              source={
+                part?.image
+                  ? { uri: getImageUrl(part?.image) }
+                  : require('../../assets/spareparts.png')
+              }
+              style={styles.modalImage}
+              resizeMode="cover"
+            />
             <TouchableOpacity style={styles.backButton} onPress={() => setModalVisible(false)}>
               <MaterialIcons name="arrow-back" size={24} color={COLORS.white} />
             </TouchableOpacity>
@@ -270,7 +297,10 @@ const SparePartsCard = ({ part }: Props) => {
 
             {/* Add to Cart Button */}
             <TouchableOpacity
-              style={[styles.modalAddButton]}
+              style={[
+                styles.modalAddButton,
+                (!part?.inStock || isLoading) && styles.disabledButton,
+              ]}
               onPress={() => {
                 if (TokenSelector) {
                   handleAddtoCart(part);
@@ -278,9 +308,9 @@ const SparePartsCard = ({ part }: Props) => {
                   setSignUpConfirmModalVisible(true);
                 }
               }}
-              disabled={!part?.inStock}>
+              disabled={!part?.inStock || isLoading}>
               <Text style={styles.modalAddButtonText}>
-                {part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
+                {isLoading ? 'ADDING...' : part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -440,20 +470,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tab: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     marginRight: 8,
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.primary,
+    backgroundColor: COLORS.primary_01,
+    borderRadius: 10,
   },
   tabText: {
     ...FONTS.body3,
     color: COLORS.primary_01,
   },
   activeTabText: {
-    color: COLORS.primary,
+    color: 'white',
     fontWeight: 'bold',
   },
   tabContentContainer: {
@@ -523,8 +553,11 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: 'bold',
   },
+  disabledButton: {
+    backgroundColor: COLORS.grey,
+    opacity: 0.6,
+  },
 
-  // Common Styles
   inStock: {
     backgroundColor: COLORS.success_lightgreen,
   },

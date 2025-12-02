@@ -1,5 +1,7 @@
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   BookingCartScreen,
   BookingsScreen,
@@ -20,6 +22,8 @@ import {
   SparePartsScreen,
 } from '~/screens';
 import ServiceDrawer from '../tabs/CustomDrawer';
+import { View, ActivityIndicator, Text, Animated, Easing, Image } from 'react-native';
+import { COLORS, FONTS } from '~/constants';
 
 export type RootStackParamList = {
   AuthStack: undefined;
@@ -47,6 +51,22 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Routes: React.FC = () => {
+  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
+        setIsFirstLaunch(hasSeenOnboarding === null);
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        setIsFirstLaunch(true);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, []);
+
   const MainStack: React.FC = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="CustomDrawer" component={ServiceDrawer} />
@@ -69,10 +89,31 @@ const Routes: React.FC = () => {
     </Stack.Navigator>
   );
 
+  if (isFirstLaunch === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ color: COLORS.primary, ...FONTS.h3, fontWeight: 500, marginTop: 5 }}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-      <Stack.Screen name="MainStack" component={MainStack} />
+      {isFirstLaunch ? (
+        <>
+          <Stack.Screen
+            name="Onboarding" 
+            component={OnboardingScreen} 
+            options={{ gestureEnabled: false }}
+          />
+          <Stack.Screen name="MainStack" component={MainStack} />
+        </>
+      ) : (
+        <Stack.Screen name="MainStack" component={MainStack} />
+      )}
     </Stack.Navigator>
   );
 };

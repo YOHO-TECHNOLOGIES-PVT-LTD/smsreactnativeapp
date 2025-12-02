@@ -81,10 +81,10 @@ export const icons = {
   cart_bg: require('../assets/images/cart-bg.jpg'),
   black_friday: require('../assets/home/black-friday.jpg'),
   promo1: require('../assets/home/promo-banner1.jpg'),
-  promo2: require('../assets/home/promo-banner2.jpg'),
+  promo2: require('../assets/home/promo-banner2.png'),
   promo3: require('../assets/home/promo-banner3.jpg'),
   promo4: require('../assets/home/promo-banner4.jpg'),
-  promo5: require('../assets/home/promo-banner5.jpg'),
+  promo5: require('../assets/home/promo-banner5.png'),
   spare_card: require('../assets/home/spare-card.jpg'),
   spare_card2: require('../assets/home/spare-card2.jpg'),
   spare_card3: require('../assets/home/spare-cart-card.jpg'),
@@ -116,6 +116,8 @@ export const icons = {
   carlogo14: require('../assets/home/car logo/carlogo14.png'),
   carlogo15: require('../assets/home/car logo/carlogo15.png'),
   clock: require('../assets/icons/clock.png'),
+  carservice1: require('../assets/loading1.png'),
+  carservice2: require('../assets/loading2.png'),
 };
 
 export const Styles = {
@@ -444,6 +446,7 @@ export const SPACING = {
   xl_03: wp('22%'), // Responsive extra large spacing
   xxl: wp('24%'), // Responsive extra extra large spacing
   xxxl: wp('32%'), // Responsive extra extra extra large spacing
+  huge: hp('90%'), // Responsive huge spacing
 };
 
 // Elevation

@@ -13,18 +13,35 @@ import SparePartsCard from '../../components/SpareParts/SparePartsCard';
 import { SparePartCategory } from '../../components/SpareParts/sparePartsData';
 import { COLORS, FONTS } from '../../constants/index';
 import { Ionicons } from '@expo/vector-icons';
+import { RefreshControl } from 'react-native';
+import { getImageUrl } from '~/utils/imageUtils';
 
 type SparePartsPageProps = {
   spareParts: SparePartCategory[];
+  onRefresh?: () => void;
 };
 
-const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
+const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts, onRefresh }) => {
   const scrollRef = useRef<ScrollView>(null);
   const [error, setError] = React.useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredParts, setFilteredParts] = useState<SparePartCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const categories = [...new Set(spareParts.map((item) => item.category))];
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (onRefresh) {
+      setRefreshing(true);
+      try {
+        onRefresh();
+      } catch (error) {
+        console.error('Error refreshing spare parts:', error);
+      } finally {
+        setRefreshing(false);
+      }
+    }
+  };
 
   useEffect(() => {
     if (spareParts?.length > 0 && categories?.length > 0 && !selectedCategory) {
@@ -88,7 +105,11 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
                 activeOpacity={0.7}>
                 <View style={styles.horizontalNavIcon}>
                   <Image
-                    source={{ uri: item?.image }}
+                    source={
+                      item?.image
+                        ? { uri: getImageUrl(item?.image) }
+                        : require('../../assets/spareparts.png')
+                    }
                     style={styles.image}
                     onError={() => setError(true)}
                   />
@@ -130,10 +151,9 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
 
       {/* Main Content - Grid Layout */}
       <View style={styles.cardContainer}>
-        {/* {filteredParts.length > 0 ? ( */}
         <FlatList
           showsVerticalScrollIndicator={false}
-          data={(filteredParts?.length > 0 || searchQuery.trim() !== '') && filteredParts}
+          data={filteredParts?.length > 0 || searchQuery.trim() !== '' ? filteredParts : []}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
             <View style={styles.cardWrapper} key={index}>
@@ -152,16 +172,15 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts }) => {
               </Text>
             </View>
           }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[COLORS.primary]} 
+              tintColor={COLORS.primary}
+            />
+          }
         />
-        {/* ) : (
-          <View style={styles.noResultsContainer}>
-            <Text style={styles.noResultsText}>
-              {searchQuery.trim() !== ''
-                ? 'No products found matching your search'
-                : 'No products available in this category'}
-            </Text>
-          </View> */}
-        {/* )} */}
       </View>
       <View style={{ marginTop: 35 }}></View>
     </View>
@@ -199,18 +218,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     width: '100%',
+    paddingVertical:2,
+   
   },
   activeHorizontalNavText: {
-    color: COLORS.primary,
+    color:"white",
     ...FONTS.h6,
-    textDecorationLine: 'underline',
+    // textDecorationLine: 'underline',
+     backgroundColor:COLORS.primary_01,
+    paddingHorizontal:4,
+    paddingVertical:2,
+    borderRadius:10
+  
   },
   image: {
     width: 65,
     height: 65,
     borderRadius: 50,
     marginBottom: 5,
-    backgroundColor: COLORS.primary_04,
+    borderColor: COLORS.primary_04,
+    borderWidth: 1,
   },
   cardContainer: {
     flex: 1,
@@ -255,6 +282,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    marginTop: 180,
   },
   noResultsText: {
     ...FONTS.body3,

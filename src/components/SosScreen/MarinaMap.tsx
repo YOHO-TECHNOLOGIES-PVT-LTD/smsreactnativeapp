@@ -1,36 +1,66 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
+import * as Location from 'expo-location';
 
-const EMBED_URL =
-  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1944.1720238824046!2d80.18278093519574!3d12.949822861828878!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525fc59f87dbd3%3A0x5c81dab0c9af94da!2sPatron%20International!5e0!3m2!1sen!2sin!4v1750313647179!5m2!1sen!2sin';
+const MarinaMap = () => {
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-const html = `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>html,body{margin:0;padding:0;height:100%;}</style>
-  </head>
-  <body>
-    <iframe
-      src="${EMBED_URL}"
-      width="100%"
-      height="100%"
-      frameborder="0"
-      style="border:0;"
-      allowfullscreen
-      loading="lazy">
-    </iframe>
-  </body>
-</html>
-`;
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
 
-const MarinaMap = () => (
-  <View style={styles.container}>
-    <WebView originWhitelist={['*']} source={{ html }} style={styles.map} />
-  </View>
-);
+      let loc = await Location.getCurrentPositionAsync({});
+      setLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+    })();
+  }, []);
+
+  if (!location) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="blue" />
+      </View>
+    );
+  }
+
+  // Google Maps embed link with dynamic coordinates
+  const EMBED_URL = `https://www.google.com/maps?q=${location.latitude},${location.longitude}&z=15&output=embed`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>html,body{margin:0;padding:0;height:100%;}</style>
+      </head>
+      <body>
+        <iframe
+          src="${EMBED_URL}"
+          width="100%"
+          height="100%"
+          frameborder="0"
+          style="border:0;"
+          allowfullscreen
+          loading="lazy">
+        </iframe>
+      </body>
+    </html>
+  `;
+
+  return (
+    <View style={styles.container}>
+      <WebView originWhitelist={['*']} source={{ html }} style={styles.map} />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

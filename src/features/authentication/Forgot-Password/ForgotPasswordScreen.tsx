@@ -15,7 +15,7 @@ import toast from '~/utils/toast';
 import { ForgotPassword } from '../service';
 
 const ForgotPasswordScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const {
     control,
     handleSubmit,
@@ -24,7 +24,6 @@ const ForgotPasswordScreen = () => {
 
   const onSubmit = async (data: { emailOrPhone: string }) => {
     const response = await ForgotPassword({ email: data.emailOrPhone });
-    console.log('Forgot Password Response:', response);
     if (response) {
       navigation.navigate('OtpVerificationScreen' as never, {
         data: response,

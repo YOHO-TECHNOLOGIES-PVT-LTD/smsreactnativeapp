@@ -18,7 +18,7 @@ import type { RouteProp } from '@react-navigation/native';
 type OtpVerificationScreenRouteProp = RouteProp<any, any>;
 
 const OtpVerificationScreen = ({ route }: { route: OtpVerificationScreenRouteProp }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [otp, setOtp] = React.useState(Array(6).fill(''));
   const inputsRef = React.useRef<Array<TextInput | null>>([]);
   const { data, method } = route?.params || {};
@@ -60,23 +60,24 @@ const OtpVerificationScreen = ({ route }: { route: OtpVerificationScreenRoutePro
           });
         } else {
           await AsyncStorage.setItem('authToken', response?.token);
-          // await AsyncStorage.setItem('userId', response?.userId);
           navigation.reset({
             index: 0,
             routes: [{ name: 'MainStack' }],
           });
-          toast.success('OTP Verified', 'You have successfully verified your OTP.');
+          toast.success('Success', 'You are successfully logged in');
         }
+      } else {
+        toast.error('Error', 'Enter valid otp');
       }
     } else {
       toast.error('Error', 'Enter all 6 digits');
     }
   };
 
-  const handleResendOtp = async () => {
-    // const response = await VerifyOtp({ otp: '', AuthToken: data?.token });
-    toast.success('Resend OTP', 'OTP has been resent.');
-  };
+  // const handleResendOtp = async () => {
+  //   const response = await VerifyOtp({ otp: '', AuthToken: data?.token });
+  //   toast.success('Resend OTP', 'OTP has been resent.');
+  // };
 
   return (
     <KeyboardAvoidingView
@@ -95,7 +96,7 @@ const OtpVerificationScreen = ({ route }: { route: OtpVerificationScreenRoutePro
           {otp.map((digit, index) => (
             <TextInput
               key={index}
-              ref={(ref) => (inputsRef.current[index] = ref)}
+              ref={(ref: any) => (inputsRef.current[index] = ref)}
               value={digit}
               onChangeText={(val) => handleChange(index, val)}
               onKeyPress={(e) => handleKeyPress(index, e)}
@@ -109,14 +110,14 @@ const OtpVerificationScreen = ({ route }: { route: OtpVerificationScreenRoutePro
         <TouchableOpacity style={styles.loginButton} onPress={handleVerifyOtp}>
           <Text style={styles.loginButtonText}>Verify OTP</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={{ marginTop: 20, flexDirection: 'column', alignItems: 'flex-end' }}
           onPress={() => handleResendOtp()}>
           <Text
             style={{ ...FONTS.body5, color: COLORS.primary_01, textDecorationLine: 'underline' }}>
             Resend OTP
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <View style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'center', gap: 5 }}>
           <Text style={styles.signupText}>Back to</Text>
           <TouchableOpacity onPress={() => navigation.navigate('LoginScreen' as never)}>

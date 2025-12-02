@@ -11,10 +11,8 @@ import {
   Easing,
   Modal,
   TextInput,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, icons, screens } from '~/constants';
@@ -35,26 +33,13 @@ import CustomLogoutModal from '~/components/CustomLogoutModal';
 import { getAllSpareParts } from '~/features/spare-parts/service';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { getAllOffers } from '~/features/Offer/service';
+import { getImageUrl } from '~/utils/imageUtils';
+import { RefreshControl } from 'react-native';
+import { createEnquiry } from '~/features/home/service';
+import SparePartsCard from '~/components/SpareParts/SparePartsCard';
+import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
+import { selectProfile } from '~/features/profile/reducers/selector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserProfileDetails } from '~/features/profile/service';
-
-const chatMessages = [
-  { id: '1', sender: 'admin', text: 'Hello! How can I help you today?', time: '10:30 AM' },
-  { id: '2', sender: 'user', text: 'I need help with my car AC service', time: '10:32 AM' },
-  {
-    id: '3',
-    sender: 'admin',
-    text: 'Sure, we can help with that. What model is your car?',
-    time: '10:33 AM',
-  },
-  {
-    id: '4',
-    sender: 'admin',
-    text: 'We have special offers on AC service this week',
-    time: '10:34 AM',
-  },
-  { id: '5', sender: 'user', text: "It's a Honda City 2018 model", time: '10:36 AM' },
-];
 
 const carlogos = [
   icons.carlogo1,
@@ -73,39 +58,46 @@ const HomePage = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const translateYAnim = useRef(new Animated.Value(30)).current;
-  const blogsImage = [
-    require('../../assets/sparepartsimage/category/lighting.jpg'),
-    require('../../assets/sparepartsimage/category/battery.jpg'),
-    require('../../assets/sparepartsimage/category/engine.jpg'),
-    require('../../assets/sparepartsimage/category/tyres.jpg'),
-    require('../../assets/sparepartsimage/category/ac.jpg'),
-  ];
   const [showOfferApplied, setShowOfferApplied] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const tokenSelector = useSelector(selectToken);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [spareParts, setSpareParts] = useState([]);
   const [serviceCategories, setServiceCategories] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
-  const [profileData, setProfileData] = useState<{
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    contact_info: {
-      phoneNumber: string;
-    };
-    vehicleInfo: string;
-  }>({
-    firstName: '',
-    lastName: '',
+  const profileData = useSelector(selectProfile);
+  const didFetch = useRef(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    fullName: '',
     email: '',
-    contact_info: {
-      phoneNumber: '',
-    },
-    vehicleInfo: '',
+    phoneNumber: '',
+    carModel: '',
+    serviceType: 'general',
+    yourEnquiry: '',
+    date: '',
   });
+
+  const [errors, setErrors] = useState({
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    carModel: '',
+    serviceType: '',
+    yourEnquiry: '',
+    date: '',
+  });
+
+  const [showServiceTypeDropdown, setShowServiceTypeDropdown] = useState(false);
+
+  const serviceTypeOptions = [
+    { label: 'General', value: 'general' },
+    { label: 'Preferred Service', value: 'preferred' },
+  ];
 
   useEffect(() => {
     Animated.parallel([
@@ -140,16 +132,24 @@ const HomePage = () => {
     }
   }, [dispatch]);
 
-  const handleClaimOffer = () => {
-    setShowOfferApplied(true);
-    setTimeout(() => {
-      setShowOfferApplied(false);
-    }, 3000);
-    toast.success('Offer Applied', 'Your offer has been successfully applied!');
-  };
+  useEffect(() => {
+    if (tokenSelector && !didFetch.current) {
+      dispatch(getProfileDetailsThunk({}));
+      didFetch.current = true;
+    }
+  }, [tokenSelector]);
 
   const handleChatNow = () => {
     setShowChatModal(true);
+    if (profileData) {
+      setFormData({
+        ...formData,
+        fullName:
+          `${profileData?.firstName.trim() || ''} ${profileData?.lastName.trim() || ''}`.trim(),
+        email: profileData?.email || '',
+        phoneNumber: profileData?.contact_info?.phoneNumber || '',
+      });
+    }
   };
 
   const images = [icons.promo1, icons.promo2, icons.promo3, icons.promo4, icons.promo5];
@@ -167,17 +167,6 @@ const HomePage = () => {
     } finally {
       setIsLoading(false);
       setLogoutModalVisible(false);
-    }
-  };
-
-  const fetchUserProfile = async () => {
-    try {
-      const response: any = await getUserProfileDetails({});
-      if (response) {
-        setProfileData(response);
-      }
-    } catch (error) {
-      console.log(error);
     }
   };
 
@@ -221,15 +210,140 @@ const HomePage = () => {
     fetchAllOffers();
   }, [dispatch]);
 
-  useEffect(() => {
-    if (tokenSelector) {
-      fetchUserProfile();
-    }
-  }, [tokenSelector]);
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {
+      fullName: '',
+      email: '',
+      phoneNumber: '',
+      carModel: '',
+      serviceType: '',
+      yourEnquiry: '',
+      date: '',
+    };
 
-  const handleSubmitEnquiry = () => {
-    setShowChatModal(false);
-    toast.success('Success', 'Your enquiry submitted successfully!');
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+      isValid = false;
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+      isValid = false;
+    }
+
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = 'Phone number is required';
+      isValid = false;
+    } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = 'Phone number must be 10 digits';
+      isValid = false;
+    }
+
+    if (!formData.carModel.trim()) {
+      newErrors.carModel = 'Car details are required';
+      isValid = false;
+    }
+
+    if (!formData.serviceType) {
+      newErrors.serviceType = 'Service type is required';
+      isValid = false;
+    }
+
+    if (!formData.yourEnquiry.trim()) {
+      newErrors.yourEnquiry = 'Enquiry is required';
+      isValid = false;
+    }
+
+    if (!formData.date.trim()) {
+      newErrors.date = 'Preferred service date is required';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+
+    // Clear error when user starts typing
+    if (errors[field as keyof typeof errors]) {
+      setErrors({
+        ...errors,
+        [field]: '',
+      });
+    }
+  };
+
+  const handleSelectServiceType = (value: string) => {
+    handleInputChange('serviceType', value);
+    setShowServiceTypeDropdown(false);
+  };
+
+  const handleSubmitEnquiry = async () => {
+    if (!validateForm()) {
+      toast.error('Validation Error', 'Please fill all required fields correctly');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        carModel: formData.carModel,
+        serviceType: formData.serviceType,
+        yourEnquiry: formData.yourEnquiry,
+        date: formData.date,
+        subject: formData.serviceType,
+        description: formData.yourEnquiry,
+      };
+
+      const response = await createEnquiry(payload);
+      if (response) {
+        setShowChatModal(false);
+        toast.success('Success', 'Your enquiry submitted successfully');
+        setFormData({
+          fullName: '',
+          email: '',
+          phoneNumber: '',
+          carModel: '',
+          serviceType: 'general',
+          yourEnquiry: '',
+          date: '',
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting enquiry:', error);
+      toast.error('Error', 'Failed to submit enquiry. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await getAllSparePartsDetails();
+      await fetchAllServices();
+      await fetchAllOffers();
+      if (tokenSelector) {
+        await dispatch(getProfileDetailsThunk({}));
+      }
+    } catch (error) {
+      console.log('Error while refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   return (
@@ -246,16 +360,19 @@ const HomePage = () => {
               alignItems: 'center',
               marginBottom: 1,
             }}>
-            <Image
-              source={require('../../assets/home/LOGO.png')}
-              style={{ width: 145, height: 25, position: 'relative', top: tokenSelector ? 0 : 0 }}
-            />
+            <TouchableOpacity onPress={() => navigation.openDrawer()}>
+              <Image
+                source={require('../../assets/home/LOGO.png')}
+                style={{ width: 145, height: 25, position: 'relative', top: tokenSelector ? 0 : 0 }}
+              />
+            </TouchableOpacity>
             {tokenSelector ? (
               <View style={{}}>
                 <View style={{ flexDirection: 'row' }}>
                   <HandShakeAnimation />
                   <Text style={styles.title}>
-                    Hi, {tokenSelector ? profileData?.firstName : 'Customer'}
+                    Hi,{' '}
+                    {tokenSelector && profileData?.firstName ? profileData?.firstName : 'Customer'}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -268,7 +385,7 @@ const HomePage = () => {
                     marginVertical: 3,
                   }}>
                   <Ionicons name="log-out-outline" size={20} color={COLORS.primary} />
-                  <Text style={{ fontWeight: 400, ...FONTS.h4, color: COLORS.primary }}>
+                  <Text style={{ fontWeight: 500, ...FONTS.h4, color: COLORS.primary }}>
                     Logout
                   </Text>
                 </TouchableOpacity>
@@ -279,7 +396,7 @@ const HomePage = () => {
                   onPress={() => navigation.navigate('LoginScreen' as never)}
                   style={{ flexDirection: 'row', gap: 2 }}>
                   <Ionicons name="log-in-outline" size={20} color={COLORS.primary} />
-                  <Text style={{ fontWeight: 400, ...FONTS.h4, color: COLORS.primary }}>Login</Text>
+                  <Text style={{ fontWeight: 500, ...FONTS.h4, color: COLORS.primary }}>Login</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -288,7 +405,15 @@ const HomePage = () => {
           {/* Search Bar */}
           <AnimatedSearch />
         </View>
-        <ScrollView>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+            />
+          }>
           {/* Image Carousel */}
           <View style={{ backgroundColor: COLORS.primary_04, paddingVertical: 10 }}>
             <ImageCarousel images={images} />
@@ -305,8 +430,14 @@ const HomePage = () => {
                   <TouchableOpacity
                     key={item.id}
                     style={styles.serviceItem1}
-                    onPress={() => dispatch(setSelectedTab(screens.services))}>
-                    <MaterialIcons name="directions-car" size={28} color={COLORS.primary_02} />
+                    onPress={async () => {
+                      await AsyncStorage.setItem('activeService', item?.category_name);
+                      dispatch(setSelectedTab(screens.services));
+                    }}>
+                    <Image
+                      source={require('../../assets/loading1.png')}
+                      style={{ width: 55, height: 55 }}
+                    />
                     <Text style={styles.serviceText}>{item?.category_name}</Text>
                   </TouchableOpacity>
                 ))
@@ -339,19 +470,9 @@ const HomePage = () => {
                 style={styles.partsContainer1}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 20 }}>
+                contentContainerStyle={{ paddingRight: 10 }}>
                 {spareParts?.slice(0, 10)?.map((item: any) => (
-                  <View key={item?._id} style={[styles.partCard1, { width: 120 }]}>
-                    <Image source={item?.image} style={styles.partImage} />
-                    <View style={styles.partDetails}>
-                      <Text style={styles.partName}>{item?.productName?.substring(0, 15)}</Text>
-                      <Text style={styles.partOem}>{item?.brand}</Text>
-                      <Text style={styles.partPrice}>₹{item.price}</Text>
-                      <Text style={styles.stock}>
-                        {item.inStock === true ? 'In Stock' : 'Out of Stock'}({item?.stock})
-                      </Text>
-                    </View>
-                  </View>
+                  <SparePartsCard key={item?._id} part={item} />
                 ))}
               </ScrollView>
             ) : (
@@ -378,7 +499,11 @@ const HomePage = () => {
                       <FontAwesome name="tag" size={14} color={COLORS.white} />
                     </View>
                     <Image
-                      source={offer?.image}
+                      source={
+                        offer?.image
+                          ? { uri: getImageUrl(offer?.image) }
+                          : require('../../assets/home/offer.jpg')
+                      }
                       style={{
                         width: '100%',
                         height: 75,
@@ -389,20 +514,20 @@ const HomePage = () => {
                     />
                     <View
                       style={{
-                        flexDirection: 'row',
+                        flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}>
-                      <Text style={styles.offerTitle}>{offer?.title?.substring(0, 12)}</Text>
+                      <Text style={styles.offerTitle}>{offer?.title}</Text>
                       <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
                         {' '}
                         Offer: ₹{offer?.offer}
                       </Text>
                     </View>
-                    <Text style={styles.offerDiscount}>{offer?.description?.substring(0, 15)}</Text>
-                    <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
+                    <Text style={styles.offerDiscount}>{offer?.description}</Text>
+                    {/* <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
                       <Text style={styles.offerButtonText}>Claim Offer</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </Animated.View>
                 ))
               ) : (
@@ -442,7 +567,7 @@ const HomePage = () => {
           </View>
 
           {/* Original Spare parnter */}
-          <View style={styles.spareparnterConatiner}>
+          {/* <View style={styles.spareparnterConatiner}>
             <View>
               <Text style={{ ...FONTS.h3, fontWeight: 500, color: COLORS.primary_text }}>
                 Authorized Spare Parts
@@ -462,7 +587,7 @@ const HomePage = () => {
                 </View>
               ))}
             </ScrollView>
-          </View>
+          </View> */}
 
           {/* Footer CTA */}
           <View style={styles.footerCta}>
@@ -504,125 +629,139 @@ const HomePage = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.chatContainer}
                 keyboardVerticalOffset={80}>
-                <View style={{ padding: 15 }}>
+                <ScrollView style={{ padding: 15 }} showsVerticalScrollIndicator={false}>
+                  {/* Full Name */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Full Name *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
-                      value={profileData?.firstName + " " + profileData?.lastName}
+                      style={[styles.input, errors.fullName ? styles.inputError : null]}
+                      value={formData.fullName}
+                      onChangeText={(text) => handleInputChange('fullName', text)}
                     />
+                    {errors.fullName ? (
+                      <Text style={styles.errorText}>{errors.fullName}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Email */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Email *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
-                      value={profileData?.email}
+                      style={[styles.input, errors.email ? styles.inputError : null]}
+                      value={formData.email}
+                      onChangeText={(text) => handleInputChange('email', text)}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
                     />
+                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
                   </View>
+
+                  {/* Phone Number */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Phone Number *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
-                      value={profileData?.contact_info?.phoneNumber}
+                      style={[styles.input, errors.phoneNumber ? styles.inputError : null]}
+                      value={formData.phoneNumber}
+                      onChangeText={(text) => handleInputChange('phoneNumber', text)}
+                      keyboardType="phone-pad"
+                      maxLength={10}
                     />
+                    {errors.phoneNumber ? (
+                      <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Car Details */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Car Details *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
+                      style={[styles.input, errors.carModel ? styles.inputError : null]}
+                      value={formData.carModel}
+                      onChangeText={(text) => handleInputChange('carModel', text)}
                     />
+                    {errors.carModel ? (
+                      <Text style={styles.errorText}>{errors.carModel}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Service Type Dropdown */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Service Type *</Text>
-                    <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
-                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.input,
+                        styles.dropdownTrigger,
+                        errors.serviceType ? styles.inputError : null,
+                      ]}
+                      onPress={() => setShowServiceTypeDropdown(!showServiceTypeDropdown)}>
+                      <Text style={styles.dropdownText}>
+                        {formData.serviceType === 'general' ? 'General' : 'Preferred Service'}
+                      </Text>
+                      <Ionicons
+                        name={showServiceTypeDropdown ? 'chevron-up' : 'chevron-down'}
+                        size={20}
+                        color={COLORS.primary}
+                      />
+                    </TouchableOpacity>
+                    {errors.serviceType ? (
+                      <Text style={styles.errorText}>{errors.serviceType}</Text>
+                    ) : null}
+
+                    {showServiceTypeDropdown && (
+                      <View style={styles.dropdown}>
+                        {serviceTypeOptions.map((option) => (
+                          <TouchableOpacity
+                            key={option.value}
+                            style={styles.dropdownOption}
+                            onPress={() => handleSelectServiceType(option.value)}>
+                            <Text style={styles.dropdownOptionText}>{option.label}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
                   </View>
+
+                  {/* Preferred Service Date */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>
                       Preferred Service Date *
                     </Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
+                      style={[styles.input, errors.date ? styles.inputError : null]}
+                      value={formData.date}
+                      onChangeText={(text) => handleInputChange('date', text)}
+                      placeholder="DD/MM/YYYY"
                     />
+                    {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
                   </View>
+
+                  {/* Your Enquiry */}
                   <View style={{ flexDirection: 'column', gap: 7, marginVertical: 7 }}>
                     <Text style={{ ...FONTS.body4, color: COLORS.primary }}>Your Enquiry *</Text>
                     <TextInput
-                      style={{
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        borderColor: COLORS.primary_04,
-                        paddingHorizontal: 10,
-                        color: COLORS.primary,
-                        ...FONTS.body4,
-                      }}
+                      style={[
+                        styles.input,
+                        styles.textArea,
+                        errors.yourEnquiry ? styles.inputError : null,
+                      ]}
+                      value={formData.yourEnquiry}
+                      onChangeText={(text) => handleInputChange('yourEnquiry', text)}
+                      multiline
+                      numberOfLines={4}
                     />
+                    {errors.yourEnquiry ? (
+                      <Text style={styles.errorText}>{errors.yourEnquiry}</Text>
+                    ) : null}
                   </View>
+
+                  {/* Submit Button */}
                   <View
-                    style={{ marginVertical: 12, justifyContent: 'center', alignItems: 'center' }}>
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: COLORS.primary,
-                        borderRadius: 12,
-                        width: '30%',
-                        padding: 10,
-                      }}
-                      onPress={handleSubmitEnquiry}>
-                      <Text
-                        style={{
-                          ...FONTS.body4,
-                          color: COLORS.white,
-                          textAlign: 'center',
-                          fontWeight: 500,
-                        }}>
-                        Submit
-                      </Text>
+                    style={{ marginVertical: 20, justifyContent: 'center', alignItems: 'center' }}>
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmitEnquiry}>
+                      <Text style={styles.submitButtonText}>Submit</Text>
                     </TouchableOpacity>
                   </View>
-                </View>
+                </ScrollView>
               </KeyboardAvoidingView>
             </SafeAreaView>
           </Modal>
@@ -753,7 +892,7 @@ const styles = StyleSheet.create({
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     marginVertical: 15,
   },
   serviceItem: {
@@ -789,10 +928,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   seeAll: {
-    color: COLORS.primary_text,
+    color: 'white',
     ...FONTS.h6,
     fontWeight: '500',
-    textDecorationLine: 'underline',
+    backgroundColor: COLORS.primary_01,
+    borderRadius: 8,
+    padding: 6,
   },
   offersContainer: {
     flexDirection: 'row',
@@ -832,6 +973,7 @@ const styles = StyleSheet.create({
   offerDiscount: {
     ...FONTS.body6,
     color: COLORS.black,
+    marginTop: 5,
   },
   offerButton: {
     backgroundColor: COLORS.primary,
@@ -1276,6 +1418,69 @@ const styles = StyleSheet.create({
   spareparnterConatiner: {
     paddingVertical: 15,
     paddingHorizontal: 15,
+  },
+
+  // Form styles
+  input: {
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: COLORS.primary_04,
+    paddingHorizontal: 10,
+    color: COLORS.primary,
+    ...FONTS.body4,
+    height: 40,
+  },
+  inputError: {
+    borderColor: COLORS.error,
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: 12,
+    marginTop: 3,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+    paddingTop: 10,
+  },
+  dropdownTrigger: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingRight: 10,
+  },
+  dropdownText: {
+    color: COLORS.primary,
+    ...FONTS.body4,
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: COLORS.primary_04,
+    borderRadius: 5,
+    marginTop: 5,
+    backgroundColor: COLORS.white,
+    elevation: 2,
+  },
+  dropdownOption: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.grey20,
+  },
+  dropdownOptionText: {
+    color: COLORS.primary,
+    ...FONTS.body4,
+  },
+  submitButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    width: '30%',
+    padding: 10,
+  },
+  submitButtonText: {
+    ...FONTS.body4,
+    color: COLORS.white,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
 

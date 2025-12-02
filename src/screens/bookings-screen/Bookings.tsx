@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   FlatList,
   StatusBar,
+  ScrollView,
 } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { COLORS, FONTS, icons, SIZES, SPACING } from '~/constants';
 import { useNavigation } from '@react-navigation/native';
 import BookingCard from '~/components/Bookings/BookingCard';
@@ -20,6 +21,8 @@ import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import { selectCartItems } from '~/features/booking-cart/redux/selectors';
+import { RefreshControl } from 'react-native';
+import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 
 interface Product {
   _id: string;
@@ -77,6 +80,8 @@ const Bookings = () => {
   const navigation = useNavigation();
   const cartItems = useSelector(selectCartItems);
   const [cartCount, setCartCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const didFetch = useRef(false);
 
   useEffect(() => {
     try {
@@ -90,38 +95,42 @@ const Bookings = () => {
     }
   }, [dispatch]);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = tokenSelector && (await getAllBookingsCartItems({}));
-        if (response?.success) {
-          const allOrders = [
-            ...(response.productConfirm || []),
-            ...(response.serviceConfirm || []),
-          ];
-          setOrders(allOrders);
-        }
-      } catch (error) {
-        console.log('Error fetching orders:', error);
+  const fetchOrders = async () => {
+    try {
+      const response = tokenSelector && (await getAllBookingsCartItems({}));
+      if (response?.success) {
+        const allOrders = [...(response.productConfirm || []), ...(response.serviceConfirm || [])];
+        setOrders(allOrders);
       }
-    };
-    if (tokenSelector) {
-      fetchOrders();
+    } catch (error) {
+      console.log('Error fetching orders:', error);
     }
-    const getCartCount = () => {
-      if (cartItems?.length == 1) {
-        return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
-      } else if (cartItems?.length > 1) {
-        return (
-          Number(cartItems[0]?.products?.length) +
-          Number(cartItems[0]?.services?.length) +
-          Number(cartItems[1]?.products?.length) +
-          Number(cartItems[1]?.services?.length)
-        );
-      }
-    };
+  };
+
+  const getCartCount = () => {
+    if (cartItems?.length == 1) {
+      return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
+    } else if (cartItems?.length > 1) {
+      return (
+        Number(cartItems[0]?.products?.length) +
+        Number(cartItems[0]?.services?.length) +
+        Number(cartItems[1]?.products?.length) +
+        Number(cartItems[1]?.services?.length)
+      );
+    }
+  };
+
+  useEffect(() => {
     setCartCount(getCartCount() ?? 0);
-  }, [dispatch, tokenSelector]);
+  }, [tokenSelector, cartItems]);
+
+  useEffect(() => {
+    if (tokenSelector && !didFetch.current) {
+      dispatch(getBookingCartItems());
+      fetchOrders();
+      didFetch.current = true;
+    }
+  }, [tokenSelector]);
 
   const filteredOrders = orders?.filter((order: any) => {
     const matchesTab =
@@ -132,8 +141,28 @@ const Bookings = () => {
   });
 
   const totalOrders = orders?.length;
-  const completedOrders = orders?.filter((order) => order?.status === 'completed')?.length;
-  const pendingOrders = orders?.filter((order) => order?.status === 'pending')?.length;
+  const completedOrders = orders?.filter(
+    (order) => order?.status.toLowerCase() === 'completed'
+  )?.length;
+  const pendingOrders = orders?.filter(
+    (order) => order?.status.toLowerCase() === 'pending'
+  )?.length;
+  const dispatchOrders = orders?.filter(
+    (order) => order?.status === 'Dispatched to Courier'
+  )?.length;
+
+  const handleRefresh = async () => {
+    if (!tokenSelector) return;
+    setRefreshing(true);
+    try {
+      fetchOrders();
+      dispatch(getBookingCartItems());
+    } catch (error) {
+      console.log('Error refreshing orders:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <>
@@ -207,17 +236,27 @@ const Bookings = () => {
             {/* Count cards */}
             <View style={styles.countCardsContainer}>
               <View style={styles.countCard}>
-                <Text style={{ ...FONTS.h4, color: COLORS.support1 }}>{totalOrders}</Text>
-                <Text style={styles.text}>Total Orders</Text>
+                <Text style={{ ...FONTS.h3, color: COLORS.support1, fontWeight: 600 }}>
+                  {totalOrders}
+                </Text>
+                <Text style={styles.text}>Total</Text>
               </View>
               <View style={styles.countCard}>
-                <Text style={{ color: COLORS.success_lightgreen, ...FONTS.h4 }}>
+                <Text style={{ color: COLORS.sucesss_darkgreen, ...FONTS.h3, fontWeight: 600 }}>
                   {completedOrders}
                 </Text>
                 <Text style={styles.text}>Completed</Text>
               </View>
               <View style={styles.countCard}>
-                <Text style={{ ...FONTS.h4, color: COLORS.error }}>{pendingOrders}</Text>
+                <Text style={{ color: COLORS.success_lightgreen, ...FONTS.h3, fontWeight: 600 }}>
+                  {dispatchOrders}
+                </Text>
+                <Text style={styles.text}>Dispatch</Text>
+              </View>
+              <View style={styles.countCard}>
+                <Text style={{ ...FONTS.h3, color: COLORS.error, fontWeight: 600 }}>
+                  {pendingOrders}
+                </Text>
                 <Text style={styles.text}>Pending</Text>
               </View>
             </View>
@@ -257,11 +296,28 @@ const Bookings = () => {
                 renderItem={({ item }) => <BookingCard data={item} />}
                 contentContainerStyle={styles.ordersList}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    colors={[COLORS.primary]}
+                    tintColor={COLORS.primary}
+                  />
+                }
               />
             ) : (
-              <View style={styles.emptyContainer}>
+              <ScrollView
+                contentContainerStyle={styles.emptyContainer}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    colors={[COLORS.primary]}
+                    tintColor={COLORS.primary}
+                  />
+                }>
                 <Text style={{ ...FONTS.body3, color: COLORS.grey }}>No orders found</Text>
-              </View>
+              </ScrollView>
             )}
           </View>
         </ImageBackground>
@@ -301,8 +357,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   text: {
-    ...FONTS.body4,
+    ...FONTS.body5,
     color: COLORS.primary_text,
+    fontWeight: 400,
   },
   tabContainer: {
     backgroundColor: COLORS.white,

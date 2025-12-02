@@ -25,9 +25,12 @@ import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import * as Linking from 'expo-linking';
 import toast from '~/utils/toast';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CloudSnow } from 'lucide-react-native';
+import { getImageUrl } from '~/utils/imageUtils';
 
 type BookingType = 'spare' | 'service';
-type OrderStatus = 'pending' | 'Confirm Order' | 'Dispatched to Courier';
+type OrderStatus = 'pending' | 'completed' | 'Dispatched to Courier';
 
 interface Product {
   id: string;
@@ -91,7 +94,8 @@ const OrderDetailsModal: React.FC<{
   order: BookingCardData;
 }> = ({ visible, onClose, order }) => {
   const isService = !!order?.services;
-  const isDispatched = order?.status === 'Dispatched to Courier';
+  const isDispatched = order?.status === 'Dispatched to Courier' || order?.status === 'completed';
+
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDownloadInvoice = async () => {
@@ -146,17 +150,13 @@ const OrderDetailsModal: React.FC<{
   const handleViewTrackSlip = async () => {
     setIsLoading(true);
     try {
-      toast.success('Success', `Viewing track slip for order: ${order?.track_id}`);
+      Alert.alert('Track Order', `Tracking slip ID for this order: ${order?.track_id}`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error: any) {
-      toast.error('Failed to view track slip:', error.message);
+      Alert.alert('Failed to view track slip:', error.message);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getImageSource = (item: Product | Service) => {
-    return order?.image;
   };
 
   return (
@@ -165,56 +165,52 @@ const OrderDetailsModal: React.FC<{
       animationType="slide"
       transparent={false}
       onRequestClose={onClose}
-      statusBarTranslucent={true}>
-      <View style={styles.modalFullscreenContainer}>
+      statusBarTranslucent={false}>
+      <SafeAreaView style={styles.modalFullscreenContainer} edges={['top']}>
+        {/* Fixed Header */}
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <AntDesign name="arrowleft" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Order Details</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        {/* Fixed Order Summary Section */}
+        <View style={styles.fixedOrderSummary}>
+          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Order Date:</Text>
+            <Text style={styles.summaryValue}>{formatDateandTime(order?.createdAt)}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Status:</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: isDispatched ? COLORS.success_lightgreen : COLORS.error },
+              ]}>
+              <Text style={styles.statusText}>{order?.status?.toLowerCase()}</Text>
+            </View>
+          </View>
+          {isDispatched && order?.track_id && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Tracking ID:</Text>
+              <TextInput
+                style={styles.trackingInput}
+                value={order?.track_id}
+                editable={false}
+                numberOfLines={1}
+              />
+            </View>
+          )}
+        </View>
+
+        {/* Scrollable Content */}
         <ScrollView
-          style={styles.modalScrollView}
-          contentContainerStyle={styles.modalContentContainer}>
-          {/* Header */}
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={onClose} style={styles.backButton}>
-              <AntDesign name="arrowleft" size={24} color={COLORS.black} />
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Order Details</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-
-          {/* Order Summary */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Order Summary</Text>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Order ID:</Text>
-              <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
-                {order?.orderId || 'N/A'}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Order Date:</Text>
-              <Text style={styles.summaryValue}>{formatDateandTime(order?.createdAt)}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Status:</Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: isDispatched ? COLORS.success_lightgreen : COLORS.error },
-                ]}>
-                <Text style={styles.statusText}>{order?.status}</Text>
-              </View>
-            </View>
-            {isDispatched && order?.track_id && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Tracking ID:</Text>
-                <TextInput
-                  style={styles.trackingInput}
-                  value={order?.track_id}
-                  editable={false}
-                  numberOfLines={1}
-                />
-              </View>
-            )}
-          </View>
-
+          style={styles.scrollableContent}
+          contentContainerStyle={styles.scrollableContentContainer}
+          showsVerticalScrollIndicator={false}>
           {/* Items Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
@@ -225,7 +221,10 @@ const OrderDetailsModal: React.FC<{
               ? order?.services?.map((service, index) => (
                   <View key={`service-${index}`} style={styles.itemContainer}>
                     <View style={styles.itemImageContainer}>
-                      <Image source={{ uri: getImageSource(service) }} style={styles.itemImage} />
+                      <Image
+                        source={{ uri: getImageUrl(service?.image) }}
+                        style={styles.itemImage}
+                      />
                     </View>
                     <View style={styles.itemDetails}>
                       <Text style={styles.itemName} numberOfLines={2}>
@@ -241,10 +240,17 @@ const OrderDetailsModal: React.FC<{
                     </View>
                   </View>
                 ))
-              : order?.products?.map((product, index) => (
+              : order?.products?.map((product: any, index) => (
                   <View key={`product-${index}`} style={styles.itemContainer}>
                     <View style={styles.itemImageContainer}>
-                      <Image source={{ uri: getImageSource(product) }} style={styles.itemImage} />
+                      <Image
+                        source={
+                          product?.productId?.image
+                            ? { uri: getImageUrl(product?.productId?.image) }
+                            : require('../../assets/spareparts.png')
+                        }
+                        style={styles.itemImage}
+                      />
                     </View>
                     <View style={styles.itemDetails}>
                       <Text style={styles.itemName} numberOfLines={2}>
@@ -313,21 +319,23 @@ const OrderDetailsModal: React.FC<{
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.downloadButton]}
-              onPress={handleDownloadInvoice}
-              disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color={COLORS.white} size="small" />
-              ) : (
-                <>
-                  <MaterialIcons name="file-download" size={20} color={COLORS.white} />
-                  <Text style={styles.actionButtonText}>Download Invoice</Text>
-                </>
-              )}
-            </TouchableOpacity>
+            {(order.status === 'completed' || order.status === 'Dispatched to Courier') && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.downloadButton]}
+                onPress={handleDownloadInvoice}
+                disabled={isLoading}>
+                {isLoading ? (
+                  <ActivityIndicator color={COLORS.white} size="small" />
+                ) : (
+                  <>
+                    <MaterialIcons name="file-download" size={20} color={COLORS.white} />
+                    <Text style={styles.actionButtonText}>Download Invoice</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
 
-            {isDispatched && (
+            {isDispatched && !isService && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.trackButton]}
                 onPress={handleViewTrackSlip}
@@ -346,7 +354,7 @@ const OrderDetailsModal: React.FC<{
             )}
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -355,44 +363,6 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
-
-  const handleDownloadInvoice = async () => {
-    try {
-      if (!data?.uuid) {
-        throw new Error('No order UUID available');
-      }
-
-      // 1. Get the PDF blob from API
-      let response;
-      if (data?.services?.length) {
-        response = await getinvoiceService({ uuid: data.uuid });
-      } else if (data?.products?.length) {
-        response = await getinvoiceProduct({ uuid: data.uuid });
-      } else {
-        console.log('Invalid order type');
-      }
-
-      // 2. Create a reference to the Blob
-      const blob = response?.data;
-      const base64Data = await blobToBase64(blob);
-
-      // 4. Create file and share
-      const fileName = `invoice_${data.uuid}.pdf`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-
-      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      await Sharing.shareAsync(fileUri, {
-        mimeType: 'application/pdf',
-        dialogTitle: 'Save Invoice',
-        UTI: 'com.adobe.pdf',
-      });
-    } catch (error) {
-      toast.error('Error', 'Failed to download invoice');
-    }
-  };
 
   const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -410,10 +380,9 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   useEffect(() => {
     translateY.value = withTiming(0, {
       duration: 1000,
-      delay,
       easing: Easing.out(Easing.exp),
     });
-    opacity.value = withTiming(1, { duration: 1500, delay });
+    opacity.value = withTiming(1, { duration: 1500 });
   }, [delay, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -421,9 +390,15 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
     opacity: opacity.value,
   }));
 
-  const statusColor = data?.status === 'pending' ? COLORS.error : COLORS.success_lightgreen;
+  const statusColor =
+    data?.status.toLowerCase() === 'completed' ||
+    data.status.toLowerCase() === 'dispatched to courier'
+      ? COLORS.success_lightgreen
+      : COLORS.error;
   const statusText =
-    data?.status === 'Dispatched to Courier' ? data?.status.substring(0, 10) : data?.status;
+    data?.status === 'Dispatched to Courier'
+      ? data?.status.substring(0, 10)
+      : data?.status.toLowerCase();
 
   const itemCount = data?.products?.length || data?.services?.length || 0;
   const itemText = itemCount === 1 ? 'item' : 'items';
@@ -431,12 +406,20 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
   return (
     <>
       <Animated.View style={[animatedStyle, styles.container]}>
-        <TouchableOpacity style={styles.card} onPress={() => setShowDetails(true)}>
+        <View style={styles.card}>
           {/* Image and Status Section */}
           <View style={styles.imageContainer}>
-            <Image source={{ uri: data.image }} style={styles.image} />
+            <Image
+              source={
+                data?.products?.length
+                  ? require('../../assets/spareOrder.jpg')
+                  : require('../../assets/serviceOrder.jpg')
+              }
+              style={styles.image}
+            />
             <View style={styles.statusContainer}>
-              {data.status !== 'pending' ? (
+              {data.status.toLowerCase() === 'completed' ||
+              data.status.toLowerCase() === 'dispatched to courier' ? (
                 <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
               ) : (
                 <Image source={icons.clock} style={styles.statusIcon} tintColor={statusColor} />
@@ -488,7 +471,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
               <Text style={styles.viewButtonText}>View</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Animated.View>
 
       <OrderDetailsModal visible={showDetails} onClose={() => setShowDetails(false)} order={data} />
@@ -540,6 +523,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     ...FONTS.h7,
+    color: 'white',
   },
   contentContainer: {
     flex: 1,
@@ -602,9 +586,9 @@ const styles = StyleSheet.create({
   },
   viewButton: {
     backgroundColor: COLORS.primary_borders,
-    borderRadius: SIZES.small,
+    borderRadius: 6,
     width: 60,
-    paddingVertical: 2,
+    paddingVertical: 6,
     paddingHorizontal: 4,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
@@ -622,21 +606,20 @@ const styles = StyleSheet.create({
   modalFullscreenContainer: {
     flex: 1,
     backgroundColor: COLORS.white,
+    paddingBottom: 0,
+    marginBottom: 0,
   },
-  modalScrollView: {
-    flex: 1,
-  },
-  modalContentContainer: {
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
+
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
     paddingHorizontal: 16,
     paddingTop: 50,
+    paddingBottom: 10,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGrey,
   },
   backButton: {
     padding: 4,
@@ -650,6 +633,26 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 24,
+  },
+  fixedOrderSummary: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.lightGrey,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scrollableContent: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  scrollableContentContainer: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   section: {
     marginBottom: 20,
