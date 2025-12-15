@@ -15,10 +15,11 @@ export const addBookingCartItem = async (data: any) => {
   try {
     const response = await new Client().user.booking_cart.post(data);
     if (response) {
-      return response?.data;
+      return response;
     }
   } catch (error) {
     console.log('Error adding booking cart item:', error);
+    return error;
   }
 };
 

@@ -293,7 +293,7 @@ const Bookings = () => {
               <FlatList
                 data={filteredOrders}
                 keyExtractor={(item: any) => item._id}
-                renderItem={({ item }) => <BookingCard data={item} />}
+                renderItem={({ item }: any) => <BookingCard data={item} />}
                 contentContainerStyle={styles.ordersList}
                 showsVerticalScrollIndicator={false}
                 refreshControl={

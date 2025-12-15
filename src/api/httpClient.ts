@@ -5,7 +5,7 @@ import { Alert } from 'react-native';
 const backEndUrl: string = 'https://sms-node-backend.onrender.com';
 // const backEndUrl: string = 'http://192.168.1.11:3000';
 // const backEndUrl: string = 'https://sms-node-backend-17xb.onrender.com';
-// const backEndUrl: string = 'http://192.168.1.10:3000';
+// const backEndUrl: string = 'https://api.yesmechanic.co';
 
 const Axios = axios.create({
   baseURL: backEndUrl,
@@ -31,6 +31,7 @@ export const setLogoutCallback = (callback: any) => {
 Axios.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.log(error, 'errorrr');
     if (
       error?.response &&
       error?.response?.status === 401 &&
@@ -44,6 +45,8 @@ Axios.interceptors.response.use(
       }
     } else if (error?.response && error?.response?.status === 403) {
       Alert.alert('Profile Details', 'Please complete your profile details.');
+    } else {
+      return error?.response;
     }
 
     if (process.env.NODE_ENV === 'development') {

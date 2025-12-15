@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -21,6 +21,8 @@ import { addServiceCartItems, addSparePartCartItems } from '~/features/bookings/
 import toast from '~/utils/toast';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { getImageUrl } from '~/utils/imageUtils';
+import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
+import { useDispatch } from 'react-redux';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
@@ -71,6 +73,28 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
   }>({ products: [], services: [] });
   const [cartId, setCartId] = useState<string | null>(null);
   const [serviceId, setServiceId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch<any>();
+
+  const spareCart = useMemo(
+    () => bookingCarts?.find((c) => c.type === 'spare') || null,
+    [bookingCarts]
+  );
+
+  const serviceCart = useMemo(
+    () => bookingCarts?.find((c) => c.type === 'service') || null,
+    [bookingCarts]
+  );
+
+  const products = spareCart?.products ?? [];
+  const services = serviceCart?.services ?? [];
+
+  const filteredItems = activeTab === 'Spare Parts' ? products : services;
+
+  const totalAmount = filteredItems.reduce((sum, item) => {
+    const price = Number(item.price) || 0;
+    return sum + price * (item.quantity || 1);
+  }, 0);
 
   // Fix: Proper cart items extraction
   useEffect(() => {
@@ -143,32 +167,15 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
     }
   };
 
-  const calculateTotal = (items: CartItem[]) => {
-    return items.reduce((sum, item) => {
-      const itemPrice = parseInt(item?.price) || 0;
-      const quantity = item?.quantity || 1;
-      return sum + itemPrice * quantity;
-    }, 0);
-  };
-
-  const filteredItems = getFilteredItems();
-  const totalAmount = calculateTotal(filteredItems);
-
   const handleConfirmOrder = useCallback(async () => {
-    if (filteredItems?.length === 0) {
-      toast.error('Empty Cart', 'Your cart is empty. Please add items to proceed.');
-      return;
-    }
+    if (loading) return;
 
     try {
+      setLoading(true);
       if (activeTab === 'Spare Parts') {
         // Find the cart that has products
-        const spareCart = bookingCarts?.find(
-          (cart) => cart?.products && cart?.products?.length > 0
-        );
-
-        if (!spareCart) {
-          toast.error('Error', 'No spare parts cart found.');
+        if (!spareCart?._id) {
+          toast.error('Error', 'Spare parts cart not available.');
           return;
         }
 
@@ -186,12 +193,8 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
         }
       } else if (activeTab === 'Services') {
         // Find the cart that has services
-        const serviceCart = bookingCarts?.find(
-          (cart) => cart?.services && cart?.services?.length > 0
-        );
-
-        if (!serviceCart) {
-          toast.error('Error', 'No services cart found.');
+        if (!serviceCart?._id) {
+          toast.error('Error', 'Service cart not available.');
           return;
         }
 
@@ -208,20 +211,22 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
     } catch (error) {
       console.error('Error confirming order:', error);
       toast.error('Error', 'An error occurred while placing your order.');
+    } finally {
+      setLoading(false);
+      dispatch(getBookingCartItems());
     }
-  }, [activeTab]);
+  }, [activeTab, spareCart, serviceCart, loading]);
 
   const handleDelete = useCallback(
     async (itemId: string) => {
+      if (loading) return;
+
       try {
+        setLoading(true);
         if (activeTab === 'Spare Parts') {
           // Find the current spare cart ID dynamically
-          const spareCart = bookingCarts?.find(
-            (cart) => cart?.products && cart?.products?.length > 0
-          );
-
           if (!spareCart?._id) {
-            toast.error('Error', 'No spare parts cart found.');
+            toast.error('Error', 'Spare parts cart not found.');
             return;
           }
 
@@ -238,12 +243,8 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
           }
         } else if (activeTab === 'Services') {
           // Find the current service cart ID dynamically
-          const serviceCart = bookingCarts?.find(
-            (cart) => cart?.services && cart?.services.length > 0
-          );
-
           if (!serviceCart?._id) {
-            toast.error('Error', 'No services cart found.');
+            toast.error('Error', 'Service cart not found.');
             return;
           }
 
@@ -263,8 +264,11 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
         console.error('Error deleting item:', error);
         toast.error('Error', 'Failed to remove item from cart.');
       }
+      finally{
+        dispatch(getBookingCartItems());
+      }
     },
-    [activeTab, bookingCarts, onChangeCart]
+    [activeTab, spareCart, serviceCart, loading]
   );
 
   const renderItem = (item: CartItem, index: number) => {

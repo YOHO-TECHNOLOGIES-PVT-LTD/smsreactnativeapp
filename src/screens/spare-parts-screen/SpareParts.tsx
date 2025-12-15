@@ -48,7 +48,7 @@ const SpareParts = () => {
     }
   }, [TokenSelector]);
 
-  useEffect(() => {
+  const onRefreshCartCount = () => {
     const getCartCount = () => {
       if (cartItems?.length == 1) {
         return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
@@ -64,6 +64,10 @@ const SpareParts = () => {
       }
     };
     setCartCount(getCartCount() ?? 0);
+  };
+
+  useEffect(() => {
+    onRefreshCartCount();
   }, [cartItems]);
 
   return (
@@ -115,6 +119,8 @@ const SpareParts = () => {
           spareParts={spareParts}
           onRefresh={() => {
             getAllSparePartsDetails();
+            onRefreshCartCount();
+            dispatch(getBookingCartItems());
             TokenSelector && !didFetch.current && dispatch(getBookingCartItems());
           }}
         />

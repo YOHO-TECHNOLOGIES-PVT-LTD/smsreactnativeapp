@@ -23,10 +23,8 @@ import { getinvoiceProduct, getinvoiceService } from '~/features/bookings/servic
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
-import * as Linking from 'expo-linking';
 import toast from '~/utils/toast';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CloudSnow } from 'lucide-react-native';
 import { getImageUrl } from '~/utils/imageUtils';
 
 type BookingType = 'spare' | 'service';
@@ -120,7 +118,7 @@ const OrderDetailsModal: React.FC<{
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
       await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: 'base64',
       });
 
       await Sharing.shareAsync(fileUri, {
@@ -170,7 +168,11 @@ const OrderDetailsModal: React.FC<{
         {/* Fixed Header */}
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <AntDesign name="arrowleft" size={24} color={COLORS.primary} />
+            <Image
+              source={icons.back}
+              style={{ width: 25, height: 25 }}
+              tintColor={COLORS.primary_text}
+            />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Order Details</Text>
           <View style={styles.headerSpacer} />
@@ -615,7 +617,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 15,
     paddingBottom: 10,
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
@@ -674,11 +676,11 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     ...FONTS.body4,
-    color: COLORS.primary_01,
+    color: COLORS.black,
   },
   summaryValue: {
     ...FONTS.body4,
-    color: COLORS.primary_text,
+    color: COLORS.black,
     flexShrink: 1,
     textAlign: 'right',
   },
@@ -724,7 +726,7 @@ const styles = StyleSheet.create({
   },
   itemDescription: {
     ...FONTS.body5,
-    color: COLORS.primary_01,
+    color: COLORS.black,
     marginBottom: 4,
   },
   itemMeta: {
@@ -735,7 +737,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     ...FONTS.body4,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.black,
   },
   itemQuantity: {
     ...FONTS.body5,
@@ -743,7 +745,7 @@ const styles = StyleSheet.create({
   },
   itemDuration: {
     ...FONTS.body5,
-    color: COLORS.primary_01,
+    color: COLORS.black,
   },
   actionButtons: {
     flexDirection: 'row',

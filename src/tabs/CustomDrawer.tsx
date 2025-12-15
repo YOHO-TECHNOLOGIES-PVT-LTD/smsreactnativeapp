@@ -29,6 +29,9 @@ import { selectToken } from '~/features/token/redux/selectors';
 import AnimatedUserDummy from '~/components/profile/AnimatedUserDummy';
 import { selectProfile } from '~/features/profile/reducers/selector';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
+import { Ionicons } from '@expo/vector-icons';
+import { selectCartItems } from '~/features/booking-cart/redux/selectors';
+import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 
 type CustomDrawerItemProps = {
   label: string;
@@ -36,6 +39,7 @@ type CustomDrawerItemProps = {
   isFocused?: boolean;
   onPress: () => void;
   isDivider?: boolean;
+  badgeCount?: number;
 };
 
 const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({
@@ -44,6 +48,7 @@ const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({
   isFocused,
   onPress,
   isDivider = false,
+  badgeCount = 0,
 }) => {
   return (
     <>
@@ -58,17 +63,10 @@ const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({
           borderRadius: SIZES.radius + 2,
           backgroundColor: isFocused ? COLORS.primary_03 : 'transparent',
           marginHorizontal: SIZES.small,
-          // Add subtle shadow for focused items
-          ...(isFocused && {
-            shadowColor: COLORS.primary,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 2,
-          }),
         }}
         onPress={onPress}
         activeOpacity={0.7}>
+        {/* Icon */}
         <View
           style={{
             width: 32,
@@ -88,6 +86,8 @@ const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({
             }}
           />
         </View>
+
+        {/* Label */}
         <Text
           style={{
             flex: 1,
@@ -97,17 +97,31 @@ const CustomDrawerItem: React.FC<CustomDrawerItemProps> = ({
           }}>
           {label}
         </Text>
-        {isFocused && (
+
+        {/* Cart badge (RIGHT END ONLY) */}
+        {badgeCount > 0 && (
           <View
             style={{
-              width: 4,
-              height: 4,
-              borderRadius: 2,
+              minWidth: 18,
+              height: 18,
+              paddingHorizontal: 5,
+              borderRadius: 9,
               backgroundColor: COLORS.primary,
-            }}
-          />
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Text
+              style={{
+                color: COLORS.white,
+                fontSize: 11,
+                fontWeight: '600',
+              }}>
+              {badgeCount}
+            </Text>
+          </View>
         )}
       </TouchableOpacity>
+
       {isDivider && (
         <View
           style={{
@@ -136,10 +150,13 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
   const tokenSelector = useSelector(selectToken);
   const didFetch = useRef(false);
   const profileData = useSelector(selectProfile);
+  const cartItems = useSelector(selectCartItems);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     if (tokenSelector && !didFetch.current) {
       dispatch(getProfileDetailsThunk({}));
+      dispatch(getBookingCartItems());
       didFetch.current = true;
     }
   }, [tokenSelector]);
@@ -170,6 +187,22 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
       setLogoutModalVisible(false);
     }
   };
+
+  useEffect(() => {
+    const getCartCount = () => {
+      if (cartItems?.length == 1) {
+        return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
+      } else if (cartItems?.length > 1) {
+        return (
+          Number(cartItems[0]?.products?.length) +
+          Number(cartItems[0]?.services?.length) +
+          Number(cartItems[1]?.products?.length) +
+          Number(cartItems[1]?.services?.length)
+        );
+      }
+    };
+    setCartCount(getCartCount() ?? 0);
+  }, [dispatch, cartItems]);
 
   return (
     <DrawerContentScrollView
@@ -367,6 +400,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
             icon={selectedTab === 'BookingCart' ? icons.cart_filled : icons.cart_outlined}
             isFocused={selectedTab === 'BookingCart'}
             isDivider={true}
+            badgeCount={cartCount || 0}
             onPress={() => {
               dispatch(setSelectedTab('BookingCart'));
               navigation.navigate('BookingCartScreen');

@@ -128,7 +128,7 @@ export default function RoadsideAssistanceScreen() {
       setuserId(profileData?._id);
       if (profileData?.vehicleInfo?.length > 0) {
         setVehicleList(profileData?.vehicleInfo);
-        setSelectedVehicle(profileData?.vehicleInfo[0]);
+        setSelectedVehicle(profileData?.vehicleInfo?.[0]);
       }
     }
   }, [profileData]);
