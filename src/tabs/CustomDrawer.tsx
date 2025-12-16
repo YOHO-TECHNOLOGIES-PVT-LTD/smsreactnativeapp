@@ -422,7 +422,9 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
                 borderWidth: 1,
                 borderColor: COLORS.error20,
               }}
-              onPress={() => setLogoutModalVisible(true)}
+              onPress={() =>
+                tokenSelector ? setLogoutModalVisible(true) : navigation.navigate('LoginScreen')
+              }
               activeOpacity={0.8}>
               <View
                 style={{
@@ -434,14 +436,18 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
                   alignItems: 'center',
                   marginRight: SIZES.radius,
                 }}>
-                <Image
-                  source={icons.logout}
-                  style={{
-                    width: 18,
-                    height: 18,
-                    tintColor: COLORS.error,
-                  }}
-                />
+                {tokenSelector ? (
+                  <Image
+                    source={icons.logout}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      tintColor: COLORS.error,
+                    }}
+                  />
+                ) : (
+                  <Ionicons name="log-in-outline" size={20} color={COLORS.error} />
+                )}
               </View>
               <Text
                 style={{
@@ -450,7 +456,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
                   ...FONTS.h4,
                   fontWeight: '500',
                 }}>
-                Logout
+                {tokenSelector ? 'Logout' : 'Login'}
               </Text>
             </TouchableOpacity>
           </View>
