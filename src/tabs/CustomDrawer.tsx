@@ -272,7 +272,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
               navigation.navigate('MainLayout');
             }}
             activeOpacity={0.9}>
-            {profileData?.image && !error ? (
+            {tokenSelector && profileData?.image && !error ? (
               <View
                 style={{
                   width: 56,
@@ -314,7 +314,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
                   marginBottom: 2,
                 }}
                 numberOfLines={1}>
-                {profileData?.firstName && profileData?.lastName
+                {tokenSelector && profileData?.firstName && profileData?.lastName
                   ? `${profileData.firstName} ${profileData.lastName}`
                   : 'Customer'}
               </Text>
@@ -325,7 +325,7 @@ const ServiceDrawerContent: React.FC<DrawerContentProps> = ({ navigation }) => {
                   textTransform: 'capitalize',
                 }}
                 numberOfLines={1}>
-                {profileData?.role}
+                {tokenSelector && profileData?.role}
               </Text>
             </View>
             <View

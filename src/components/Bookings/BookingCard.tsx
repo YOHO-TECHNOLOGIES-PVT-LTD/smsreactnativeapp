@@ -20,7 +20,8 @@ import { COLORS, FONTS, icons, SIZES } from '~/constants';
 import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { formatDateandTime, formatDateMonthandYear } from '../../utils/formatDate';
 import { getinvoiceProduct, getinvoiceService } from '~/features/bookings/service';
-import * as FileSystem from 'expo-file-system';
+// import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import toast from '~/utils/toast';
@@ -93,7 +94,7 @@ const OrderDetailsModal: React.FC<{
 }> = ({ visible, onClose, order }) => {
   const isService = !!order?.services;
   const isDispatched = order?.status === 'Dispatched to Courier' || order?.status === 'completed';
-
+  const [isDownload, setIsDownload] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDownloadInvoice = async () => {
@@ -101,7 +102,7 @@ const OrderDetailsModal: React.FC<{
       if (!order?.uuid) {
         throw new Error('No order UUID available');
       }
-
+      setIsDownload(true);
       let response;
       if (order?.services?.length) {
         response = await getinvoiceService({ uuid: order?.uuid });
@@ -110,10 +111,10 @@ const OrderDetailsModal: React.FC<{
       } else {
         throw new Error('Invalid order type');
       }
+
       const blob = response?.data;
       const base64Data = await blobToBase64(blob);
 
-      // 4. Create file and share
       const fileName = `invoice_${order?.uuid}.pdf`;
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
@@ -126,9 +127,12 @@ const OrderDetailsModal: React.FC<{
         dialogTitle: 'Save Invoice',
         UTI: 'com.adobe.pdf',
       });
+
       toast.success('Success', 'Invoice downloaded successfully!');
     } catch (error) {
       toast.error('Error', 'Failed to download invoice');
+    } finally {
+      setIsDownload(false);
     }
   };
 
@@ -237,7 +241,7 @@ const OrderDetailsModal: React.FC<{
                       </Text>
                       <View style={styles.itemMeta}>
                         <Text style={styles.itemPrice}>₹{service?.price.toFixed(2)}</Text>
-                        <Text style={styles.itemDuration}>Duration: {service?.duration} hours</Text>
+                        <Text style={styles.itemDuration}>Duration: {service?.duration}</Text>
                       </View>
                     </View>
                   </View>
@@ -331,7 +335,9 @@ const OrderDetailsModal: React.FC<{
                 ) : (
                   <>
                     <MaterialIcons name="file-download" size={20} color={COLORS.white} />
-                    <Text style={styles.actionButtonText}>Download Invoice</Text>
+                    <Text style={styles.actionButtonText}>
+                      {isDownload ? 'Downloading...' : 'Download Invoice'}
+                    </Text>
                   </>
                 )}
               </TouchableOpacity>

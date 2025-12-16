@@ -362,7 +362,8 @@ const HomePage = () => {
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: 1,
+              marginBottom: tokenSelector ? 1 : 5,
+              marginVertical: tokenSelector ? 0 : 5,
             }}>
             <TouchableOpacity onPress={() => navigation.openDrawer()}>
               {/* <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
@@ -508,43 +509,48 @@ const HomePage = () => {
             <Text style={[styles.sectionTitle, {}]}>Special Offers</Text>
             <View style={styles.offersContainer}>
               {announcements?.length ? (
-                announcements?.map((offer: any) => (
-                  <Animated.View key={offer?._id} style={[styles.offerCard, { opacity: fadeAnim }]}>
-                    <View style={styles.offerBadge}>
-                      <FontAwesome name="tag" size={14} color={COLORS.white} />
-                    </View>
-                    <Image
-                      source={
-                        offer?.image
-                          ? { uri: getImageUrl(offer?.image) }
-                          : require('../../assets/home/offer.jpg')
-                      }
-                      style={{
-                        width: '100%',
-                        height: 75,
-                        backgroundColor: COLORS.primary_04,
-                        borderRadius: 5,
-                        marginBottom: 5,
-                      }}
-                    />
-                    <View
-                      style={{
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}>
-                      <Text style={styles.offerTitle}>{offer?.title}</Text>
-                      <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
-                        {' '}
-                        Offer: ₹{offer?.offer}
-                      </Text>
-                    </View>
-                    <Text style={styles.offerDiscount}>{offer?.description}</Text>
-                    {/* <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
+                announcements
+                  ?.reverse()
+                  ?.slice(0, 4)
+                  ?.map((offer: any) => (
+                    <Animated.View
+                      key={offer?._id}
+                      style={[styles.offerCard, { opacity: fadeAnim }]}>
+                      <View style={styles.offerBadge}>
+                        <FontAwesome name="tag" size={14} color={COLORS.white} />
+                      </View>
+                      <Image
+                        source={
+                          offer?.image
+                            ? { uri: getImageUrl(offer?.image) }
+                            : require('../../assets/home/offer.jpg')
+                        }
+                        style={{
+                          width: '100%',
+                          height: 75,
+                          backgroundColor: COLORS.primary_04,
+                          borderRadius: 5,
+                          marginBottom: 5,
+                        }}
+                      />
+                      <View
+                        style={{
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}>
+                        <Text style={styles.offerTitle}>{offer?.title}</Text>
+                        <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
+                          {' '}
+                          Offer: ₹{offer?.offer}
+                        </Text>
+                      </View>
+                      <Text style={styles.offerDiscount}>{offer?.description}</Text>
+                      {/* <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
                       <Text style={styles.offerButtonText}>Claim Offer</Text>
                     </TouchableOpacity> */}
-                  </Animated.View>
-                ))
+                    </Animated.View>
+                  ))
               ) : (
                 <View
                   style={{

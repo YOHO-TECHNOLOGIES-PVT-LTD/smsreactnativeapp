@@ -188,20 +188,22 @@ const Bookings = () => {
           <View style={{ flexDirection: 'row', gap: 15, marginRight: 8 }}>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              <View
-                style={{
-                  width: 15,
-                  height: 15,
-                  backgroundColor: COLORS.primary,
-                  borderRadius: 25,
-                  position: 'absolute',
-                  right: -2,
-                  top: -6,
-                }}>
-                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>
-                  {cartCount}
-                </Text>
-              </View>
+              {cartCount > 0 && (
+                <View
+                  style={{
+                    width: 15,
+                    height: 15,
+                    backgroundColor: COLORS.primary,
+                    borderRadius: 25,
+                    position: 'absolute',
+                    right: -2,
+                    top: -6,
+                  }}>
+                  <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>
+                    {cartCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>

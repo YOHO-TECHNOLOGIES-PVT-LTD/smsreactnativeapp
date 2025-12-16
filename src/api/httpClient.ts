@@ -31,7 +31,7 @@ export const setLogoutCallback = (callback: any) => {
 Axios.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.log(error, 'errorrr');
+    console.log(error?.response, 'HTTP Error');
     if (
       error?.response &&
       error?.response?.status === 401 &&
@@ -88,6 +88,14 @@ class HttpClient {
     const response = await Axios.get(url, {
       params,
       responseType: 'blob',
+    });
+    return response;
+  }
+
+  async fileGetArrayBuffer(url: string, params?: any) {
+    const response = await Axios.get(url, {
+      params,
+      responseType: 'arraybuffer',
     });
     return response;
   }

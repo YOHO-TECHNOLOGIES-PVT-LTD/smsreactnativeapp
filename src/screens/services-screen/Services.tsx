@@ -670,9 +670,9 @@ const Services = () => {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              <View style={styles.cartBadge}>
+              {cartCount > 0 && <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{cartCount}</Text>
-              </View>
+              </View>}
             </TouchableOpacity>
           </View>
         </View>
