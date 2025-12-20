@@ -12,6 +12,7 @@ import {
   TextInput,
   ImageBackground,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -183,7 +184,7 @@ const Services = () => {
     fetchAllServices();
   }, [dispatch]);
 
-  useEffect(() => {
+  const onRefreshCartCount = () => {
     const getCartCount = () => {
       if (cartItems?.length == 1) {
         return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
@@ -197,6 +198,10 @@ const Services = () => {
       }
     };
     setCartCount(getCartCount() ?? 0);
+  };
+
+  useEffect(() => {
+    onRefreshCartCount();
   }, [dispatch, cartItems]);
 
   // Reset booking modal states when it opens/closes
@@ -263,7 +268,9 @@ const Services = () => {
 
       const response = await addBookingCartItem(data);
 
-      if (response) {
+      if (response?.message === 'services already added yoru cart' && response?.success === true) {
+        Alert.alert('Info', 'Service already in cart');
+      } else if (response?.data) {
         toast.success('Booked', `${selectedService?.service_name} has been booked`);
         setAdded(true);
         setBookingModalVisible(false);
@@ -272,12 +279,15 @@ const Services = () => {
         setSelectedVehicleIndex(null);
         setStartTime('');
         setEndTime('');
+        dispatch(getBookingCartItems());
       } else {
         toast.error('Error', 'Something went wrong. Try again.');
       }
     } catch (error) {
       console.log('Error adding to cart:', error);
       toast.error('Error', 'Failed to add service to cart.');
+    } finally {
+      onRefreshCartCount();
     }
   };
 
@@ -660,9 +670,9 @@ const Services = () => {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              <View style={styles.cartBadge}>
+              {cartCount > 0 && <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{cartCount}</Text>
-              </View>
+              </View>}
             </TouchableOpacity>
           </View>
         </View>

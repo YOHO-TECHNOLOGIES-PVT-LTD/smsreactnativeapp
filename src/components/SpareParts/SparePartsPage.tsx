@@ -157,7 +157,7 @@ const SparePartsPage: React.FC<SparePartsPageProps> = ({ spareParts, onRefresh }
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
             <View style={styles.cardWrapper} key={index}>
-              <SparePartsCard part={item} />
+              <SparePartsCard part={item} onRefresh={handleRefresh} />
             </View>
           )}
           numColumns={2}

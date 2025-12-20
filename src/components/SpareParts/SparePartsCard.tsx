@@ -38,7 +38,7 @@ type SparePart = {
 
 const { width } = Dimensions.get('window');
 
-const SparePartsCard = ({ part }: any) => {
+const SparePartsCard = ({ part, onRefresh }: any) => {
   const [error, setError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -109,6 +109,7 @@ const SparePartsCard = ({ part }: any) => {
       setModalVisible(false);
       setQuantity(1);
       setAdded(false);
+      onRefresh();
     }
   };
 

@@ -14,7 +14,7 @@ import { COLORS, FONTS } from '~/constants/index';
 import MarinaMap from '~/components/SosScreen/MarinaMap';
 import SosButtons from '~/components/SosScreen/Buttons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Fontisto } from '@expo/vector-icons';
 import PhoneDialerButton from '~/components/PhoneDialerButton';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -146,7 +146,7 @@ const SOS = () => {
           </TouchableOpacity>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity onPress={() => setShowSearchBar((prev) => !prev)}>
-              <AntDesign name="search1" size={24} color={COLORS.primary} />
+              <Fontisto name="search" size={24} color={COLORS.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={{ marginRight: 8 }}>
               <PhoneDialerButton />
@@ -170,7 +170,7 @@ const SOS = () => {
                 setSearchText('');
                 setFilteredIssues([]);
               }}>
-              <AntDesign name="close" size={20} color={COLORS.primary} style={{ marginLeft: 10 }} />
+              <AntDesign name="close" size={16} color={COLORS.primary} style={{ marginLeft: 10 }} />
             </TouchableOpacity>
           </View>
         )}

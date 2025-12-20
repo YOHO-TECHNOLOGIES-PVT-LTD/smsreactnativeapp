@@ -48,7 +48,7 @@ const SpareParts = () => {
     }
   }, [TokenSelector]);
 
-  useEffect(() => {
+  const onRefreshCartCount = () => {
     const getCartCount = () => {
       if (cartItems?.length == 1) {
         return Number(cartItems[0]?.products?.length) + Number(cartItems[0]?.services?.length);
@@ -64,6 +64,10 @@ const SpareParts = () => {
       }
     };
     setCartCount(getCartCount() ?? 0);
+  };
+
+  useEffect(() => {
+    onRefreshCartCount();
   }, [cartItems]);
 
   return (
@@ -94,20 +98,22 @@ const SpareParts = () => {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              <View
-                style={{
-                  width: 15,
-                  height: 15,
-                  backgroundColor: COLORS.primary,
-                  borderRadius: 25,
-                  position: 'absolute',
-                  right: -2,
-                  top: -6,
-                }}>
-                <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>
-                  {cartCount}
-                </Text>
-              </View>
+              {cartCount > 0 && (
+                <View
+                  style={{
+                    width: 15,
+                    height: 15,
+                    backgroundColor: COLORS.primary,
+                    borderRadius: 25,
+                    position: 'absolute',
+                    right: -2,
+                    top: -6,
+                  }}>
+                  <Text style={{ color: COLORS.white, textAlign: 'center', ...FONTS.body6 }}>
+                    {cartCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -115,6 +121,8 @@ const SpareParts = () => {
           spareParts={spareParts}
           onRefresh={() => {
             getAllSparePartsDetails();
+            onRefreshCartCount();
+            dispatch(getBookingCartItems());
             TokenSelector && !didFetch.current && dispatch(getBookingCartItems());
           }}
         />

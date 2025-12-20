@@ -20,13 +20,12 @@ import { COLORS, FONTS, icons, SIZES } from '~/constants';
 import { AntDesign, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { formatDateandTime, formatDateMonthandYear } from '../../utils/formatDate';
 import { getinvoiceProduct, getinvoiceService } from '~/features/bookings/service';
-import * as FileSystem from 'expo-file-system';
+// import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
-import * as Linking from 'expo-linking';
 import toast from '~/utils/toast';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CloudSnow } from 'lucide-react-native';
 import { getImageUrl } from '~/utils/imageUtils';
 
 type BookingType = 'spare' | 'service';
@@ -95,7 +94,7 @@ const OrderDetailsModal: React.FC<{
 }> = ({ visible, onClose, order }) => {
   const isService = !!order?.services;
   const isDispatched = order?.status === 'Dispatched to Courier' || order?.status === 'completed';
-
+  const [isDownload, setIsDownload] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDownloadInvoice = async () => {
@@ -103,7 +102,7 @@ const OrderDetailsModal: React.FC<{
       if (!order?.uuid) {
         throw new Error('No order UUID available');
       }
-
+      setIsDownload(true);
       let response;
       if (order?.services?.length) {
         response = await getinvoiceService({ uuid: order?.uuid });
@@ -112,15 +111,15 @@ const OrderDetailsModal: React.FC<{
       } else {
         throw new Error('Invalid order type');
       }
+
       const blob = response?.data;
       const base64Data = await blobToBase64(blob);
 
-      // 4. Create file and share
       const fileName = `invoice_${order?.uuid}.pdf`;
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
       await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: 'base64',
       });
 
       await Sharing.shareAsync(fileUri, {
@@ -128,9 +127,12 @@ const OrderDetailsModal: React.FC<{
         dialogTitle: 'Save Invoice',
         UTI: 'com.adobe.pdf',
       });
+
       toast.success('Success', 'Invoice downloaded successfully!');
     } catch (error) {
       toast.error('Error', 'Failed to download invoice');
+    } finally {
+      setIsDownload(false);
     }
   };
 
@@ -170,7 +172,11 @@ const OrderDetailsModal: React.FC<{
         {/* Fixed Header */}
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <AntDesign name="arrowleft" size={24} color={COLORS.primary} />
+            <Image
+              source={icons.back}
+              style={{ width: 25, height: 25 }}
+              tintColor={COLORS.primary_text}
+            />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Order Details</Text>
           <View style={styles.headerSpacer} />
@@ -235,7 +241,7 @@ const OrderDetailsModal: React.FC<{
                       </Text>
                       <View style={styles.itemMeta}>
                         <Text style={styles.itemPrice}>₹{service?.price.toFixed(2)}</Text>
-                        <Text style={styles.itemDuration}>Duration: {service?.duration} hours</Text>
+                        <Text style={styles.itemDuration}>Duration: {service?.duration}</Text>
                       </View>
                     </View>
                   </View>
@@ -329,7 +335,9 @@ const OrderDetailsModal: React.FC<{
                 ) : (
                   <>
                     <MaterialIcons name="file-download" size={20} color={COLORS.white} />
-                    <Text style={styles.actionButtonText}>Download Invoice</Text>
+                    <Text style={styles.actionButtonText}>
+                      {isDownload ? 'Downloading...' : 'Download Invoice'}
+                    </Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -615,7 +623,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 15,
     paddingBottom: 10,
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
@@ -674,11 +682,11 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     ...FONTS.body4,
-    color: COLORS.primary_01,
+    color: COLORS.black,
   },
   summaryValue: {
     ...FONTS.body4,
-    color: COLORS.primary_text,
+    color: COLORS.black,
     flexShrink: 1,
     textAlign: 'right',
   },
@@ -724,7 +732,7 @@ const styles = StyleSheet.create({
   },
   itemDescription: {
     ...FONTS.body5,
-    color: COLORS.primary_01,
+    color: COLORS.black,
     marginBottom: 4,
   },
   itemMeta: {
@@ -735,7 +743,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     ...FONTS.body4,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.black,
   },
   itemQuantity: {
     ...FONTS.body5,
@@ -743,7 +751,7 @@ const styles = StyleSheet.create({
   },
   itemDuration: {
     ...FONTS.body5,
-    color: COLORS.primary_01,
+    color: COLORS.black,
   },
   actionButtons: {
     flexDirection: 'row',

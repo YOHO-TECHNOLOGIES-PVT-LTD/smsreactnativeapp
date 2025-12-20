@@ -934,6 +934,7 @@ const Profile = () => {
         }));
         setFormErrors({});
         fetchUserProfile();
+        dispatch(getProfileDetailsThunk({}));
         toast.success('Success', 'Vehicle added successfully!');
       }
     } catch (error) {

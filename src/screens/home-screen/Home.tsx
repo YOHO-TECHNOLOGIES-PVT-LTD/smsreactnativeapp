@@ -40,6 +40,8 @@ import SparePartsCard from '~/components/SpareParts/SparePartsCard';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 import { selectProfile } from '~/features/profile/reducers/selector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
+import { selectCartItems } from '~/features/booking-cart/redux/selectors';
 
 const carlogos = [
   icons.carlogo1,
@@ -70,6 +72,7 @@ const HomePage = () => {
   const [announcements, setAnnouncements] = useState([]);
   const profileData = useSelector(selectProfile);
   const didFetch = useRef(false);
+  const cartItems = useSelector(selectCartItems);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -135,6 +138,7 @@ const HomePage = () => {
   useEffect(() => {
     if (tokenSelector && !didFetch.current) {
       dispatch(getProfileDetailsThunk({}));
+      dispatch(getBookingCartItems());
       didFetch.current = true;
     }
   }, [tokenSelector]);
@@ -358,14 +362,26 @@ const HomePage = () => {
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: 1,
+              marginBottom: tokenSelector ? 1 : 5,
+              marginVertical: tokenSelector ? 0 : 5,
             }}>
             <TouchableOpacity onPress={() => navigation.openDrawer()}>
+              {/* <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartCount}</Text>
+              </View> */}
               <Image
-                source={require('../../assets/home/LOGO.png')}
-                style={{ width: 145, height: 25, position: 'relative', top: tokenSelector ? 0 : 0 }}
+                source={icons.menu}
+                tintColor={COLORS.primary}
+                style={{ width: 25, height: 25 }}
               />
             </TouchableOpacity>
+            {/* <TouchableOpacity onPress={() => navigation.openDrawer()}> */}
+            <Image
+              source={require('../../assets/home/LOGO.png')}
+              style={{ width: 145, height: 25, position: 'relative', top: tokenSelector ? 0 : 0 }}
+            />
+            {/* </TouchableOpacity> */}
             {tokenSelector ? (
               <View style={{}}>
                 <View style={{ flexDirection: 'row' }}>
@@ -493,43 +509,48 @@ const HomePage = () => {
             <Text style={[styles.sectionTitle, {}]}>Special Offers</Text>
             <View style={styles.offersContainer}>
               {announcements?.length ? (
-                announcements?.map((offer: any) => (
-                  <Animated.View key={offer?._id} style={[styles.offerCard, { opacity: fadeAnim }]}>
-                    <View style={styles.offerBadge}>
-                      <FontAwesome name="tag" size={14} color={COLORS.white} />
-                    </View>
-                    <Image
-                      source={
-                        offer?.image
-                          ? { uri: getImageUrl(offer?.image) }
-                          : require('../../assets/home/offer.jpg')
-                      }
-                      style={{
-                        width: '100%',
-                        height: 75,
-                        backgroundColor: COLORS.primary_04,
-                        borderRadius: 5,
-                        marginBottom: 5,
-                      }}
-                    />
-                    <View
-                      style={{
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}>
-                      <Text style={styles.offerTitle}>{offer?.title}</Text>
-                      <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
-                        {' '}
-                        Offer: ₹{offer?.offer}
-                      </Text>
-                    </View>
-                    <Text style={styles.offerDiscount}>{offer?.description}</Text>
-                    {/* <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
+                announcements
+                  ?.reverse()
+                  ?.slice(0, 4)
+                  ?.map((offer: any) => (
+                    <Animated.View
+                      key={offer?._id}
+                      style={[styles.offerCard, { opacity: fadeAnim }]}>
+                      <View style={styles.offerBadge}>
+                        <FontAwesome name="tag" size={14} color={COLORS.white} />
+                      </View>
+                      <Image
+                        source={
+                          offer?.image
+                            ? { uri: getImageUrl(offer?.image) }
+                            : require('../../assets/home/offer.jpg')
+                        }
+                        style={{
+                          width: '100%',
+                          height: 75,
+                          backgroundColor: COLORS.primary_04,
+                          borderRadius: 5,
+                          marginBottom: 5,
+                        }}
+                      />
+                      <View
+                        style={{
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}>
+                        <Text style={styles.offerTitle}>{offer?.title}</Text>
+                        <Text style={[styles.offerDiscount, { color: COLORS.success_lightgreen }]}>
+                          {' '}
+                          Offer: ₹{offer?.offer}
+                        </Text>
+                      </View>
+                      <Text style={styles.offerDiscount}>{offer?.description}</Text>
+                      {/* <TouchableOpacity style={styles.offerButton} onPress={handleClaimOffer}>
                       <Text style={styles.offerButtonText}>Claim Offer</Text>
                     </TouchableOpacity> */}
-                  </Animated.View>
-                ))
+                    </Animated.View>
+                  ))
               ) : (
                 <View
                   style={{

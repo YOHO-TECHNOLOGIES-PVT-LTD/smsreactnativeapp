@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
@@ -128,7 +129,7 @@ export default function RoadsideAssistanceScreen() {
       setuserId(profileData?._id);
       if (profileData?.vehicleInfo?.length > 0) {
         setVehicleList(profileData?.vehicleInfo);
-        setSelectedVehicle(profileData?.vehicleInfo[0]);
+        setSelectedVehicle(profileData?.vehicleInfo?.[0]);
       }
     }
   }, [profileData]);
@@ -197,8 +198,8 @@ export default function RoadsideAssistanceScreen() {
         longitude: currentLocation.coords.longitude,
       });
 
-      let formatted = `${address.name || ''}, ${address.street || ''}, ${address.city || ''}, ${address.region || ''}`;
-      setLocationText(formatted);
+      let formatted = address?.formattedAddress;
+      setLocationText(formatted || 'Location not found');
     } catch (err) {
       console.error('Error fetching location', err);
       setLocationText('Unable to fetch location');
@@ -263,12 +264,32 @@ export default function RoadsideAssistanceScreen() {
 
   const pickImage = async () => {
     try {
+      // Block if already 3 images
+      if (images?.length >= 3) {
+        toast.error('Limit Reached', 'You can upload a maximum of 3 images');
+        return;
+      }
+
       let result: any = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 1,
         allowsMultipleSelection: true,
+        selectionLimit: 3 - images?.length,
       });
+
+      if (result.canceled) return;
+
+      if (result.assets.length === 0) {
+        toast.error('Error', 'Please select at least one image');
+        return;
+      }
+
+      // If user tries to exceed limit
+      if (result.assets.length + images.length > 3) {
+        toast.error('Limit Exceeded', 'You can select only up to 3 images');
+        return;
+      }
 
       if (!result.canceled) {
         // Take only first 3 images
@@ -321,8 +342,8 @@ export default function RoadsideAssistanceScreen() {
   };
 
   const takePhoto = async () => {
-    if (images.length >= 3) {
-      alert(`You already have ${images.length} images. Maximum allowed is 3.`);
+    if (images?.length >= 3) {
+      alert(`You already have ${images?.length} images. Maximum allowed is 3.`);
       return;
     }
 
@@ -358,6 +379,7 @@ export default function RoadsideAssistanceScreen() {
       ...prev,
       [field]: value,
     }));
+
     // Clear validation error when user starts typing
     if (validationErrors[field as keyof ValidationErrors]) {
       setValidationErrors((prev) => ({
@@ -403,6 +425,15 @@ export default function RoadsideAssistanceScreen() {
       payload.relationship = otherDetails.relationship;
       payload.additionalNotes = otherDetails.additionalNotes;
       payload.location = otherDetails.location;
+    }
+
+    console.log('SOS Payload:', payload);
+
+    if (payload.image.length === 0) {
+      toast.error('Error', 'Please upload at least one image.');
+      Alert.alert('Error', 'Please upload at least one image.');
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -552,7 +583,7 @@ export default function RoadsideAssistanceScreen() {
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Blood Group:</Text>
-                <Text style={styles.detailValue}>{user.bloodGroup || 'N/A'}</Text>
+                <Text style={styles.detailValue}>{user.bloodGroup || '-'}</Text>
               </View>
 
               <Text style={styles.sectionTitle}>Vehicle Details</Text>
@@ -770,9 +801,7 @@ export default function RoadsideAssistanceScreen() {
                           longitude: currentLocation.coords.longitude,
                         });
 
-                        let formatted = `${address.name || ''}${address.street ? ', ' + address.street : ''}${
-                          address.city ? ', ' + address.city : ''
-                        }${address.region ? ', ' + address.region : ''}`;
+                        let formatted = address?.formattedAddress;
 
                         handleOtherDetailsChange('location', formatted);
                       } catch (err) {
