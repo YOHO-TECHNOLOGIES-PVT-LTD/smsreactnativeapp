@@ -80,7 +80,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
-const COLORS1 = {
+export const COLORS1 = {
   // Primary colors1 - Refined Deep Crimson Theme
   primary: '#0050A5',
   primaryLight: '#4566de',
@@ -303,13 +303,13 @@ interface FormErrors {
   address2?: string;
   city?: string;
   state?: string;
-  vehicles?: Array<{
+  vehicles?: {
     registerNumber?: string;
     company?: string;
     model?: string;
     year?: string;
     fuleType?: string;
-  }>;
+  }[];
   newVehicle?: {
     registerNumber?: string;
     company?: string;
@@ -497,7 +497,7 @@ const Profile = () => {
           setCurrentImageIndex(newIndex);
         }
       },
-      onPanResponderRelease: () => {},
+      onPanResponderRelease: () => { },
     })
   ).current;
 
@@ -623,7 +623,7 @@ const Profile = () => {
   };
 
   // Utility Functions
-  const saveUserProfileImage = (imageUri: string) => {};
+  const saveUserProfileImage = (imageUri: string) => { };
 
   const getUserProfileImage = () => {
     return null;
@@ -1120,7 +1120,7 @@ const Profile = () => {
       <>
         {vehicle?.map((v, index) => (
           <View style={styles.menuItem} key={index}>
-            <TouchableOpacity style={styles.menuItemContent} onPress={() => {}} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.menuItemContent} onPress={() => { }} activeOpacity={0.8}>
               <View style={[styles.menuItemIcon, styles.vehicleIconContainer]}>
                 <Car size={20} color={COLORS.primary} />
               </View>
@@ -1595,7 +1595,7 @@ const Profile = () => {
                     <Text style={styles.profileName}>
                       {(TokenSelector
                         ? profileData?.firstName != null &&
-                          profileData?.firstName + ' ' + profileData?.lastName
+                        profileData?.firstName + ' ' + profileData?.lastName
                         : '') || 'Customer'}
                     </Text>
                     {TokenSelector && <Verified size={16} color={COLORS1.success} />}

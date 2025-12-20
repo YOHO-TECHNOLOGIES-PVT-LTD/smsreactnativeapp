@@ -13,12 +13,13 @@ import {
   ImageBackground,
   RefreshControl,
   Alert,
+  Animated,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { COLORS, FONTS, icons } from '~/constants';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { Clock } from 'lucide-react-native';
+import { Clock, X } from 'lucide-react-native';
 import { getAllServiceCategories } from '~/features/services-page/service';
 import { addBookingCartItem } from '~/features/booking-cart/service';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +36,33 @@ import { getImageUrl } from '~/utils/imageUtils';
 import { selectProfile } from '~/features/profile/reducers/selector';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS1 } from '../profile-screen/Profile';
+import { updateUserProfileDetails } from '~/features/profile/service';
+
+interface FormErrors {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  vehicles?: {
+    registerNumber?: string;
+    company?: string;
+    model?: string;
+    year?: string;
+    fuleType?: string;
+  }[];
+  newVehicle?: {
+    registerNumber?: string;
+    company?: string;
+    model?: string;
+    year?: string;
+    fuleType?: string;
+  };
+}
 
 type ServiceCategory = {
   uuid: string;
@@ -95,6 +123,25 @@ const Services = () => {
   const [showTimePicker, setShowTimePicker] = useState<false | 'start' | 'end'>(false);
   const profileData = useSelector(selectProfile);
   const didFetch = useRef(false);
+  const [formData, setFormData] = useState<any>({
+    firstName: '',
+    lastName: '',
+    contact_info: {
+      city: '',
+      state: '',
+      address1: '',
+      address2: '',
+    },
+    vehicleInfo: [
+      {
+        registerNumber: '',
+        model: '',
+        company: '',
+        fuleType: '',
+        year: '',
+      },
+    ],
+  });
 
   useFocusEffect(
     React.useCallback(() => {
@@ -104,7 +151,7 @@ const Services = () => {
       setSelectedVehicleIndex(null);
       setSelectedBookingType('general');
 
-      return () => {};
+      return () => { };
     }, [])
   );
 
@@ -199,6 +246,7 @@ const Services = () => {
     };
     setCartCount(getCartCount() ?? 0);
   };
+  const headerOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     onRefreshCartCount();
@@ -256,11 +304,11 @@ const Services = () => {
         schedule_date:
           selectedBookingType === 'schedule'
             ? selectedDate.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
             : null,
         preferredTime: selectedBookingType === 'schedule' ? { startTime, endTime } : null,
         vehicle: selectedVehicleIndex,
@@ -280,6 +328,7 @@ const Services = () => {
         setStartTime('');
         setEndTime('');
         dispatch(getBookingCartItems());
+        navigation("BookingCartScreen")
       } else {
         toast.error('Error', 'Something went wrong. Try again.');
       }
@@ -288,6 +337,34 @@ const Services = () => {
       toast.error('Error', 'Failed to add service to cart.');
     } finally {
       onRefreshCartCount();
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    Animated.sequence([
+      Animated.timing(headerOpacity, {
+        toValue: 0.8,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    try {
+      console.log(formData, "checking form")
+      const response: any = await updateUserProfileDetails(formData);
+      if (response) {
+        setFormErrors({});
+        dispatch(getProfileDetailsThunk({}));
+        toast.success('Success', 'Profile updated successfully!');
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error('Error', 'Failed to update profile');
     }
   };
 
@@ -346,6 +423,15 @@ const Services = () => {
       default:
         return null;
     }
+  };
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+
+  const clearError = (field: string) => {
+    setFormErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[field as keyof FormErrors];
+      return newErrors;
+    });
   };
 
   const renderBookingModal = () => (
@@ -457,6 +543,283 @@ const Services = () => {
                 </View>
               ) : (
                 <View style={{ marginTop: 15 }}>
+                  <View style={styles.modalContainer}>
+                    <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>First Name *</Text>
+                        <TextInput
+                          style={[styles.textInput, formErrors.firstName && styles.textInputError]}
+                          value={formData?.firstName}
+                          onChangeText={(name) => {
+                            setFormData({ ...formData, firstName: name });
+                            if (formErrors.firstName) clearError('firstName');
+                          }}
+                          placeholder="Enter your first name"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                        {formErrors.firstName && (
+                          <Text style={styles.errorText}>{formErrors.firstName}</Text>
+                        )}
+                      </View>
+
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Last Name *</Text>
+                        <TextInput
+                          style={[styles.textInput, formErrors.lastName && styles.textInputError]}
+                          value={formData?.lastName}
+                          onChangeText={(name) => {
+                            setFormData({ ...formData, lastName: name });
+                            if (formErrors.lastName) clearError('lastName');
+                          }}
+                          placeholder="Enter your last name"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                        {formErrors.lastName && (
+                          <Text style={styles.errorText}>{formErrors.lastName}</Text>
+                        )}
+                      </View>
+
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Email Address *</Text>
+                        <TextInput
+                          style={[styles.textInput, formErrors.email && styles.textInputError]}
+                          value={formData?.email}
+                          onChangeText={(text) => {
+                            setFormData({ ...formData, email: text });
+                            if (formErrors.email) clearError('email');
+                          }}
+                          placeholder="Enter your email"
+                          placeholderTextColor={COLORS.primary_03}
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                        />
+                        {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
+                      </View>
+
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Address 1 *</Text>
+                        <TextInput
+                          style={[styles.textInput, formErrors.address1 && styles.textInputError]}
+                          value={formData?.contact_info?.address1}
+                          onChangeText={(text) => {
+                            setFormData({
+                              ...formData,
+                              contact_info: { ...formData.contact_info, address1: text },
+                            });
+                            if (formErrors.address1) clearError('address1');
+                          }}
+                          placeholder="Enter your address 1"
+                          placeholderTextColor={COLORS.primary_03}
+                          multiline={true}
+                          numberOfLines={2}
+                        />
+                        {formErrors.address1 && (
+                          <Text style={styles.errorText}>{formErrors.address1}</Text>
+                        )}
+                      </View>
+
+                      {/* Address 2 Field */}
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>Address 2</Text>
+                        <TextInput
+                          style={[styles.textInput, formErrors.address2 && styles.textInputError]}
+                          value={formData?.contact_info?.address2}
+                          onChangeText={(text) => {
+                            setFormData({
+                              ...formData,
+                              contact_info: { ...formData.contact_info, address2: text },
+                            });
+                            if (formErrors.address2) clearError('address2');
+                          }}
+                          placeholder="Enter your address 2 (optional)"
+                          placeholderTextColor={COLORS.primary_03}
+                          multiline={true}
+                          numberOfLines={2}
+                        />
+                        {formErrors.address2 && (
+                          <Text style={styles.errorText}>{formErrors.address2}</Text>
+                        )}
+                      </View>
+
+                      {/* City Field */}
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>City *</Text>
+                        <TextInput
+                          style={[styles.textInput, formErrors.city && styles.textInputError]}
+                          value={formData?.contact_info?.city}
+                          onChangeText={(text) => {
+                            setFormData({
+                              ...formData,
+                              contact_info: { ...formData.contact_info, city: text },
+                            });
+                            if (formErrors.city) clearError('city');
+                          }}
+                          placeholder="Enter your city"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                        {formErrors.city && <Text style={styles.errorText}>{formErrors.city}</Text>}
+                      </View>
+
+                      {/* State Field */}
+                      <View style={styles.formSection}>
+                        <Text style={styles.fieldLabel}>State *</Text>
+                        <TextInput
+                          style={[styles.textInput, formErrors.state && styles.textInputError]}
+                          value={formData?.contact_info?.state}
+                          onChangeText={(text) => {
+                            setFormData({
+                              ...formData,
+                              contact_info: { ...formData.contact_info, state: text },
+                            });
+                            if (formErrors.state) clearError('state');
+                          }}
+                          placeholder="Enter your state"
+                          placeholderTextColor={COLORS.primary_03}
+                        />
+                        {formErrors.state && <Text style={styles.errorText}>{formErrors.state}</Text>}
+                      </View>
+
+                      {/* Vehicle Information */}
+                      {Array.isArray(formData?.vehicleInfo) &&
+                        formData?.vehicleInfo?.map((vehicle: any, index: any) => (
+                          <View key={index}>
+                            <View
+                              style={{
+                                borderTopWidth: 1,
+                                borderBottomWidth: 1,
+                                borderBottomColor: COLORS.primary_04,
+                                borderTopColor: COLORS.primary_04,
+                                paddingVertical: 7,
+                                backgroundColor: COLORS.grey08,
+                                marginVertical: 5,
+                              }}>
+                              <Text
+                                style={{
+                                  textAlign: 'center',
+                                  ...FONTS.body4,
+                                  fontWeight: 500,
+                                  color: COLORS.primary_text,
+                                }}>
+                                Vehicle {index + 1}
+                              </Text>
+                            </View>
+
+                            <View style={styles.formSection}>
+                              <Text style={styles.fieldLabel}>Register Number</Text>
+                              <TextInput
+                                style={[
+                                  styles.textInput,
+                                  formErrors.vehicles?.[index]?.registerNumber && styles.textInputError,
+                                ]}
+                                value={vehicle.registerNumber}
+                                onChangeText={(text) => {
+                                  const updatedVehicleInfo = [...formData.vehicleInfo];
+                                  updatedVehicleInfo[index].registerNumber = text;
+                                  setFormData({
+                                    ...formData,
+                                    vehicleInfo: updatedVehicleInfo,
+                                  });
+                                  if (formErrors.vehicles?.[index]?.registerNumber) {
+                                    clearVehicleError(index, 'registerNumber');
+                                  }
+                                }}
+                                placeholder="Enter your register number"
+                                placeholderTextColor={COLORS.primary_03}
+                              />
+                              {formErrors.vehicles?.[index]?.registerNumber && (
+                                <Text style={styles.errorText}>
+                                  {formErrors.vehicles[index].registerNumber}
+                                </Text>
+                              )}
+                            </View>
+                            <View style={styles.formSection}>
+                              <Text style={styles.fieldLabel}>Car Company *</Text>
+                              <TextInput
+                                style={[
+                                  styles.textInput,
+                                  formErrors.vehicles?.[index]?.company && styles.textInputError,
+                                ]}
+                                value={vehicle.company}
+                                onChangeText={(text) => {
+                                  const updatedVehicleInfo = [...formData.vehicleInfo];
+                                  updatedVehicleInfo[index].company = text;
+                                  setFormData({
+                                    ...formData,
+                                    vehicleInfo: updatedVehicleInfo,
+                                  });
+                                  if (formErrors.vehicles?.[index]?.company) {
+                                    clearVehicleError(index, 'company');
+                                  }
+                                }}
+                                placeholder="Enter your car company"
+                                placeholderTextColor={COLORS.primary_03}
+                              />
+                              {formErrors.vehicles?.[index]?.company && (
+                                <Text style={styles.errorText}>{formErrors.vehicles[index].company}</Text>
+                              )}
+                            </View>
+
+                            {/* Model Field */}
+                            <View style={styles.formSection}>
+                              <Text style={styles.fieldLabel}>Car Model *</Text>
+                              <TextInput
+                                style={[
+                                  styles.textInput,
+                                  formErrors.vehicles?.[index]?.model && styles.textInputError,
+                                ]}
+                                value={vehicle.model}
+                                onChangeText={(text) => {
+                                  const updatedVehicleInfo = [...formData.vehicleInfo];
+                                  updatedVehicleInfo[index].model = text;
+                                  setFormData({
+                                    ...formData,
+                                    vehicleInfo: updatedVehicleInfo,
+                                  });
+                                  if (formErrors.vehicles?.[index]?.model) {
+                                    clearVehicleError(index, 'model');
+                                  }
+                                }}
+                                placeholder="Enter your car model"
+                                placeholderTextColor={COLORS.primary_03}
+                              />
+                              {formErrors.vehicles?.[index]?.model && (
+                                <Text style={styles.errorText}>{formErrors.vehicles[index].model}</Text>
+                              )}
+                            </View>
+
+                            {/* Fuel Type Field */}
+                            <View style={styles.formSection}>
+                              <Text style={styles.fieldLabel}>Fuel Type *</Text>
+                              <TextInput
+                                style={[
+                                  styles.textInput,
+                                  formErrors.vehicles?.[index]?.fuleType && styles.textInputError,
+                                ]}
+                                value={vehicle.fuleType}
+                                onChangeText={(text) => {
+                                  const updatedVehicleInfo = [...formData.vehicleInfo];
+                                  updatedVehicleInfo[index].fuleType = text;
+                                  setFormData({
+                                    ...formData,
+                                    vehicleInfo: updatedVehicleInfo,
+                                  });
+                                  if (formErrors.vehicles?.[index]?.fuleType) {
+                                    clearVehicleError(index, 'fuleType');
+                                  }
+                                }}
+                                placeholder="Enter your car fuel type"
+                                placeholderTextColor={COLORS.primary_03}
+                              />
+                              {formErrors.vehicles?.[index]?.fuleType && (
+                                <Text style={styles.errorText}>
+                                  {formErrors.vehicles[index].fuleType}
+                                </Text>
+                              )}
+                            </View>
+                          </View>
+                        ))}
+                    </ScrollView>
+                  </View>
                   <Text
                     style={{
                       color: 'red',
@@ -464,7 +827,7 @@ const Services = () => {
                       ...FONTS.body5,
                       textAlign: 'center',
                     }}>
-                    Add the car details in profile page and start book a service
+                    Add the car details and start book a service
                   </Text>
                 </View>
               )}
@@ -578,6 +941,283 @@ const Services = () => {
               ) : (
                 <>
                   <View style={{ marginTop: 15 }}>
+                    <View style={styles.modalContainer}>
+                      <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+                        <View style={styles.formSection}>
+                          <Text style={styles.fieldLabel}>First Name *</Text>
+                          <TextInput
+                            style={[styles.textInput, formErrors.firstName && styles.textInputError]}
+                            value={formData?.firstName}
+                            onChangeText={(name) => {
+                              setFormData({ ...formData, firstName: name });
+                              if (formErrors.firstName) clearError('firstName');
+                            }}
+                            placeholder="Enter your first name"
+                            placeholderTextColor={COLORS.primary_03}
+                          />
+                          {formErrors.firstName && (
+                            <Text style={styles.errorText}>{formErrors.firstName}</Text>
+                          )}
+                        </View>
+
+                        <View style={styles.formSection}>
+                          <Text style={styles.fieldLabel}>Last Name *</Text>
+                          <TextInput
+                            style={[styles.textInput, formErrors.lastName && styles.textInputError]}
+                            value={formData?.lastName}
+                            onChangeText={(name) => {
+                              setFormData({ ...formData, lastName: name });
+                              if (formErrors.lastName) clearError('lastName');
+                            }}
+                            placeholder="Enter your last name"
+                            placeholderTextColor={COLORS.primary_03}
+                          />
+                          {formErrors.lastName && (
+                            <Text style={styles.errorText}>{formErrors.lastName}</Text>
+                          )}
+                        </View>
+
+                        <View style={styles.formSection}>
+                          <Text style={styles.fieldLabel}>Email Address *</Text>
+                          <TextInput
+                            style={[styles.textInput, formErrors.email && styles.textInputError]}
+                            value={formData?.email}
+                            onChangeText={(text) => {
+                              setFormData({ ...formData, email: text });
+                              if (formErrors.email) clearError('email');
+                            }}
+                            placeholder="Enter your email"
+                            placeholderTextColor={COLORS.primary_03}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                          />
+                          {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
+                        </View>
+
+                        <View style={styles.formSection}>
+                          <Text style={styles.fieldLabel}>Address 1 *</Text>
+                          <TextInput
+                            style={[styles.textInput, formErrors.address1 && styles.textInputError]}
+                            value={formData?.contact_info?.address1}
+                            onChangeText={(text) => {
+                              setFormData({
+                                ...formData,
+                                contact_info: { ...formData.contact_info, address1: text },
+                              });
+                              if (formErrors.address1) clearError('address1');
+                            }}
+                            placeholder="Enter your address 1"
+                            placeholderTextColor={COLORS.primary_03}
+                            multiline={true}
+                            numberOfLines={2}
+                          />
+                          {formErrors.address1 && (
+                            <Text style={styles.errorText}>{formErrors.address1}</Text>
+                          )}
+                        </View>
+
+                        {/* Address 2 Field */}
+                        <View style={styles.formSection}>
+                          <Text style={styles.fieldLabel}>Address 2</Text>
+                          <TextInput
+                            style={[styles.textInput, formErrors.address2 && styles.textInputError]}
+                            value={formData?.contact_info?.address2}
+                            onChangeText={(text) => {
+                              setFormData({
+                                ...formData,
+                                contact_info: { ...formData.contact_info, address2: text },
+                              });
+                              if (formErrors.address2) clearError('address2');
+                            }}
+                            placeholder="Enter your address 2 (optional)"
+                            placeholderTextColor={COLORS.primary_03}
+                            multiline={true}
+                            numberOfLines={2}
+                          />
+                          {formErrors.address2 && (
+                            <Text style={styles.errorText}>{formErrors.address2}</Text>
+                          )}
+                        </View>
+
+                        {/* City Field */}
+                        <View style={styles.formSection}>
+                          <Text style={styles.fieldLabel}>City *</Text>
+                          <TextInput
+                            style={[styles.textInput, formErrors.city && styles.textInputError]}
+                            value={formData?.contact_info?.city}
+                            onChangeText={(text) => {
+                              setFormData({
+                                ...formData,
+                                contact_info: { ...formData.contact_info, city: text },
+                              });
+                              if (formErrors.city) clearError('city');
+                            }}
+                            placeholder="Enter your city"
+                            placeholderTextColor={COLORS.primary_03}
+                          />
+                          {formErrors.city && <Text style={styles.errorText}>{formErrors.city}</Text>}
+                        </View>
+
+                        {/* State Field */}
+                        <View style={styles.formSection}>
+                          <Text style={styles.fieldLabel}>State *</Text>
+                          <TextInput
+                            style={[styles.textInput, formErrors.state && styles.textInputError]}
+                            value={formData?.contact_info?.state}
+                            onChangeText={(text) => {
+                              setFormData({
+                                ...formData,
+                                contact_info: { ...formData.contact_info, state: text },
+                              });
+                              if (formErrors.state) clearError('state');
+                            }}
+                            placeholder="Enter your state"
+                            placeholderTextColor={COLORS.primary_03}
+                          />
+                          {formErrors.state && <Text style={styles.errorText}>{formErrors.state}</Text>}
+                        </View>
+
+                        {/* Vehicle Information */}
+                        {Array.isArray(formData?.vehicleInfo) &&
+                          formData?.vehicleInfo?.map((vehicle: any, index: any) => (
+                            <View key={index}>
+                              <View
+                                style={{
+                                  borderTopWidth: 1,
+                                  borderBottomWidth: 1,
+                                  borderBottomColor: COLORS.primary_04,
+                                  borderTopColor: COLORS.primary_04,
+                                  paddingVertical: 7,
+                                  backgroundColor: COLORS.grey08,
+                                  marginVertical: 5,
+                                }}>
+                                <Text
+                                  style={{
+                                    textAlign: 'center',
+                                    ...FONTS.body4,
+                                    fontWeight: 500,
+                                    color: COLORS.primary_text,
+                                  }}>
+                                  Vehicle {index + 1}
+                                </Text>
+                              </View>
+
+                              <View style={styles.formSection}>
+                                <Text style={styles.fieldLabel}>Register Number</Text>
+                                <TextInput
+                                  style={[
+                                    styles.textInput,
+                                    formErrors.vehicles?.[index]?.registerNumber && styles.textInputError,
+                                  ]}
+                                  value={vehicle.registerNumber}
+                                  onChangeText={(text) => {
+                                    const updatedVehicleInfo = [...formData.vehicleInfo];
+                                    updatedVehicleInfo[index].registerNumber = text;
+                                    setFormData({
+                                      ...formData,
+                                      vehicleInfo: updatedVehicleInfo,
+                                    });
+                                    if (formErrors.vehicles?.[index]?.registerNumber) {
+                                      clearVehicleError(index, 'registerNumber');
+                                    }
+                                  }}
+                                  placeholder="Enter your register number"
+                                  placeholderTextColor={COLORS.primary_03}
+                                />
+                                {formErrors.vehicles?.[index]?.registerNumber && (
+                                  <Text style={styles.errorText}>
+                                    {formErrors.vehicles[index].registerNumber}
+                                  </Text>
+                                )}
+                              </View>
+                              <View style={styles.formSection}>
+                                <Text style={styles.fieldLabel}>Car Company *</Text>
+                                <TextInput
+                                  style={[
+                                    styles.textInput,
+                                    formErrors.vehicles?.[index]?.company && styles.textInputError,
+                                  ]}
+                                  value={vehicle.company}
+                                  onChangeText={(text) => {
+                                    const updatedVehicleInfo = [...formData.vehicleInfo];
+                                    updatedVehicleInfo[index].company = text;
+                                    setFormData({
+                                      ...formData,
+                                      vehicleInfo: updatedVehicleInfo,
+                                    });
+                                    if (formErrors.vehicles?.[index]?.company) {
+                                      clearVehicleError(index, 'company');
+                                    }
+                                  }}
+                                  placeholder="Enter your car company"
+                                  placeholderTextColor={COLORS.primary_03}
+                                />
+                                {formErrors.vehicles?.[index]?.company && (
+                                  <Text style={styles.errorText}>{formErrors.vehicles[index].company}</Text>
+                                )}
+                              </View>
+
+                              {/* Model Field */}
+                              <View style={styles.formSection}>
+                                <Text style={styles.fieldLabel}>Car Model *</Text>
+                                <TextInput
+                                  style={[
+                                    styles.textInput,
+                                    formErrors.vehicles?.[index]?.model && styles.textInputError,
+                                  ]}
+                                  value={vehicle.model}
+                                  onChangeText={(text) => {
+                                    const updatedVehicleInfo = [...formData.vehicleInfo];
+                                    updatedVehicleInfo[index].model = text;
+                                    setFormData({
+                                      ...formData,
+                                      vehicleInfo: updatedVehicleInfo,
+                                    });
+                                    if (formErrors.vehicles?.[index]?.model) {
+                                      clearVehicleError(index, 'model');
+                                    }
+                                  }}
+                                  placeholder="Enter your car model"
+                                  placeholderTextColor={COLORS.primary_03}
+                                />
+                                {formErrors.vehicles?.[index]?.model && (
+                                  <Text style={styles.errorText}>{formErrors.vehicles[index].model}</Text>
+                                )}
+                              </View>
+
+                              {/* Fuel Type Field */}
+                              <View style={styles.formSection}>
+                                <Text style={styles.fieldLabel}>Fuel Type *</Text>
+                                <TextInput
+                                  style={[
+                                    styles.textInput,
+                                    formErrors.vehicles?.[index]?.fuleType && styles.textInputError,
+                                  ]}
+                                  value={vehicle.fuleType}
+                                  onChangeText={(text) => {
+                                    const updatedVehicleInfo = [...formData.vehicleInfo];
+                                    updatedVehicleInfo[index].fuleType = text;
+                                    setFormData({
+                                      ...formData,
+                                      vehicleInfo: updatedVehicleInfo,
+                                    });
+                                    if (formErrors.vehicles?.[index]?.fuleType) {
+                                      clearVehicleError(index, 'fuleType');
+                                    }
+                                  }}
+                                  placeholder="Enter your car fuel type"
+                                  placeholderTextColor={COLORS.primary_03}
+                                />
+                                {formErrors.vehicles?.[index]?.fuleType && (
+                                  <Text style={styles.errorText}>
+                                    {formErrors.vehicles[index].fuleType}
+                                  </Text>
+                                )}
+                              </View>
+                            </View>
+                          ))}
+                      </ScrollView>
+                    </View>
                     <Text
                       style={{
                         color: 'red',
@@ -585,7 +1225,7 @@ const Services = () => {
                         ...FONTS.body5,
                         textAlign: 'center',
                       }}>
-                      Add the car details in profile page and start book a service
+                      Add the car details and start book a service
                     </Text>
                   </View>
                 </>
@@ -611,14 +1251,19 @@ const Services = () => {
             ]}
             onPress={() => {
               if (TokenSelector) {
-                handleAddtoCart(selectedVehicleIndex);
+                if (!selectedVehicleIndex) {
+                  handleSaveProfile()
+                  handleAddtoCart(selectedVehicleIndex);
+                } else {
+                  handleAddtoCart(selectedVehicleIndex);
+                }
               } else {
                 setSignUpConfirmModalVisible(true);
               }
             }}
             disabled={
-              selectedVehicleIndex === null ||
-              (selectedBookingType === 'schedule' && (!startTime || !endTime))
+              // selectedVehicleIndex === null ||
+              selectedBookingType === 'schedule' && (!startTime || !endTime)
             }>
             <Text style={styles.bookButtonText}>
               {selectedBookingType === 'general' ? 'BOOK NOW' : 'PRE-BOOK SERVICE'}
@@ -1110,6 +1755,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
   },
+  fieldLabel: {
+    ...FONTS.body4,
+    fontWeight: 500,
+    color: COLORS.primary_text,
+    marginBottom: 10,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: COLORS.primary_04,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...FONTS.body5,
+    color: COLORS.primary,
+    backgroundColor: COLORS1.white,
+    shadowColor: COLORS1.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  textInputError: {
+    borderColor: COLORS1.error,
+    borderWidth: 1.5,
+  },
   modalDescription: {
     ...FONTS.body4,
     color: COLORS.primary_01,
@@ -1268,8 +1938,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.white,
   },
+  formSection: {
+    marginBottom: 10,
+  },
   selectedBookingType: {
     backgroundColor: COLORS.primary,
+  },
+  errorText: {
+    color: COLORS1.error,
+    marginTop: 4,
+    marginLeft: 4,
+    ...FONTS.body6,
   },
   bookingTypeText: {
     ...FONTS.body4,
