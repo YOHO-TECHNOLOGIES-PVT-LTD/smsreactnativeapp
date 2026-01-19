@@ -348,7 +348,7 @@ const pickImage = async () => {
     const payload: any = {
       problem: selectedIssue,
       type: activeTab,
-      images: images,
+      image: images,
     };
 
     if (activeTab === 'own') {
