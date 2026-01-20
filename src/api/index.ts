@@ -102,10 +102,14 @@ class Client {
     },
     sos: {
       post: (data: any) => httpClient.post(API_END_POINTS.sos.Post, data),
+      get: () => httpClient.get(API_END_POINTS.sos.GetAll),
+      getByUser: (params: any) => httpClient.get(API_END_POINTS.sos.GetByUser.replace(':id',params)) 
+  
     },
     announcement: {
       get: (params: any) => httpClient.get(API_END_POINTS.announcement.Get, params),
     },
+   
     enquiry: {
       post: (data: any) => httpClient.post(API_END_POINTS.enquiry.Post, data),
     },

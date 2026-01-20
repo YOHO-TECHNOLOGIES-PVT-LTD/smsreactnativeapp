@@ -22,6 +22,7 @@ import { selectProfile } from '~/features/profile/reducers/selector';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
+import { getAllSOS, getSos } from '~/features/sos/service';
 
 const issuesList = [
   'Battery Discharged',
@@ -42,12 +43,15 @@ const SOS = () => {
   const [searchText, setSearchText] = useState('');
   const [filteredIssues, setFilteredIssues] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [userSosList, setUserSosList] = useState<any[]>([]);
+
   const navigation = useNavigation<any>();
   const dispatch = useDispatch<any>();
   const profileData = useSelector(selectProfile);
   const tokenSelector = useSelector(selectToken);
   const didFetch = useRef(false);
 
+  // Fetch user mobile number
   const fetchUser = async () => {
     try {
       if (profileData) {
@@ -59,8 +63,31 @@ const SOS = () => {
     }
   };
 
+  // Fetch SOS records for current user
+  const getSosByUser = async () => {
+    try {
+      if (!profileData?._id) return;
+
+      const response = await getAllSOS();
+
+      const filtered = response?.data?.filter(
+        (sos: any) =>
+          sos.customerId === profileData._id &&
+          (sos.status === "In Progress" || sos.status === "notstarted")
+      );
+
+      setUserSosList(filtered || []);
+      console.log("Filtered SOS list:", filtered);
+    } catch (error) {
+      console.error("Error fetching user SOS:", error);
+    }
+  };
+
   useEffect(() => {
-    fetchUser();
+    if (profileData?._id) {
+      fetchUser();
+      getSosByUser();
+    }
   }, [profileData]);
 
   useEffect(() => {
@@ -92,6 +119,7 @@ const SOS = () => {
     }
   };
 
+  // Search issues filter
   const handleSearchTextChange = (text: string) => {
     setSearchText(text);
     if (text.trim() === '') {
@@ -104,6 +132,7 @@ const SOS = () => {
     }
   };
 
+  // Pull-to-refresh
   const onRefresh = async () => {
     try {
       setRefreshing(true);
@@ -113,6 +142,7 @@ const SOS = () => {
       setFilteredIssues([]);
       setShowSearchBar(false);
       await fetchUser();
+      await getSosByUser();
     } catch (error) {
       console.error('Error during refresh:', error);
     } finally {
@@ -154,7 +184,7 @@ const SOS = () => {
           </View>
         </View>
 
-        {/* Search Bar below Navbar */}
+        {/* Search Bar */}
         {showSearchBar && (
           <View style={styles.searchWrapper}>
             <TextInput
@@ -193,11 +223,7 @@ const SOS = () => {
         <ScrollView
           style={[styles.container, { position: 'relative' }]}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[COLORS.primary]}
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
           }>
           <View style={styles.mapContainer}>
             <MarinaMap />
@@ -218,6 +244,51 @@ const SOS = () => {
             </View>
             <SosButtons />
           </View>
+
+
+          <View style={{ padding: 15, marginBottom: 40 }}>
+            <Text style={{ ...FONTS.body3, marginBottom: 10 }}>Active SOS Records:</Text>
+            {userSosList.length > 0 ? (
+              userSosList.map((sos, index) => {
+                const partner = sos.partnerId;
+                return (
+                  <View
+                    key={index}
+                    style={{
+                      padding: 15,
+                      marginBottom: 10,
+                      borderWidth: 0.3,
+                      borderColor: COLORS.grey,
+                      borderRadius: 8,
+                      backgroundColor: '#fafafa',
+                    }}
+                  >
+
+                    <Text style={{ ...FONTS.body4, fontWeight: 'bold' }}>SOS Name: {sos.name}</Text>
+                    <Text style={{ ...FONTS.body4 }}>Location: {sos.location}</Text>
+                    <Text style={{ ...FONTS.body4 }}>Status: {sos.status}</Text>
+
+
+                    {partner && (
+                      <View style={{ marginTop: 10, borderTopWidth: 0.3, borderTopColor: COLORS.grey, paddingTop: 10 }}>
+                        <Text style={{ ...FONTS.body4, fontWeight: 'bold' }}>Partner Details:</Text>
+                        <Text style={{ ...FONTS.body4 }}>Name: {partner.firstName} {partner.lastName}</Text>
+                        <Text style={{ ...FONTS.body4 }}>Company: {partner.companyName}</Text>
+                        <Text style={{ ...FONTS.body4 }}>Phone: {partner?.contact_info?.phoneNumber}</Text>
+                        <Text style={{ ...FONTS.body4 }}>
+                          Address: {partner?.contact_info?.address1}, {partner?.contact_info?.address2}, {partner?.contact_info?.city}, {partner?.contact_info?.state} - {partner?.contact_info?.pincode}
+                        </Text>
+                        <Text style={{ ...FONTS.body4 }}>Email: {partner.email}</Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={{ color: 'gray' }}>No SOS records found for you.</Text>
+            )}
+          </View>
+
         </ScrollView>
       </SafeAreaView>
     </>
@@ -250,7 +321,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 15,
-    marginBottom: 10,
+    // marginBottom: 10,
     paddingHorizontal: 10,
     backgroundColor: COLORS.white,
     borderRadius: 25,
