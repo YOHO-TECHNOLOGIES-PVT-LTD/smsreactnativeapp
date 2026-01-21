@@ -80,7 +80,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch<any>();
-  const { types } = route.params
+  const { types } = (route.params as { types?: 'Spare Parts' | 'Services' } | undefined) || {}
 
   useEffect(() => {
     if (types) {

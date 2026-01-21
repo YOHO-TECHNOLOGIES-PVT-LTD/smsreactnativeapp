@@ -497,7 +497,7 @@ const Profile = () => {
           setCurrentImageIndex(newIndex);
         }
       },
-      onPanResponderRelease: () => { },
+      onPanResponderRelease: () => {},
     })
   ).current;
 
@@ -623,7 +623,7 @@ const Profile = () => {
   };
 
   // Utility Functions
-  const saveUserProfileImage = (imageUri: string) => { };
+  const saveUserProfileImage = (imageUri: string) => {};
 
   const getUserProfileImage = () => {
     return null;
@@ -1120,7 +1120,7 @@ const Profile = () => {
       <>
         {vehicle?.map((v, index) => (
           <View style={styles.menuItem} key={index}>
-            <TouchableOpacity style={styles.menuItemContent} onPress={() => { }} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.menuItemContent} onPress={() => {}} activeOpacity={0.8}>
               <View style={[styles.menuItemIcon, styles.vehicleIconContainer]}>
                 <Car size={20} color={COLORS.primary} />
               </View>
@@ -1595,7 +1595,7 @@ const Profile = () => {
                     <Text style={styles.profileName}>
                       {(TokenSelector
                         ? profileData?.firstName != null &&
-                        profileData?.firstName + ' ' + profileData?.lastName
+                          profileData?.firstName + ' ' + profileData?.lastName
                         : '') || 'Customer'}
                     </Text>
                     {TokenSelector && <Verified size={16} color={COLORS1.success} />}
@@ -1662,6 +1662,7 @@ const Profile = () => {
                   <MenuItem
                     title="Phone Number"
                     subtitle={profileData?.contact_info?.phoneNumber}
+                    
                     icon={<Phone size={20} color={COLORS1.primary} />}
                   />
                   <View style={styles.separator} />
@@ -1948,6 +1949,7 @@ const Profile = () => {
                   <TextInput
                     style={[styles.textInput, formErrors.phoneNumber && styles.textInputError]}
                     value={formData?.contact_info?.phoneNumber}
+                    editable={false}
                     onChangeText={(text) => {
                       setFormData({
                         ...formData,
