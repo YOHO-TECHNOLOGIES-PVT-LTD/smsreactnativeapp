@@ -67,7 +67,11 @@ type CartProps = {
 };
 
 const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, token }) => {
-  const [activeTab, setActiveTab] = useState<'Spare Parts' | 'Services'>('Spare Parts');
+  const route = useRoute();
+  const params = route.params as { activeTab?: 'Spare Parts' | 'Services' } | undefined;
+  const [activeTab, setActiveTab] = useState<'Spare Parts' | 'Services'>(
+    params?.activeTab || 'Spare Parts'
+  );
   const [cartItems, setCartItems] = useState<{
     products: CartItem[];
     services: CartItem[];
@@ -76,7 +80,6 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch<any>();
-  const route = useRoute<any>()
   const { types } = route.params
 
   useEffect(() => {
@@ -104,6 +107,12 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
     const price = Number(item.price) || 0;
     return sum + price * (item.quantity || 1);
   }, 0);
+
+   useEffect(() => {
+    if (params?.activeTab) {
+      setActiveTab(params.activeTab);
+    }
+  }, [params?.activeTab]);
 
   // Fix: Proper cart items extraction
   useEffect(() => {

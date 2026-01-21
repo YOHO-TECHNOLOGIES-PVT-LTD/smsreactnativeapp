@@ -14,13 +14,17 @@ import { COLORS, FONTS } from '~/constants';
 import { addBookingCartItem } from '~/features/booking-cart/service';
 import toast from '~/utils/toast';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectToken } from '~/features/token/redux/selectors';
 import { getToken } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '../CustomLogoutModal';
 import { getImageUrl } from '~/utils/imageUtils';
+type RootStackParamList = {
+  BookingCartScreen: { activeTab?: 'Spare Parts' | 'Services' };
+  LoginScreen: undefined;
+};
 
 type SparePart = {
   uuid: string;
@@ -44,7 +48,8 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
   const [added, setAdded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const dispatch = useDispatch<AppDispatch>();
   const TokenSelector = useSelector(selectToken);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,7 +117,49 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
       onRefresh();
     }
   };
+  const handleBuyNow = async (part: SparePart) => {
+    // Prevent multiple calls
+    if (isLoading) {
+      return;
+    }
 
+    if (!part?.uuid || !part?.price) {
+      console.error('Missing required part data');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const data = {
+        uuid: part.uuid,
+        products: {
+          productId: part._id,
+          quantity: quantity,
+          price: part.price,
+        },
+        type: 'spare',
+      };
+
+      const response = await addBookingCartItem(data);
+
+      if (response) {
+        toast.success('Success', `${part.productName} added to cart`);
+        setModalVisible(false);
+        setQuantity(1);
+        setAdded(false);
+        navigation.navigate('BookingCartScreen', { activeTab: 'Spare Parts' });
+      } else {
+        toast.error('Error', 'Failed to add to cart');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Error', 'Failed to add to cart');
+    } finally {
+      setIsLoading(false);
+      onRefresh();
+    }
+  };
   const renderStars = (rating: number = 0) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -297,23 +344,43 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
             </View>
 
             {/* Add to Cart Button */}
-            <TouchableOpacity
-              style={[
-                styles.modalAddButton,
-                (!part?.inStock || isLoading) && styles.disabledButton,
-              ]}
-              onPress={() => {
-                if (TokenSelector) {
-                  handleAddtoCart(part);
-                } else {
-                  setSignUpConfirmModalVisible(true);
-                }
-              }}
-              disabled={!part?.inStock || isLoading}>
-              <Text style={styles.modalAddButtonText}>
-                {isLoading ? 'ADDING...' : part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.modalAddButton,
+                  (!part?.inStock || isLoading) && styles.disabledButton,
+                ]}
+                onPress={() => {
+                  if (TokenSelector) {
+                    handleAddtoCart(part);
+                  } else {
+                    setSignUpConfirmModalVisible(true);
+                  }
+                }}
+                disabled={!part?.inStock || isLoading}>
+                <Text style={styles.modalAddButtonText}>
+                  {isLoading ? 'ADDING...' : part?.inStock ? 'ADD TO CART' : 'OUT OF STOCK'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.buyNowButton,
+                  (!part?.inStock || isLoading) && styles.disabledButton,
+                ]}
+                onPress={() => {
+                  if (TokenSelector) {
+                    handleBuyNow(part);
+                  } else {
+                    setSignUpConfirmModalVisible(true);
+                  }
+                }}
+                disabled={!part?.inStock || isLoading}>
+                <Text style={styles.buyNowButtonText}>
+                  {isLoading ? 'BUYING...' : part?.inStock ? 'BUY NOW' : 'OUT OF STOCK'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </Modal>
@@ -503,6 +570,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
+    borderRadius:2,
+    borderColor:COLORS.grey20,
+    borderWidth:1,
     paddingHorizontal: 8,
   },
   quantityLabel: {
@@ -535,25 +605,25 @@ const styles = StyleSheet.create({
   },
 
   // Add to Cart Button
-  modalAddButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
-    width: '45%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-    alignSelf: 'center',
-    marginTop: 15,
-  },
+  // modalAddButton: {
+  //   backgroundColor: COLORS.primary,
+  //   paddingVertical: 12,
+  //   borderRadius: 8,
+  //   width: '45%',
+  //   justifyContent: 'center',
+  //   alignItems: 'center',
+  //   marginBottom: 24,
+  //   alignSelf: 'center',
+  //   marginTop: 15,
+  // },
   addedButton: {
     backgroundColor: 'green',
   },
-  modalAddButtonText: {
-    ...FONTS.body4,
-    color: COLORS.white,
-    fontWeight: 'bold',
-  },
+  // modalAddButtonText: {
+  //   ...FONTS.body4,
+  //   color: COLORS.white,
+  //   fontWeight: 'bold',
+  // },
   disabledButton: {
     backgroundColor: COLORS.grey,
     opacity: 0.6,
@@ -564,6 +634,44 @@ const styles = StyleSheet.create({
   },
   outOfStock: {
     backgroundColor: COLORS.error,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 24,
+    alignSelf: 'center',
+    width: '100%',
+    marginTop: 15,
+    flex: 1,
+  },
+  modalAddButton: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalAddButtonText: {
+    ...FONTS.body4,
+    color: COLORS.primary,
+    fontWeight: 'bold',
+  },
+  buyNowButton: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buyNowButtonText: {
+    ...FONTS.body4,
+    color: COLORS.white,
+    fontWeight: 'bold',
   },
 });
 

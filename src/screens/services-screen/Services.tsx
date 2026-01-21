@@ -340,6 +340,87 @@ const Services = () => {
     }
   };
 
+  const handleBuyNow = async (vehicleIndex: number | null) => {
+  if (!selectedService?.uuid) {
+    toast.error('Error', 'Please select a service.');
+    return;
+  }
+
+  if (selectedVehicleIndex === null) {
+    toast.error('Error', 'Please select a vehicle.');
+    return;
+  }
+
+  // Enhanced validation for schedule booking
+  if (selectedBookingType === 'schedule') {
+    if (!selectedDate) {
+      toast.error('Error', 'Please select a date.');
+      return;
+    }
+
+    if (!startTime || !endTime) {
+      toast.error('Error', 'Please select both start and end time.');
+      return;
+    }
+
+    // Validate that end time is after start time
+    const [startHours, startMinutes] = startTime.split(':').map(Number);
+    const [endHours, endMinutes] = endTime.split(':').map(Number);
+
+    if (endHours < startHours || (endHours === startHours && endMinutes <= startMinutes)) {
+      toast.error('Error', 'End time must be after start time.');
+      return;
+    }
+  }
+
+  try {
+    const data = {
+      service: selectedService._id,
+      type: 'service',
+      requestType: selectedBookingType,
+      schedule_date:
+        selectedBookingType === 'schedule'
+          ? selectedDate.toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
+          : null,
+      preferredTime: selectedBookingType === 'schedule' ? { startTime, endTime } : null,
+      vehicle: selectedVehicleIndex,
+    };
+
+    const response = await addBookingCartItem(data);
+
+    if (response?.message === 'services already added yoru cart' && response?.success === true) {
+      toast.info('Info', 'Service already in cart');
+      // Navigate to cart with Services tab
+      navigation.navigate('BookingCartScreen', { activeTab: 'Services' });
+    } else if (response?.data) {
+      toast.success('Success', `${selectedService?.service_name} added to cart`);
+      setBookingModalVisible(false);
+      setModalVisible(false);
+      setSelectedDate(new Date());
+      setSelectedVehicleIndex(null);
+      setStartTime('');
+      setEndTime('');
+      dispatch(getBookingCartItems());
+      
+      // Navigate to cart with Services tab
+      navigation.navigate('BookingCartScreen', { activeTab: 'Services' });
+    } else {
+      toast.error('Error', 'Something went wrong. Try again.');
+    }
+  } catch (error) {
+    console.log('Error adding to cart:', error);
+    toast.error('Error', 'Failed to add service to cart.');
+  } finally {
+    onRefreshCartCount();
+  }
+};
+
+
   const handleSaveProfile = async () => {
     Animated.sequence([
       Animated.timing(headerOpacity, {
@@ -396,6 +477,7 @@ const Services = () => {
 
     return <View style={{ flexDirection: 'row', alignItems: 'center' }}>{stars}</View>;
   };
+  
 
   const renderTabContent = () => {
     if (!selectedService) return null;
@@ -2022,21 +2104,21 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
     fontStyle: 'italic',
   },
-  bookButton: {
-    backgroundColor: COLORS.primary,
-    padding: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-    width: '50%',
-    alignSelf: 'center',
-  },
-  bookButtonText: {
-    ...FONTS.body5,
-    color: COLORS.white,
-    fontWeight: 600,
-  },
+  // bookButton: {
+  //   backgroundColor: COLORS.primary,
+  //   padding: 12,
+  //   borderRadius: 10,
+  //   alignItems: 'center',
+  //   marginTop: 10,
+  //   marginBottom: 20,
+  //   width: '50%',
+  //   alignSelf: 'center',
+  // },
+  // bookButtonText: {
+  //   ...FONTS.body5,
+  //   color: COLORS.white,
+  //   fontWeight: 600,
+  // },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2070,6 +2152,40 @@ const styles = StyleSheet.create({
   vehicleOptionText: {
     ...FONTS.body4,
     color: COLORS.primary_text,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 10,
+    flex:1,
+    marginBottom: 20,
+  },
+  bookButton: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  bookButtonText: {
+    ...FONTS.body5,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  buyNowButton: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buyNowButtonText: {
+    ...FONTS.body5,
+    color: COLORS.white,
+    fontWeight: '600',
   },
 });
 
