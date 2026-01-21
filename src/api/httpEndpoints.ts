@@ -92,4 +92,10 @@ export const API_END_POINTS = {
     post: '/api/image/singlefile/:userId',
     postMultiImage: '/api/image/multiplefile/:userId'
   },
+
+  externalVehicle: {
+		getMakes: 'https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json',
+		getModelsByMake: 'https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/:make?format=json',
+	},
+  
 };
