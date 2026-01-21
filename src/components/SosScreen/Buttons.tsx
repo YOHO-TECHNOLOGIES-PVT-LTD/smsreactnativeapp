@@ -407,6 +407,7 @@ export default function RoadsideAssistanceScreen() {
       problem: selectedIssue,
       type: activeTab,
       image: images,
+      customerId: profileData?._id,
     };
 
     if (activeTab === 'own') {
