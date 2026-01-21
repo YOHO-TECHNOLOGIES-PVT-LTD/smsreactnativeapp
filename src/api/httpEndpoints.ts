@@ -21,6 +21,7 @@ export const API_END_POINTS = {
   sos: {
     Post: '/api/sos/add',
     GetAll: '/api/sos/getall',
+    GetByUser: '/api/sos/getbycustomer/:id',
     Get: '/api/sos/get/:id',
     Put: '/api/sos/update/',
     put: '/api/sos/addlist',

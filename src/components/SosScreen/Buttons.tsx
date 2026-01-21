@@ -877,7 +877,7 @@ export default function RoadsideAssistanceScreen() {
           messageTextColor={COLORS.grey}
         />
       </View>
-      <View style={{ marginTop: 90 }}></View>
+      {/* <View style={{ marginTop: 90 }}></View> */}
     </ScrollView>
   );
 }
