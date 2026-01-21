@@ -67,7 +67,7 @@ type CartProps = {
 };
 
 const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, token }) => {
-  const route = useRoute();
+  const route = useRoute<any>();
   const params = route.params as { activeTab?: 'Spare Parts' | 'Services' } | undefined;
   const [activeTab, setActiveTab] = useState<'Spare Parts' | 'Services'>(
     params?.activeTab || 'Spare Parts'
