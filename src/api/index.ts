@@ -86,7 +86,7 @@ class Client {
         ),
     },
     bookings: {
-      getAll: (params: any) => httpClient.get(API_END_POINTS.bookings.getAll, params),
+      getAll: (params?: any) => httpClient.get(API_END_POINTS.bookings.getAll, params),
       postProduct: (params: any) => httpClient.post(API_END_POINTS.bookings.postProduct, params),
       postService: (params: any) => httpClient.post(API_END_POINTS.bookings.postService, params),
       getServiceInvoice: (params: any) =>
@@ -118,6 +118,16 @@ class Client {
         httpClient.uploadFile(API_END_POINTS.upload.post.replace(':userId', params?.userId), data),
     },
 
+    externalVehicle: {
+			getMakes: () =>
+				httpClient.get(API_END_POINTS.externalVehicle.getMakes),
+
+			getModelsByMake: (make: string) =>
+				httpClient.get(
+					API_END_POINTS.externalVehicle.getModelsByMake.replace(':make', make)
+				),
+		},
+
     uploadMultiple: {
       post: (params: any, data: any) =>
         httpClient.uploadFile(
@@ -126,6 +136,8 @@ class Client {
         ),
     },
   };
+    externalVehicle: any;
+    vehicle: any;
 }
 
 export default Client;

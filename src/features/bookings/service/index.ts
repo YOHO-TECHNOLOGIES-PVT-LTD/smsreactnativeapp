@@ -1,5 +1,6 @@
 import Client from '~/api';
 
+
 export const getAllServiceBookings = async (data: any) => {
   try {
     const response = await new Client().user.service_bookings.getAll(data);
@@ -50,6 +51,7 @@ export const getAllBookingsCartItems = async (data: any) => {
     return null;
   }
 };
+
 
 export const addServiceCartItems = async (data: any) => {
   try {

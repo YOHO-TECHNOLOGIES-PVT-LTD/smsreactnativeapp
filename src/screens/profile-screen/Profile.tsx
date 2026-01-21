@@ -77,6 +77,8 @@ import { uploadSingleFileorImage } from '~/features/common/service';
 import { getImageUrl } from '~/utils/imageUtils';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fetchFuelTypes, fetchMakes, fetchModels } from '~/features/profile/service/vehicle';
+import { Picker } from '@react-native-picker/picker';
 
 const { width, height } = Dimensions.get('window');
 
@@ -357,6 +359,59 @@ const Profile = () => {
   const [originalFormData, setOriginalFormData] = useState<any>(null);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
 
+  const [makes, setMakes] = useState<any[]>([]);
+  const [models, setModels] = useState<any[]>([]);
+  const [years, setYears] = useState<number[]>([]);
+  const [fuelTypes, setFuelTypes] = useState<any[]>([]);
+
+  const [selectedMake, setSelectedMake] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedFuelType, setSelectedFuelType] = useState('');
+  const [addVehicleModal, setAddVehicleModal] = useState(false);
+
+  useEffect(() => {
+    if (addVehicleModal) {
+      loadMakes();
+      loadFuelTypes();
+      generateYears();
+    }
+  }, [addVehicleModal]);
+
+  const loadMakes = async () => {
+    try {
+      const data = await fetchMakes();
+      setMakes(data);
+    } catch (err) {
+      console.error("Error fetching makes:", err);
+    }
+  };
+
+  const loadModels = async (make: string) => {
+    try {
+      const data = await fetchModels(make);
+      setModels(data);
+    } catch (err) {
+      console.error("Error fetching models:", err);
+    }
+  };
+
+  const loadFuelTypes = async () => {
+    try {
+      const data = await fetchFuelTypes();
+      setFuelTypes(data);
+    } catch (err) {
+      console.error("Error fetching fuel types:", err);
+    }
+  };
+
+  // Last 30 years for dropdown
+  const generateYears = () => {
+    const currentYear = new Date().getFullYear();
+    setYears(Array.from({ length: 30 }, (_, i) => currentYear - i));
+  };
+
+
   useEffect(() => {
     try {
       setIsLoading(true);
@@ -440,7 +495,6 @@ const Profile = () => {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [editProfileModal, setEditProfileModal] = useState(false);
-  const [addVehicleModal, setAddVehicleModal] = useState(false);
   const [vehicleDetailModal, setVehicleDetailModal] = useState(false);
   const [orderDetailModal, setOrderDetailModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
@@ -2259,27 +2313,24 @@ const Profile = () => {
 
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Car Company *</Text>
-                    <TextInput
-                      style={[
-                        styles.textInput,
-                        formErrors.newVehicle?.company && styles.textInputError,
-                      ]}
-                      value={formData.newVehicle?.company || ''}
-                      onChangeText={(text) => {
+                    <Picker
+                      selectedValue={selectedMake}
+                      onValueChange={(value) => {
+                        setSelectedMake(value);
                         setFormData({
                           ...formData,
-                          newVehicle: {
-                            ...(formData.newVehicle || {}),
-                            company: text,
-                          },
+                          newVehicle: { ...(formData.newVehicle || {}), company: value },
                         });
-                        if (formErrors.newVehicle?.company) {
-                          clearNewVehicleError('company');
-                        }
+                        loadModels(value);
+                        clearNewVehicleError('company');
                       }}
-                      placeholder="Enter car company"
-                      placeholderTextColor={COLORS.primary_03}
-                    />
+                    >
+                      <Picker.Item label="Select Company" value="" />
+                      {makes.map((make: any) => (
+                        <Picker.Item key={make.Make_ID} label={make.Make_Name} value={make.Make_Name} />
+                      ))}
+                    </Picker>
+
                     {formErrors.newVehicle?.company && (
                       <Text style={styles.errorText}>{formErrors.newVehicle.company}</Text>
                     )}
@@ -2287,27 +2338,23 @@ const Profile = () => {
 
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Car Model *</Text>
-                    <TextInput
-                      style={[
-                        styles.textInput,
-                        formErrors.newVehicle?.model && styles.textInputError,
-                      ]}
-                      value={formData.newVehicle?.model || ''}
-                      onChangeText={(text) => {
+                    <Picker
+                      selectedValue={selectedModel}
+                      onValueChange={(value) => {
+                        setSelectedModel(value);
                         setFormData({
                           ...formData,
-                          newVehicle: {
-                            ...(formData.newVehicle || {}),
-                            model: text,
-                          },
+                          newVehicle: { ...(formData.newVehicle || {}), model: value },
                         });
-                        if (formErrors.newVehicle?.model) {
-                          clearNewVehicleError('model');
-                        }
+                        clearNewVehicleError('model');
                       }}
-                      placeholder="Enter car model"
-                      placeholderTextColor={COLORS.primary_03}
-                    />
+                    >
+                      <Picker.Item label="Select Model" value="" />
+                      {models.map((model: any) => (
+                        <Picker.Item key={model.Model_ID} label={model.Model_Name} value={model.Model_Name} />
+                      ))}
+                    </Picker>
+
                     {formErrors.newVehicle?.model && (
                       <Text style={styles.errorText}>{formErrors.newVehicle.model}</Text>
                     )}
@@ -2315,28 +2362,23 @@ const Profile = () => {
 
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Model Year *</Text>
-                    <TextInput
-                      style={[
-                        styles.textInput,
-                        formErrors.newVehicle?.year && styles.textInputError,
-                      ]}
-                      value={formData.newVehicle?.year || ''}
-                      onChangeText={(text) => {
+                    <Picker
+                      selectedValue={selectedYear}
+                      onValueChange={(value) => {
+                        setSelectedYear(value);
                         setFormData({
                           ...formData,
-                          newVehicle: {
-                            ...(formData.newVehicle || {}),
-                            year: text,
-                          },
+                          newVehicle: { ...(formData.newVehicle || {}), year: value },
                         });
-                        if (formErrors.newVehicle?.year) {
-                          clearNewVehicleError('year');
-                        }
+                        clearNewVehicleError('year');
                       }}
-                      placeholder="Enter model year"
-                      placeholderTextColor={COLORS.primary_03}
-                      keyboardType="numeric"
-                    />
+                    >
+                      <Picker.Item label="Select Year" value="" />
+                      {years.map((year) => (
+                        <Picker.Item key={year} label={year.toString()} value={year.toString()} />
+                      ))}
+                    </Picker>
+
                     {formErrors.newVehicle?.year && (
                       <Text style={styles.errorText}>{formErrors.newVehicle.year}</Text>
                     )}
@@ -2344,27 +2386,23 @@ const Profile = () => {
 
                   <View style={styles.formSection}>
                     <Text style={styles.fieldLabel}>Fuel Type *</Text>
-                    <TextInput
-                      style={[
-                        styles.textInput,
-                        formErrors.newVehicle?.fuleType && styles.textInputError,
-                      ]}
-                      value={formData.newVehicle?.fuleType || ''}
-                      onChangeText={(text) => {
+                    <Picker
+                      selectedValue={selectedFuelType}
+                      onValueChange={(value) => {
+                        setSelectedFuelType(value);
                         setFormData({
                           ...formData,
-                          newVehicle: {
-                            ...(formData.newVehicle || {}),
-                            fuleType: text,
-                          },
+                          newVehicle: { ...(formData.newVehicle || {}), fuelType: value },
                         });
-                        if (formErrors.newVehicle?.fuleType) {
-                          clearNewVehicleError('fuleType');
-                        }
+                        clearNewVehicleError('fuelType');
                       }}
-                      placeholder="Enter fuel type"
-                      placeholderTextColor={COLORS.primary_03}
-                    />
+                    >
+                      <Picker.Item label="Select Fuel Type" value="" />
+                      {fuelTypes.map((fuel: any) => (
+                        <Picker.Item key={fuel.id} label={fuel.name} value={fuel.name} />
+                      ))}
+                    </Picker>
+
                     {formErrors.newVehicle?.fuleType && (
                       <Text style={styles.errorText}>{formErrors.newVehicle.fuleType}</Text>
                     )}

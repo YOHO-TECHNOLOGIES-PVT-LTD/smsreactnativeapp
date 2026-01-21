@@ -31,6 +31,15 @@ import { getImageUrl } from '~/utils/imageUtils';
 type BookingType = 'spare' | 'service';
 type OrderStatus = 'pending' | 'completed' | 'Dispatched to Courier';
 
+interface PartnerAssign {
+  companyName?: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  contact_info?: any;
+  email?: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -53,6 +62,7 @@ interface Service {
   price: number;
   image?: string;
   service_name: string;
+  partnerAssign: any;
 }
 
 interface BookingCardData {
@@ -71,6 +81,7 @@ interface BookingCardData {
   confirm_Date: string;
   products?: Product[];
   services?: Service[];
+  partnerAssign?: PartnerAssign;
   amount: number;
   track_id?: string;
   trackslip_image?: string;
@@ -301,6 +312,39 @@ const OrderDetailsModal: React.FC<{
                   </Text>
                 </View>
               )}
+            </View>
+          )}
+
+          {order?.partnerAssign && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Service Center</Text>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Partner Name:</Text>
+                <Text style={styles.summaryValue}>
+                  {order?.partnerAssign
+                    ? `${order.partnerAssign?.firstName ?? ''} ${order.partnerAssign?.lastName ?? ''}`.trim()
+                    : 'N/A'}
+                </Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Company:</Text>
+                <Text style={styles.summaryValue}>
+                  {order?.partnerAssign?.companyName || 'N/A'}
+                </Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Contact Email:</Text>
+                <Text style={styles.summaryValue}>{order?.partnerAssign?.email || 'N/A'}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Contact Mobile:</Text>
+                <Text style={styles.summaryValue}>
+                  {order?.partnerAssign?.contact_info?.phoneNumber || 'N/A'}
+                </Text>
+              </View>
             </View>
           )}
 
