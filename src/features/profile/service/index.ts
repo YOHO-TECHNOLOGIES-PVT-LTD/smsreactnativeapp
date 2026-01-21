@@ -15,6 +15,7 @@ export const getUserProfileDetails = async (params?: any) => {
 export const updateUserProfileDetails = async (data: any) => {
   try {
     const response = await new Client().user.auth.updateUserProfile(data);
+     console.log('API Response:', response.data);
     if (response) {
       return response;
     }
