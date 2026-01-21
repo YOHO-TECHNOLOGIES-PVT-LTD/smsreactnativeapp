@@ -230,7 +230,10 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
           </View>
 
           <Text style={styles.cardDescription} numberOfLines={1}>
-            {part?.brand || 'N/A'} • {part?.warrantyPeriod || 'No warranty'}
+            Brand : {part?.brand || 'N/A'}
+          </Text>
+          <Text style={styles.cardDescription}>
+            Warranty Period: {part?.warrantyPeriod || 'No warranty'}
           </Text>
 
           <View style={styles.bottomRow}>
@@ -275,10 +278,12 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
                 ₹{parseInt(part?.price || '0').toLocaleString('en-IN')}
               </Text>
             </View>
-
-            <Text style={styles.modalDescription}>
-              {part?.brand || 'N/A'} • {part?.warrantyPeriod || 'No warranty'}
-            </Text>
+            <View style={{ marginBottom: 12 }}>
+              <Text style={styles.modalDescription}>Brand: {part?.brand || 'N/A'}</Text>
+              <Text style={styles.modalDescription}>
+                Warranty Period: {part?.warrantyPeriod || 'No warranty'}
+              </Text>
+            </View>
 
             <View style={styles.modalRating}>
               {renderStars(part?.rating)}
@@ -516,7 +521,7 @@ const styles = StyleSheet.create({
   modalDescription: {
     ...FONTS.body4,
     color: COLORS.primary_01,
-    marginBottom: 12,
+    
   },
   modalRating: {
     flexDirection: 'row',
@@ -570,9 +575,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
-    borderRadius:2,
-    borderColor:COLORS.grey20,
-    borderWidth:1,
+    borderRadius: 2,
+    borderColor: COLORS.grey20,
+    borderWidth: 1,
     paddingHorizontal: 8,
   },
   quantityLabel: {
@@ -639,10 +644,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 10,
-    marginBottom: 24,
+    // marginBottom: 24,
     alignSelf: 'center',
     width: '100%',
-    marginTop: 15,
+    // marginTop: 15,
     flex: 1,
   },
   modalAddButton: {
