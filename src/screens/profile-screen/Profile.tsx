@@ -1662,6 +1662,7 @@ const Profile = () => {
                   <MenuItem
                     title="Phone Number"
                     subtitle={profileData?.contact_info?.phoneNumber}
+                    
                     icon={<Phone size={20} color={COLORS1.primary} />}
                   />
                   <View style={styles.separator} />
@@ -1948,6 +1949,7 @@ const Profile = () => {
                   <TextInput
                     style={[styles.textInput, formErrors.phoneNumber && styles.textInputError]}
                     value={formData?.contact_info?.phoneNumber}
+                    editable={false}
                     onChangeText={(text) => {
                       setFormData({
                         ...formData,
