@@ -42,6 +42,7 @@ export const updateServiceBooking = async (id: any, data: any) => {
 export const getAllBookingsCartItems = async (data: any) => {
   try {
     const response = await new Client().user.bookings.getAll(data);
+    console.log("sERVICE",response);
     if (response) {
       return response;
     }

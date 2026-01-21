@@ -161,6 +161,8 @@ const OrderDetailsModal: React.FC<{
     }
   };
 
+  console.log("first",order)
+
   return (
     <Modal
       visible={visible}
