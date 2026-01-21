@@ -98,7 +98,6 @@ const Bookings = () => {
   const fetchOrders = async () => {
     try {
       const response = tokenSelector && (await getAllBookingsCartItems({}));
-      console.log("sERVICE",response);
       if (response?.success) {
         const allOrders = [...(response.productConfirm || []), ...(response.serviceConfirm || [])];
         setOrders(allOrders);

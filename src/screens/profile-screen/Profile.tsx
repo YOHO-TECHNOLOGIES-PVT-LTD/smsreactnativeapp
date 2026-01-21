@@ -368,6 +368,7 @@ const Profile = () => {
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedFuelType, setSelectedFuelType] = useState('');
+  const [addVehicleModal, setAddVehicleModal] = useState(false);
 
   useEffect(() => {
     if (addVehicleModal) {
@@ -494,7 +495,6 @@ const Profile = () => {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [editProfileModal, setEditProfileModal] = useState(false);
-  const [addVehicleModal, setAddVehicleModal] = useState(false);
   const [vehicleDetailModal, setVehicleDetailModal] = useState(false);
   const [orderDetailModal, setOrderDetailModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);

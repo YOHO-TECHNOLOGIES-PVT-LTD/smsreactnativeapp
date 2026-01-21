@@ -86,7 +86,7 @@ class Client {
         ),
     },
     bookings: {
-      getAll: (params: any) => httpClient.get(API_END_POINTS.bookings.getAll, params),
+      getAll: (params?: any) => httpClient.get(API_END_POINTS.bookings.getAll, params),
       postProduct: (params: any) => httpClient.post(API_END_POINTS.bookings.postProduct, params),
       postService: (params: any) => httpClient.post(API_END_POINTS.bookings.postService, params),
       getServiceInvoice: (params: any) =>
