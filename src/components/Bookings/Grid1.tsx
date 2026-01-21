@@ -23,6 +23,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { getImageUrl } from '~/utils/imageUtils';
 import { getBookingCartItems } from '~/features/booking-cart/redux/thunks';
 import { useDispatch } from 'react-redux';
+import { useRoute } from '@react-navigation/native';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
@@ -75,6 +76,14 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch<any>();
+  const route = useRoute<any>()
+  const { types } = route.params
+
+  useEffect(() => {
+    if (types) {
+      setActiveTab(types)
+    }
+  }, [types])
 
   const spareCart = useMemo(
     () => bookingCarts?.find((c) => c.type === 'spare') || null,
@@ -264,7 +273,7 @@ const BookingCartScreen: React.FC<CartProps> = ({ bookingCarts, onChangeCart, to
         console.error('Error deleting item:', error);
         toast.error('Error', 'Failed to remove item from cart.');
       }
-      finally{
+      finally {
         dispatch(getBookingCartItems());
       }
     },

@@ -328,7 +328,7 @@ const Services = () => {
         setStartTime('');
         setEndTime('');
         dispatch(getBookingCartItems());
-        navigation("BookingCartScreen")
+        navigation.navigate("BookingCartScreen", { types: "Services" })
       } else {
         toast.error('Error', 'Something went wrong. Try again.');
       }
@@ -360,11 +360,11 @@ const Services = () => {
       if (response) {
         setFormErrors({});
         dispatch(getProfileDetailsThunk({}));
-        toast.success('Success', 'Profile updated successfully!');
+        // toast.success('Success', 'Profile updated successfully!');
       }
     } catch (error) {
       console.log(error);
-      toast.error('Error', 'Failed to update profile');
+      // toast.error('Error', 'Failed to update profile');
     }
   };
 
@@ -1251,9 +1251,11 @@ const Services = () => {
             ]}
             onPress={() => {
               if (TokenSelector) {
-                if (!selectedVehicleIndex) {
+                if (profileData?.vehicleInfo?.length === 0) {
                   handleSaveProfile()
-                  handleAddtoCart(selectedVehicleIndex);
+                  if (!selectedVehicleIndex) {
+                    handleAddtoCart(selectedVehicleIndex);
+                  }
                 } else {
                   handleAddtoCart(selectedVehicleIndex);
                 }
@@ -1266,7 +1268,7 @@ const Services = () => {
               selectedBookingType === 'schedule' && (!startTime || !endTime)
             }>
             <Text style={styles.bookButtonText}>
-              {selectedBookingType === 'general' ? 'BOOK NOW' : 'PRE-BOOK SERVICE'}
+              {selectedBookingType === 'general' ? (profileData?.vehicleInfo?.length == 0 ? 'Submit' : 'BOOK NOW') : 'PRE-BOOK SERVICE'}
             </Text>
           </TouchableOpacity>
         </View>
