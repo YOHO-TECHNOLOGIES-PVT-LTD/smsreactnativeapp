@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -77,24 +77,21 @@ import { uploadSingleFileorImage } from '~/features/common/service';
 import { getImageUrl } from '~/utils/imageUtils';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchFuelTypes, fetchMakes, fetchModels } from '~/features/profile/service/vehicle';
+import { fetchMakes, fetchModels } from '~/features/profile/service/vehicle';
 import { Picker } from '@react-native-picker/picker';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 const { width, height } = Dimensions.get('window');
+const fuel = ["petrol", "diesel", "CNG"];
 
 export const COLORS1 = {
-  // Primary colors1 - Refined Deep Crimson Theme
   primary: '#0050A5',
   primaryLight: '#4566de',
   primaryDark: '#0050A5',
   primaryUltraLight: '#d8e1ef',
   primaryBorder: '#BED0EC',
-
-  // Background colors1
   background: '#0050A5',
   backgroundGradient: ['#0050A5', '#BED0EC'],
-
-  // Card colors1 with sophisticated combinations
   cardPrimary: '#FFFFFF',
   cardSecondary: '#F8FAFC',
   cardTertiary: '#F1F5F9',
@@ -105,7 +102,6 @@ export const COLORS1 = {
   cardInfo: '#EFF6FF',
   primaryinfo: ['#2563EB', '#3B82F6'],
 
-  // Status colors1
   success: '#82dd55',
   successLight: '#10B981',
   successDark: '#047857',
@@ -116,7 +112,6 @@ export const COLORS1 = {
   info: '#2563EB',
   infoLight: '#3B82F6',
 
-  // Neutral colors1
   white: '#FFFFFF',
   black: '#000000',
   gray50: 'rgba(247, 247, 247, 1)',
@@ -130,12 +125,10 @@ export const COLORS1 = {
   gray800: 'rgba(247, 247, 247, 0.08)',
   gray900: '#111827',
 
-  // Shadow colors1
   shadow: 'rgba(255, 255, 255, 0.1)',
   shadowMedium: 'rgba(0, 0, 0, 0.1)',
   shadowStrong: 'rgba(0, 0, 0, 0.7)',
 
-  // Special gradient combinations
   gradientPrimary: ['#0050A5', '#BED0EC'] as [string, string],
   gradientprimary: ['#D97706', '#F59E0B'] as [string, string],
   gradientSuccess: ['#059669', '#10B981'] as [string, string],
@@ -143,7 +136,6 @@ export const COLORS1 = {
   gradientNeutral: ['#F8FAFC', '#F1F5F9'] as [string, string],
 };
 
-// Enhanced Type Definitions
 interface Vehicle {
   id: string | number;
   registerNumber: string;
@@ -210,7 +202,8 @@ interface CarStatusProps {
   icon: React.ReactNode;
 }
 
-// Validation functions
+
+
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -295,7 +288,6 @@ const validateRegistrationNumber = (regNumber: string): boolean => {
   return /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,2}[0-9]{1,4}$/.test(regNumber.toUpperCase());
 };
 
-// Error interface
 interface FormErrors {
   firstName?: string;
   lastName?: string;
@@ -320,6 +312,27 @@ interface FormErrors {
     fuleType?: string;
   };
 }
+
+type DropdownItem = {
+  label: string;
+  value: string;
+};
+
+type MakeType = {
+  Mfr_ID: number;
+  Mfr_CommonName: string;
+  Country: string;
+  Mfr_Name: string;
+
+};
+
+type ModelType = {
+  Make_ID: number;
+  Make_Name: string;
+  Model_ID: number;
+  Model_Name: string;
+};
+
 
 const Profile = () => {
   const TokenSelector = useSelector(selectToken);
@@ -358,57 +371,218 @@ const Profile = () => {
   });
   const [originalFormData, setOriginalFormData] = useState<any>(null);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState({
+    makes: false,
+    models: false,
+    submitting: false
+  });
 
-  const [makes, setMakes] = useState<any[]>([]);
+  const [makes, setMakes] = useState<MakeType[]>([]);
   const [models, setModels] = useState<any[]>([]);
   const [years, setYears] = useState<number[]>([]);
   const [fuelTypes, setFuelTypes] = useState<any[]>([]);
 
-  const [selectedMake, setSelectedMake] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedFuelType, setSelectedFuelType] = useState('');
 
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const [selectedMake, setSelectedMake] = useState<string | null>(null);
+  const [companyItems, setCompanyItems] = useState<DropdownItem[]>([]);
+  const [addVehicleModal, setAddVehicleModal] = useState(false);
+
+  const loadMakes = useCallback(async () => {
+    try {
+      setIsLoading(prev => ({ ...prev, makes: true }));
+      console.log('Testing direct API call...');
+
+      const directResponse = await fetchMakes()
+      console.log(" Company data :", directResponse);
+
+      const directData = await directResponse;
+
+      const serviceData = await fetchMakes();
+
+      const manufacturers = (serviceData && serviceData.length > 0)
+        ? serviceData
+        : (directData.Results || []);
+
+      if (manufacturers.length === 0) {
+        console.log('No data received from any source');
+        return;
+      }
+
+      interface Manufacturer {
+        Mfr_ID?: number;
+        Mfr_Name?: string;
+        Country?: string;
+        Mfr_CommonName?: string;
+        VehicleTypes?: any[];
+      }
+
+      const manufacturer: Manufacturer[] = directData.Results;
+
+      const uniqueMap = new Map<number | string, Manufacturer & { displayName: string }>();
+
+      manufacturer.forEach((item) => {
+        if (item.Mfr_Name && item.Mfr_Name.trim() !== '') {
+          const manufacturerName = item.Mfr_Name.trim();
+          const key = item.Mfr_ID || manufacturerName;
+
+          if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, {
+              ...item,
+              displayName: manufacturerName,
+            });
+          }
+        }
+      });
+
+
+      const uniqueManufacturers = Array.from(uniqueMap.values());
+
+      const formattedItems = uniqueManufacturers
+        .map(item => ({
+          ...item,
+          Mfr_CommonName: item.Mfr_CommonName?.trim() || "",
+        }))
+        .filter(item => item.Mfr_CommonName !== "")
+        .sort((a, b) => a.Mfr_CommonName.localeCompare(b.Mfr_CommonName))
+        .map(item => ({
+          label: item.Mfr_CommonName,
+          value: item.Mfr_CommonName,
+          id: item.Mfr_ID || item.Mfr_CommonName,
+        }));
+
+
+      console.log('Formatted items count:', formattedItems.length);
+      console.log('Sample formatted item:', formattedItems[0]);
+
+      setCompanyItems(formattedItems);
+
+    } catch (error) {
+      console.error('Error loading makes:', error);
+      setCompanyItems([]);
+    } finally {
+      setIsLoading(prev => ({ ...prev, makes: false }));
+    }
+  }, []);
+
+
+  const generateYears = useCallback(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 30 }, (_, i) => currentYear - i);
+  }, []);
+
+
   useEffect(() => {
     if (addVehicleModal) {
       loadMakes();
-      loadFuelTypes();
-      generateYears();
+      setYears(generateYears());
+    } else {
+      setSelectedMake(null);
+      setSelectedModel('');
+      setSelectedYear('');
+      setSelectedFuelType('');
+      setModels([]);
+      setFormData((prev: any) => ({
+        ...prev,
+        newVehicle: {
+          registerNumber: '',
+          company: '',
+          model: '',
+          year: '',
+          fuelType: ''
+        }
+      }));
+      setFormErrors({});
+    }
+  }, [addVehicleModal, generateYears]);
+
+
+  const handleCompanyChangeNative = useCallback(async (brand: string | null) => {
+    console.log('Selected company for models:', brand);
+
+    setSelectedMake(brand);
+    setSelectedModel('');
+    setModels([]);
+
+    setFormData((prev: { newVehicle: any; }) => ({
+      ...prev,
+      newVehicle: {
+        ...(prev.newVehicle || {}),
+        company: brand || '',
+        model: '',
+      },
+    }));
+    clearNewVehicleError('company');
+
+    if (!brand) {
+      console.log('No brand selected, skipping models fetch');
+      return;
+    }
+    try {
+      setIsLoading(prev => ({ ...prev, models: true }));
+      console.log(`Fetching models for: ${brand}`);
+
+      const res = await fetchModels(brand);
+
+      if (!res || !Array.isArray(res)) {
+        console.log('Invalid response from fetchModels');
+        setModels([]);
+        return;
+      }
+
+      console.log(`Raw API returned ${res.length} items`);
+
+      const validModels = res
+        .filter((model: any, index: number) => {
+          if (index >= 200) return false;
+
+          const modelName = model.Model_Name || model.model_name || model.name;
+          return modelName &&
+            modelName.trim() !== '' &&
+            modelName.length < 50;
+        })
+        .slice(0, 100)
+        .map((model: any) => {
+          const modelName = model.Model_Name || model.model_name || model.name;
+          return {
+            Model_ID: model.Model_ID || model.model_id || model.id || Date.now(),
+            Model_Name: modelName.trim(),
+          };
+        })
+        .filter((model, index, self) =>
+          index === self.findIndex(m => m.Model_Name === model.Model_Name)
+        )
+        .sort((a: any, b: any) => a.Model_Name.localeCompare(b.Model_Name));
+
+      console.log(`Processed ${validModels.length} valid models`);
+
+      setModels(validModels);
+
+      if (validModels.length === 0) {
+        toast.info('Info', `No models found for ${brand}. You can enter manually.`);
+      }
+
+    } catch (error) {
+      console.error('Error loading models:', error);
+      console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+      setModels([]);
+      console.log(`Failed to load models for ${brand}`);
+    } finally {
+      setIsLoading(prev => ({ ...prev, models: false }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (addVehicleModal) {
+      loadMakes();
+      const currentYear = new Date().getFullYear();
+      const yearsArray = Array.from({ length: 30 }, (_, i) => currentYear - i);
+      setYears(yearsArray);
     }
   }, [addVehicleModal]);
-
-  const loadMakes = async () => {
-    try {
-      const data = await fetchMakes();
-      setMakes(data);
-    } catch (err) {
-      console.error("Error fetching makes:", err);
-    }
-  };
-
-  const loadModels = async (make: string) => {
-    try {
-      const data = await fetchModels(make);
-      setModels(data);
-    } catch (err) {
-      console.error("Error fetching models:", err);
-    }
-  };
-
-  const loadFuelTypes = async () => {
-    try {
-      const data = await fetchFuelTypes();
-      setFuelTypes(data);
-    } catch (err) {
-      console.error("Error fetching fuel types:", err);
-    }
-  };
-
-  // Last 30 years for dropdown
-  const generateYears = () => {
-    const currentYear = new Date().getFullYear();
-    setYears(Array.from({ length: 30 }, (_, i) => currentYear - i));
-  };
 
 
   useEffect(() => {
@@ -422,6 +596,7 @@ const Profile = () => {
       setIsLoading(false);
     }
   }, [dispatch]);
+
 
   const fetchUserProfile = async () => {
     try {
@@ -494,7 +669,6 @@ const Profile = () => {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [editProfileModal, setEditProfileModal] = useState(false);
-  const [addVehicleModal, setAddVehicleModal] = useState(false);
   const [vehicleDetailModal, setVehicleDetailModal] = useState(false);
   const [orderDetailModal, setOrderDetailModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
@@ -504,7 +678,6 @@ const Profile = () => {
   const [helpCentreModal, setHelpCentreModal] = useState(false);
   const [termsModal, setTermsModal] = useState(false);
   const navigation = useNavigation<any>();
-  const [isLoading, setIsLoading] = useState(false);
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
   const [editForm, setEditForm] = useState({ ...userInfo });
   const [imageModalVisible, setImageModalVisible] = useState(false);
@@ -529,15 +702,12 @@ const Profile = () => {
   const headerOpacity = useRef(new Animated.Value(1)).current;
   const cardScale = useRef(new Animated.Value(1)).current;
 
-  // Side Menu Animation - Modified for left to right
   const sideMenuTranslateX = useRef(new Animated.Value(-width)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
-  // 360 Degree Car Image State
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expandedTerm, setExpandedTerm] = useState<number | null>(null);
 
-  // Enhanced Pan Responder for 360° Car View
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -622,7 +792,6 @@ const Profile = () => {
     });
   }, []);
 
-  // Side Menu Functions - Modified for left to right animation
   const openSideMenu = () => {
     setSideMenuVisible(true);
     setExpandedSections({
@@ -668,7 +837,6 @@ const Profile = () => {
     });
   };
 
-  // Toggle individual sections
   const toggleSection = (section: 'vehicles' | 'orders' | 'settings') => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -676,7 +844,6 @@ const Profile = () => {
     }));
   };
 
-  // Utility Functions
   const saveUserProfileImage = (imageUri: string) => { };
 
   const getUserProfileImage = () => {
@@ -712,7 +879,6 @@ const Profile = () => {
     let isValid = true;
     let date = new Date().getFullYear();
 
-    // Validate first name
     if (!formData.firstName?.trim()) {
       errors.firstName = 'First name is required';
       isValid = false;
@@ -721,7 +887,6 @@ const Profile = () => {
       isValid = false;
     }
 
-    // Validate last name
     if (!formData.lastName?.trim()) {
       errors.lastName = 'Last name is required';
       isValid = false;
@@ -730,7 +895,6 @@ const Profile = () => {
       isValid = false;
     }
 
-    // Validate email
     if (!formData.email?.trim()) {
       errors.email = 'Email is required';
       isValid = false;
@@ -739,7 +903,6 @@ const Profile = () => {
       isValid = false;
     }
 
-    // Validate phone number if provided
     const phoneValidation = validatePhone(formData.contact_info?.phoneNumber || '');
     if (!phoneValidation.isValid) {
       errors.phoneNumber = phoneValidation.error;
@@ -758,27 +921,23 @@ const Profile = () => {
       isValid = false;
     }
 
-    // Validate city
     const cityError = validateCity(formData.contact_info?.city || '');
     if (cityError) {
       errors.city = cityError;
       isValid = false;
     }
 
-    // Validate state
     const stateError = validateState(formData.contact_info?.state || '');
     if (stateError) {
       errors.state = stateError;
       isValid = false;
     }
 
-    // Validate existing vehicles
     if (Array.isArray(formData.vehicleInfo)) {
       errors.vehicles = [];
       formData.vehicleInfo.forEach((vehicle: any, index: number) => {
         const vehicleErrors: any = {};
 
-        // Validate required fields for existing vehicles
         if (!vehicle.registerNumber?.trim()) {
           vehicleErrors.registerNumber = 'Register number is required';
           isValid = false;
@@ -919,7 +1078,6 @@ const Profile = () => {
         updatedData.image = formData.image;
       }
 
-      // Check contact info changes
       const contactInfoChanged: any = {};
       Object.keys(formData.contact_info).forEach((key) => {
         if (formData.contact_info[key] !== originalFormData.contact_info[key]) {
@@ -934,12 +1092,10 @@ const Profile = () => {
         };
       }
 
-      // Check vehicle info changes
       if (JSON.stringify(formData.vehicleInfo) !== JSON.stringify(originalFormData.vehicleInfo)) {
         updatedData.vehicleInfo = formData.vehicleInfo;
       }
 
-      // Only make API call if there are actual changes
       if (Object.keys(updatedData).length > 0) {
         const response: any = await updateUserProfileDetails(updatedData);
         if (response) {
@@ -1031,7 +1187,6 @@ const Profile = () => {
 
       if (!result.canceled) {
         const localUri = result.assets[0].uri;
-        // prepare FormData
         const formData = new FormData();
         formData.append('file', {
           uri: localUri,
@@ -1120,7 +1275,6 @@ const Profile = () => {
     });
   };
 
-  // Helper function to clear new vehicle error
   const clearNewVehicleError = (field: string) => {
     setFormErrors((prev: any) => {
       const newErrors = { ...prev };
@@ -1315,7 +1469,6 @@ const Profile = () => {
     </TouchableOpacity>
   );
 
-  // Enhanced Car Status Component
   const CarStatusBar = ({ label, value, color, icon }: CarStatusProps) => {
     return (
       <View style={styles.carStatusBarContainer}>
@@ -1365,7 +1518,6 @@ const Profile = () => {
     </View>
   );
 
-  // Side Menu Content Render Functions
   const renderVehiclesContent = () => (
     <>
       <View style={styles.sectionHeader}>
@@ -1569,22 +1721,18 @@ const Profile = () => {
     </>
   );
 
-  // Add this state variable near your other useState declarations
   const [refreshing, setRefreshing] = useState(false);
 
-  // Add this refresh function after your existing functions
   const onRefresh = async () => {
     try {
       setRefreshing(true);
       setProfileData({});
-      // Refresh user profile data
       if (TokenSelector) {
         await fetchUserProfile();
         dispatch(getProfileDetailsThunk({}));
         await fetchOrders();
       }
 
-      // Optional: Add a small delay for better UX
       setTimeout(() => {
         setRefreshing(false);
       }, 500);
@@ -1601,7 +1749,6 @@ const Profile = () => {
         <View style={{}}></View>
         <View style={styles.container}>
           <LoadingAnimation visible={isLoading} />
-          {/* Enhanced Header with Professional Gradient */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.openDrawer()}>
               <Image
@@ -1850,7 +1997,6 @@ const Profile = () => {
           {/* Enhanced Side Menu with Individual Dropdowns - Left to Right */}
           {sideMenuVisible && (
             <View style={styles.sideMenuContainer}>
-              {/* Overlay */}
               <Animated.View style={[styles.sideMenuOverlay, { opacity: overlayOpacity }]}>
                 <TouchableOpacity
                   style={styles.overlayTouchable}
@@ -1862,7 +2008,6 @@ const Profile = () => {
               {/* Side Menu Panel - Modified for left positioning */}
               <Animated.View
                 style={[styles.sideMenuPanel, { transform: [{ translateX: sideMenuTranslateX }] }]}>
-                {/* Side Menu Header */}
                 <LinearGradient
                   colors={COLORS1.gradientPrimary}
                   style={styles.sideMenuHeader}
@@ -2103,6 +2248,7 @@ const Profile = () => {
 
                 {/* Vehicle Information */}
                 {Array.isArray(formData?.vehicleInfo) &&
+                  formData?.vehicleInfo?.length > 0 &&
                   formData?.vehicleInfo?.map((vehicle: any, index: any) => (
                     <View key={index}>
                       <View
@@ -2280,89 +2426,135 @@ const Profile = () => {
               </LinearGradient>
 
               <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-                <View>
-                  <View style={styles.formSection}>
-                    <Text style={styles.fieldLabel}>Register Number *</Text>
-                    <TextInput
-                      style={[
-                        styles.textInput,
-                        formErrors.newVehicle?.registerNumber && styles.textInputError,
-                      ]}
-                      value={formData.newVehicle?.registerNumber || ''}
-                      onChangeText={(text) => {
-                        setFormData({
-                          ...formData,
-                          newVehicle: {
-                            ...(formData.newVehicle || {}),
-                            registerNumber: text,
-                          },
-                        });
-                        if (formErrors.newVehicle?.registerNumber) {
-                          clearNewVehicleError('registerNumber');
-                        }
-                      }}
-                      placeholder="Enter vehicle register number"
-                      placeholderTextColor={COLORS.primary_03}
-                    />
-                    {formErrors.newVehicle?.registerNumber && (
-                      <Text style={styles.errorText}>{formErrors.newVehicle.registerNumber}</Text>
-                    )}
-                  </View>
+                {/* Register Number */}
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Register Number *</Text>
+                  <TextInput
+                    style={[
+                      styles.textInput,
+                      formErrors.newVehicle?.registerNumber && styles.textInputError,
+                    ]}
+                    value={formData.newVehicle?.registerNumber || ''}
+                    onChangeText={(text) => {
+                      setFormData({
+                        ...formData,
+                        newVehicle: {
+                          ...(formData.newVehicle || {}),
+                          registerNumber: text,
+                        },
+                      });
+                      if (formErrors.newVehicle?.registerNumber) {
+                        clearNewVehicleError('registerNumber');
+                      }
+                    }}
+                    placeholder="Enter vehicle register number"
+                    placeholderTextColor={COLORS.primary_03}
+                  />
+                  {formErrors.newVehicle?.registerNumber && (
+                    <Text style={styles.errorText}>{formErrors.newVehicle.registerNumber}</Text>
+                  )}
+                </View>
 
-                  <View style={styles.formSection}>
-                    <Text style={styles.fieldLabel}>Car Company *</Text>
-                    <Picker
-                      selectedValue={selectedMake}
-                      onValueChange={(value) => {
-                        setSelectedMake(value);
-                        setFormData({
-                          ...formData,
-                          newVehicle: { ...(formData.newVehicle || {}), company: value },
-                        });
-                        loadModels(value);
-                        clearNewVehicleError('company');
-                      }}
-                    >
-                      <Picker.Item label="Select Company" value="" />
-                      {makes.map((make: any) => (
-                        <Picker.Item key={make.Make_ID} label={make.Make_Name} value={make.Make_Name} />
-                      ))}
-                    </Picker>
+                {/* Car Company Dropdown */}
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Car Company *</Text>
+                  {isLoading.makes ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  ) : (
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={selectedMake}
+                        onValueChange={(value: string) => {
+                          console.log('Company selected:', value);
+                          handleCompanyChangeNative(value);
+                          clearNewVehicleError('company');
+                        }}
+                        style={styles.picker}
+                        dropdownIconColor={COLORS.primary}
+                      >
+                        <Picker.Item
+                          label="Select Company"
+                          value=""
+                          color={COLORS.grey}
+                        />
+                        {companyItems.map((item: DropdownItem, index: number) => (
+                          <Picker.Item
+                            key={`${item.value}-${index}`}
+                            label={item.label}
+                            value={item.value}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                  )}
+                  {formErrors.newVehicle?.company && (
+                    <Text style={styles.errorText}>{formErrors.newVehicle.company}</Text>
+                  )}
+                </View>
 
-                    {formErrors.newVehicle?.company && (
-                      <Text style={styles.errorText}>{formErrors.newVehicle.company}</Text>
-                    )}
-                  </View>
+                {/* Car Model Dropdown */}
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Car Model *</Text>
+                  {isLoading.models ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  ) : models.length > 0 ? (
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={selectedModel}
+                        onValueChange={(value: string) => {
+                          console.log('Model selected:', value);
+                          setSelectedModel(value);
+                          setFormData({
+                            ...formData,
+                            newVehicle: {
+                              ...(formData.newVehicle || {}),
+                              model: value,
+                            },
+                          });
+                          clearNewVehicleError('model');
+                        }}
+                        style={styles.picker}
+                        dropdownIconColor={COLORS.primary}
+                        enabled={models.length > 0}
+                      >
+                        <Picker.Item
+                          label="Select Model"
+                          value=""
+                          color={COLORS.grey}
+                        />
+                        {models.map((model: any, index: number) => {
+                          const modelName = model.Model_Name || model.model_name || model.name || `Model ${index + 1}`;
+                          const modelId = model.Model_ID || model.model_id || model.id || index;
 
-                  <View style={styles.formSection}>
-                    <Text style={styles.fieldLabel}>Car Model *</Text>
-                    <Picker
-                      selectedValue={selectedModel}
-                      onValueChange={(value) => {
-                        setSelectedModel(value);
-                        setFormData({
-                          ...formData,
-                          newVehicle: { ...(formData.newVehicle || {}), model: value },
-                        });
-                        clearNewVehicleError('model');
-                      }}
-                    >
-                      <Picker.Item label="Select Model" value="" />
-                      {models.map((model: any) => (
-                        <Picker.Item key={model.Model_ID} label={model.Model_Name} value={model.Model_Name} />
-                      ))}
-                    </Picker>
+                          return (
+                            <Picker.Item
+                              key={`${modelId}-${index}`}
+                              label={modelName}
+                              value={modelName}
+                            />
+                          );
+                        })}
+                      </Picker>
+                    </View>
+                  ) : (
+                    <View style={styles.noDataContainer}>
+                      <Text style={styles.noDataText}>
+                        {selectedMake ? 'No models found' : 'Select a company first'}
+                      </Text>
+                    </View>
+                  )}
+                  {formErrors.newVehicle?.model && (
+                    <Text style={styles.errorText}>{formErrors.newVehicle.model}</Text>
+                  )}
+                </View>
 
-                    {formErrors.newVehicle?.model && (
-                      <Text style={styles.errorText}>{formErrors.newVehicle.model}</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.formSection}>
-                    <Text style={styles.fieldLabel}>Model Year *</Text>
+                {/* Model Year */}
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Model Year *</Text>
+                  <View style={styles.pickerContainer}>
                     <Picker
                       selectedValue={selectedYear}
-                      onValueChange={(value) => {
+                      onValueChange={(value: string) => {
                         setSelectedYear(value);
                         setFormData({
                           ...formData,
@@ -2370,23 +2562,31 @@ const Profile = () => {
                         });
                         clearNewVehicleError('year');
                       }}
+                      style={styles.picker}
+                      dropdownIconColor={COLORS.primary}
                     >
-                      <Picker.Item label="Select Year" value="" />
+                      <Picker.Item label="Select Year" value="" color={COLORS.grey} />
                       {years.map((year) => (
-                        <Picker.Item key={year} label={year.toString()} value={year.toString()} />
+                        <Picker.Item
+                          key={year}
+                          label={year.toString()}
+                          value={year.toString()}
+                        />
                       ))}
                     </Picker>
-
-                    {formErrors.newVehicle?.year && (
-                      <Text style={styles.errorText}>{formErrors.newVehicle.year}</Text>
-                    )}
                   </View>
+                  {formErrors.newVehicle?.year && (
+                    <Text style={styles.errorText}>{formErrors.newVehicle.year}</Text>
+                  )}
+                </View>
 
-                  <View style={styles.formSection}>
-                    <Text style={styles.fieldLabel}>Fuel Type *</Text>
+                {/* Fuel Type */}
+                <View style={styles.formSection}>
+                  <Text style={styles.fieldLabel}>Fuel Type *</Text>
+                  <View style={styles.pickerContainer}>
                     <Picker
                       selectedValue={selectedFuelType}
-                      onValueChange={(value) => {
+                      onValueChange={(value: string) => {
                         setSelectedFuelType(value);
                         setFormData({
                           ...formData,
@@ -2394,29 +2594,31 @@ const Profile = () => {
                         });
                         clearNewVehicleError('fuelType');
                       }}
+                      style={styles.picker}
+                      dropdownIconColor={COLORS.primary}
                     >
-                      <Picker.Item label="Select Fuel Type" value="" />
-                      {fuelTypes.map((fuel: any) => (
-                        <Picker.Item key={fuel.id} label={fuel.name} value={fuel.name} />
+                      <Picker.Item label="Select Fuel Type" value="" color={COLORS.grey} />
+                      {fuel.map((f) => (
+                        <Picker.Item key={f} label={f} value={f} />
                       ))}
                     </Picker>
-
-                    {formErrors.newVehicle?.fuleType && (
-                      <Text style={styles.errorText}>{formErrors.newVehicle.fuleType}</Text>
-                    )}
                   </View>
+                  {formErrors.newVehicle?.fuleType && (
+                    <Text style={styles.errorText}>{formErrors.newVehicle.fuleType}</Text>
+                  )}
                 </View>
 
-                <View>
+                {/* Submit Button */}
+                <View style={styles.formSection}>
                   <TouchableOpacity
                     onPress={handleAddVehicle}
                     style={{
                       backgroundColor: COLORS1.primary,
                       padding: 12,
-                      width: '25%',
                       borderRadius: 10,
                       alignSelf: 'center',
                       marginTop: 25,
+                      minWidth: 100,
                     }}>
                     <Text
                       style={{
@@ -2425,7 +2627,7 @@ const Profile = () => {
                         fontWeight: 500,
                         textAlign: 'center',
                       }}>
-                      Add
+                      Add Vehicle
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -2870,11 +3072,18 @@ const Profile = () => {
   );
 };
 
-// Enhanced Professional Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS1.white,
+  },
+  dropdown: {
+    borderColor: '#ddd',
+    borderRadius: 8,
+  },
+  dropdownContainer: {
+    borderColor: '#ddd',
+    maxHeight: 300,
   },
   header: {
     paddingTop: Platform.OS === 'ios' ? 60 : 10,
@@ -3516,7 +3725,6 @@ const styles = StyleSheet.create({
   },
   modalHeader: {
     flexDirection: 'row',
-    // justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 20,
@@ -3598,6 +3806,32 @@ const styles = StyleSheet.create({
     color: COLORS.primary_text,
     marginBottom: 10,
   },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: COLORS.primary_04,
+    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    marginTop: 4,
+  },
+  picker: {
+    height: 50,
+    color: COLORS.primary,
+  },
+  noDataContainer: {
+    borderWidth: 1,
+    borderColor: COLORS.primary_04,
+    borderRadius: 12,
+    backgroundColor: COLORS.grey08,
+    padding: 15,
+    marginTop: 4,
+  },
+  noDataText: {
+    ...FONTS.body5,
+    color: COLORS.grey,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+
   textInputError: {
     borderColor: COLORS1.error,
     borderWidth: 1.5,

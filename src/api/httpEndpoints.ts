@@ -94,8 +94,8 @@ export const API_END_POINTS = {
   },
 
   externalVehicle: {
-		getMakes: 'https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json',
+		getMakes: 'https://vpic.nhtsa.dot.gov/api/vehicles/GetAllManufacturers?format=json',
 		getModelsByMake: 'https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/:make?format=json',
 	},
-  
+
 };
