@@ -2,9 +2,9 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
-const backEndUrl: string = 'http://192.168.1.9:3000';
+// const backEndUrl: string = 'http://192.168.1.9:3000';
 // const backEndUrl: string = 'https://sms-node-backend-17xb.onrender.com';
-// const backEndUrl: string = 'https://api.yesmechanic.co';
+const backEndUrl: string = 'https://api.yesmechanic.co';
 
 const Axios = axios.create({
   baseURL: backEndUrl,

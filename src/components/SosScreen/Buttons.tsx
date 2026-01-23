@@ -42,6 +42,7 @@ interface ValidationErrors {
   location?: string;
   additionalNotes?: string;
   general?: string;
+  vehicleNumber?:string;
 }
 
 const issues = [
@@ -106,6 +107,7 @@ export default function RoadsideAssistanceScreen() {
     relationship: '',
     location: '',
     additionalNotes: '',
+    vehicleNumber:''
   });
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const dispatch = useDispatch<AppDispatch>();
@@ -418,7 +420,7 @@ export default function RoadsideAssistanceScreen() {
         ? `${selectedVehicle.company || ''} - ${selectedVehicle.model || ''}`
         : '';
       payload.licensePlate = selectedVehicle?.registerNumber || '';
-      payload.vehicleId = selectedVehicle?._id || '';
+      payload.vehicleNumber = selectedVehicle?.registerNumber  || '';
       payload.location = locationText || '';
     } else {
       payload.name = otherDetails.name;
@@ -426,6 +428,7 @@ export default function RoadsideAssistanceScreen() {
       payload.relationship = otherDetails.relationship;
       payload.additionalNotes = otherDetails.additionalNotes;
       payload.location = otherDetails.location;
+      payload.vehicleNumber = otherDetails.vehicleNumber
     }
 
     console.log('SOS Payload:', payload);
@@ -451,6 +454,7 @@ export default function RoadsideAssistanceScreen() {
           relationship: '',
           location: '',
           additionalNotes: '',
+          vehicleNumber:'',
         });
         setImages([]);
         setSelectedIssue(null);
@@ -700,6 +704,19 @@ export default function RoadsideAssistanceScreen() {
                 />
                 {validationErrors.phone && (
                   <Text style={styles.errorText}>{validationErrors.phone}</Text>
+                )}
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Vehicle Number*</Text>
+                <TextInput
+                  style={[styles.input, validationErrors.vehicleNumber && styles.inputError]}
+                  value={otherDetails.vehicleNumber}
+                  onChangeText={(text) => handleOtherDetailsChange('vehicleNumber', text)}
+                  placeholder="Enter vehicle number"
+                />
+                {validationErrors.vehicleNumber && (
+                  <Text style={styles.errorText}>{validationErrors.vehicleNumber}</Text>
                 )}
               </View>
 
