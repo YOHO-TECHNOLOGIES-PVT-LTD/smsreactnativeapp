@@ -122,9 +122,12 @@ class Client {
 			getMakes: () =>
 				httpClient.get(API_END_POINTS.externalVehicle.getMakes),
 
-			getModelsByMake: (make: string) =>
+				getModelsByMake: (make: string) =>
 				httpClient.get(
-					API_END_POINTS.externalVehicle.getModelsByMake.replace(':make', make)
+					API_END_POINTS.externalVehicle.getModelsByMake.replace(
+						':make',
+						encodeURIComponent(make)
+					)
 				),
 		},
 
@@ -136,8 +139,7 @@ class Client {
         ),
     },
   };
-    externalVehicle: any;
-    vehicle: any;
+    
 }
 
 export default Client;
