@@ -27,9 +27,10 @@ import { Alert } from 'react-native';
 import toast from '~/utils/toast';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getImageUrl } from '~/utils/imageUtils';
+import TrackOrder from './TrackOrder';
 
 type BookingType = 'spare' | 'service';
-type OrderStatus = 'pending' | 'completed' | 'Dispatched to Courier';
+type OrderStatus = 'Pending' | 'Confirm Order' | 'Dispatched to Courier' | 'Delivered';
 
 interface PartnerAssign {
   companyName?: string;
@@ -79,6 +80,16 @@ interface BookingCardData {
   status: OrderStatus;
   type: BookingType;
   confirm_Date: string;
+  pendingDate:string
+  confirmDate: string
+  deliveredDate: string
+  dispatchDate: string
+  partnerId: {
+    contact_info :{phoneNumber : string}
+    firstName: string
+    lastName: string
+    companyName: string
+  }
   products?: Product[];
   services?: Service[];
   partnerAssign?: PartnerAssign;
@@ -104,7 +115,7 @@ const OrderDetailsModal: React.FC<{
   order: BookingCardData;
 }> = ({ visible, onClose, order }) => {
   const isService = !!order?.services;
-  const isDispatched = order?.status === 'Dispatched to Courier' || order?.status === 'completed';
+  const isDispatched = order?.status === 'Dispatched to Courier' || order?.status === 'Pending' || order?.status === 'Confirm Order' || order.status === 'Delivered';
   const [isDownload, setIsDownload] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -147,6 +158,21 @@ const OrderDetailsModal: React.FC<{
     }
   };
 
+ const mapBackendStatus = (status: string): OrderStatus => {
+  switch (status) {
+    case "Pending":
+      return "Pending";
+    case "Confirm Order":
+      return "Confirm Order";
+    case "Dispatched to Courier":
+      return "Dispatched to Courier";
+    case "Delivered":
+      return "Delivered";
+    default:
+      return "Pending";
+  }
+};
+
   const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -160,16 +186,19 @@ const OrderDetailsModal: React.FC<{
     });
   };
 
-  const handleViewTrackSlip = async () => {
+  const [isTrackModel,setTrackModel] = useState<boolean>(false)
+
+  const handleViewTrackSlip = (a:boolean) => {
     setIsLoading(true);
-    try {
-      Alert.alert('Track Order', `Tracking slip ID for this order: ${order?.track_id}`);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error: any) {
-      Alert.alert('Failed to view track slip:', error.message);
-    } finally {
-      setIsLoading(false);
-    }
+    setTrackModel(a)
+    // try {
+    //   Alert.alert('Track Order', `Tracking slip ID for this order: ${order?.track_id}`);
+    //   await new Promise((resolve) => setTimeout(resolve, 1000));
+    // } catch (error: any) {
+    //   Alert.alert('Failed to view track slip:', error.message);
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   return (
@@ -369,7 +398,7 @@ const OrderDetailsModal: React.FC<{
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            {(order.status === 'completed' || order.status === 'Dispatched to Courier') && (
+            {(order.status === 'Confirm Order' || order.status === 'Dispatched to Courier' || order.status === "Delivered") && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.downloadButton]}
                 onPress={handleDownloadInvoice}
@@ -390,7 +419,7 @@ const OrderDetailsModal: React.FC<{
             {isDispatched && !isService && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.trackButton]}
-                onPress={handleViewTrackSlip}
+                onPress={() => handleViewTrackSlip(true)}
                 disabled={isLoading}>
                 {isLoading ? (
                   <ActivityIndicator color={COLORS.white} size="small" />
@@ -404,7 +433,26 @@ const OrderDetailsModal: React.FC<{
                 )}
               </TouchableOpacity>
             )}
+            
           </View>
+          {isTrackModel && (
+              <TrackOrder
+                  orderId={order.orderId}
+                  status={mapBackendStatus(order.status)}
+                  partnerName={
+                    order?.partnerId?.companyName
+                      // ? `${order.partnerId.firstName} ${order.partnerId.lastName ?? ""}`
+                      ? `${order.partnerId.companyName}`
+                      : "Will be assigned after confirmation"
+                  }
+                  partnerPhone={order?.partnerId?.contact_info ? `( ${order?.partnerId?.contact_info?.phoneNumber} )` : ""}
+                  delivered= {order.deliveredDate}
+                  dispatch={order.dispatchDate}
+                  pending={order.pendingDate}
+                  confirm={order.confirmDate}
+                  onClose={() => setTrackModel(false)}
+                />
+            )}
         </ScrollView>
       </SafeAreaView>
     </Modal>
