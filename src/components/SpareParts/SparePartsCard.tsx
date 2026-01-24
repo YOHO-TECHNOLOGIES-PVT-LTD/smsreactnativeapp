@@ -21,6 +21,8 @@ import { getToken } from '~/features/token/redux/thunks';
 import { AppDispatch } from '~/store';
 import CustomLogoutModal from '../CustomLogoutModal';
 import { getImageUrl } from '~/utils/imageUtils';
+import { individualproductrating, individualratinggetting } from '~/features/Rating/rating';
+import { getUserProfileDetails } from '~/features/profile/service';
 type RootStackParamList = {
   BookingCartScreen: { activeTab?: 'Spare Parts' | 'Services' };
   LoginScreen: undefined;
@@ -204,6 +206,84 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
     }
   };
 
+  // State for ratings
+  const [rating, setRating] = useState<number>(0);
+  const [existingRatings, setExistingRatings] = useState<Record<string, number>>({});
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [getUserId, setGetUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await getUserProfileDetails({});
+        setGetUserId(user?._id || null);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const res = await individualratinggetting();
+        console.log('data rating comming :', res);
+
+        const list = res?.data || [];
+        const map: Record<string, number> = {};
+        list.forEach((item: any) => {
+          if (item.partId && item.ratings?.length > 0) {
+            const avg =
+              item.ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / item.ratings.length;
+            map[item.partId] = Math.round(avg);
+          }
+        });
+        setExistingRatings(map);
+      } catch (err) {
+        console.error('Rating API error', err);
+      }
+    };
+
+    fetchRatings();
+  }, []);
+
+  const displayRating = existingRatings[part._id] || rating;
+
+  const handleRate = (value: number) => {
+    if (existingRatings[part._id]) return;
+
+    setRating((prev) => {
+      if (value === prev) return prev - 1;
+      return value;
+    });
+  };
+
+  const handleSubmitRating = async (partId: string) => {
+    if (!rating || !getUserId) return;
+
+    try {
+      setIsSubmittingRating(true);
+      await individualproductrating({
+        productId: partId,
+        userId: getUserId,
+        rating: rating,
+      });
+
+      setExistingRatings((prev) => ({
+        ...prev,
+        [partId]: rating,
+      }));
+      setRating(0);
+      toast.success('Success', 'Rating submitted successfully');
+    } catch (error) {
+      console.error('Error submitting rating', error);
+      toast.error('Error', 'Failed to submit rating');
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   return (
     <>
       {/* Product Card */}
@@ -236,10 +316,30 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
             Warranty Period: {part?.warrantyPeriod || 'No warranty'}
           </Text>
 
+        <View style={{ alignItems: 'center', marginVertical: 4 }}>
+  <View style={[styles.stockBadge, part?.inStock ? styles.inStock : styles.outOfStock]}>
+    <Text style={styles.stockText}>{part?.inStock ? 'In Stock' : 'Out of Stock'}</Text>
+  </View>
+</View>
+
           <View style={styles.bottomRow}>
-            {renderStars(part?.rating)}
-            <View style={[styles.stockBadge, part?.inStock ? styles.inStock : styles.outOfStock]}>
-              <Text style={styles.stockText}>{part?.inStock ? 'In Stock' : 'Out of Stock'}</Text>
+            {/* {renderStars(part?.rating)} */}
+            <View style={styles.starsAndValueRow}>
+              <View style={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Pressable
+                    key={star}
+                    disabled={!!existingRatings[part._id]}
+                    onPress={() => handleRate(star)}>
+                    <MaterialIcons
+                      name={displayRating >= star ? 'star' : 'star-outline'}
+                      size={15}
+                      color={displayRating >= star ? '#FFD700' : '#CFCFCF'}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+              {displayRating > 0 && <Text style={styles.ratingValueText}>{displayRating} / 5</Text>}
             </View>
           </View>
         </View>
@@ -286,7 +386,6 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
             </View>
 
             <View style={styles.modalRating}>
-              {renderStars(part?.rating)}
               <View
                 style={[
                   styles.modalStockBadge,
@@ -295,6 +394,41 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
                 <Text style={styles.stockText}>
                   {part?.inStock ? `In Stock (${part.stock})` : 'Out of Stock'}
                 </Text>
+              </View>
+
+              <View style={styles.modalRatingRow}>
+                <View style={styles.starsRow}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Pressable
+                      key={star}
+                      disabled={!!existingRatings[part._id]}
+                      onPress={() => handleRate(star)}>
+                      <MaterialIcons
+                        name={displayRating >= star ? 'star' : 'star-outline'}
+                        size={25}
+                        color={displayRating >= star ? '#FFD700' : '#CFCFCF'}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => handleSubmitRating(part._id)}
+                  disabled={isSubmittingRating || !!existingRatings[part._id] || !rating}
+                  style={[
+                    styles.submitButton,
+                    (isSubmittingRating || !!existingRatings[part._id] || !rating) && {
+                      opacity: 0.5,
+                    },
+                  ]}>
+                  <Text style={styles.submitButtonText}>
+                    {isSubmittingRating
+                      ? 'Submitting...'
+                      : !!existingRatings[part._id]
+                        ? 'Rated'
+                        : 'Submit'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -423,6 +557,69 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
+  modalRatingSection: {
+    backgroundColor: COLORS.grey08,
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+
+  ratingLabel: {
+    ...FONTS.body3,
+    color: COLORS.primary_text,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+
+  modalRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  ratingValueText: {
+    ...FONTS.body4,
+    color: COLORS.primary_01,
+    fontWeight: '500',
+  },
+  starsAndValueRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between', 
+  alignItems: 'center',
+  width: '100%', 
+},
+
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  ratingText: {
+    ...FONTS.body5,
+    color: COLORS.primary_text,
+    marginLeft: 6,
+  },
+
+  submitButton: {
+    marginLeft: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: 6,
+  },
+
+  submitButtonText: {
+    ...FONTS.body5,
+    color: COLORS.white,
+    fontWeight: '600',
+  },
+
   cardImage: {
     width: '100%',
     height: 120,
@@ -463,12 +660,17 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 4,
+     width: '100%', 
+  alignItems: 'center',
   },
   stockText: {
     ...FONTS.body5,
     color: COLORS.white,
     fontSize: 10,
     fontWeight: '500',
+    flexDirection:"row",
+    alignItems:"center",
+    justifyContent:"center"
   },
 
   // Modal Styles (same as before)
@@ -521,7 +723,6 @@ const styles = StyleSheet.create({
   modalDescription: {
     ...FONTS.body4,
     color: COLORS.primary_01,
-    
   },
   modalRating: {
     flexDirection: 'row',

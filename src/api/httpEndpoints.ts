@@ -99,4 +99,12 @@ export const API_END_POINTS = {
 		getModelsByMake: 'https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/:make?format=json',
 	},
   
+Rating:{
+	ratingpost:'/api/customer/rating',
+	ratingget:'/api/customer/rating'
+},
+individualproduct_ratings:{
+	product_rating_post:'/api/admin/spareparts/partsratings/:id',
+	product_rating_get:'/api/admin/spareparts/partsratings'
+}
 };

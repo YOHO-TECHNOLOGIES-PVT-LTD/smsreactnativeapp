@@ -27,6 +27,8 @@ import { Alert } from 'react-native';
 import toast from '~/utils/toast';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getImageUrl } from '~/utils/imageUtils';
+import { getrating, postrating } from '~/features/Rating/rating';
+import { getUserProfileDetails } from '~/features/profile/service';
 
 type BookingType = 'spare' | 'service';
 type OrderStatus = 'pending' | 'completed' | 'Dispatched to Courier';
@@ -68,6 +70,7 @@ interface Service {
 interface BookingCardData {
   id: string;
   uuid: string;
+  cartId:string 
   orderId: string;
   name: string;
   image?: string;
@@ -171,6 +174,9 @@ const OrderDetailsModal: React.FC<{
       setIsLoading(false);
     }
   };
+
+ 
+
 
   return (
     <Modal
@@ -454,6 +460,89 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
 
   const itemCount = data?.products?.length || data?.services?.length || 0;
   const itemText = itemCount === 1 ? 'item' : 'items';
+ const [rating, setRating] = useState<number>(0);
+const [existingRating, setExistingRating] = useState<number | string>(0);
+const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+const cartId = data?.orderId ?? data?.id;
+ console.log(" OVERALL DATA :",data);
+
+useEffect(() => {
+  const fetchRating = async () => {
+    try {
+      const profileRes: any = await getUserProfileDetails({});
+      // console.log(" USER COMPONENT DATA FOR CHECK ,",profileRes);
+      
+      const userId = profileRes?._id;
+      // console.log(" USERID :",userId);
+      
+      if (!userId) return;
+
+      const ratingRes: any = await getrating(userId);
+      console.log(" Check for getting the rating : ",ratingRes);
+      
+
+    const matched = ratingRes?.ratings?.find(
+  (r: any) =>
+    String(r.cartId) === String(data.cartId)
+);
+
+
+      if (matched) {
+        setExistingRating(matched.rating);
+        setRating(matched.rating);
+      }
+    } catch (err) {
+      console.log('Rating fetch error', err);
+    }
+  };
+
+  fetchRating();
+}, [data.id]);
+
+const handleRate = (value: number) => {
+  if (existingRating) return;
+  setRating(value);
+};
+
+const handleSubmitRating = async () => {
+  console.log(" OVERALL DATA :",data);
+  
+  const cartId = data?.cartId;
+  console.log(" CART ID ,:",cartId);
+  
+
+  if (!cartId) {
+    toast.error('Error', 'Invalid order. Unable to submit rating.');
+    return;
+  }
+
+  if (rating < 1 || rating > 5) {
+    toast.error('Error', 'Please select a rating');
+    return;
+  }
+
+  if (existingRating) return;
+
+  try {
+    setIsSubmittingRating(true);
+
+    await postrating({
+      cartId,
+      rating: Number(rating),
+    });
+
+  
+    setExistingRating(rating);
+    setRating(rating);
+
+    toast.success('Success', 'Rating submitted');
+  } catch (err: any) {
+    console.log('Rating submit error:', err?.response?.data || err);
+    toast.error('Error', err?.response?.data?.message || 'Failed to submit rating');
+  } finally {
+    setIsSubmittingRating(false);
+  }
+};
 
   return (
     <>
@@ -469,15 +558,51 @@ const BookingCard: React.FC<BookingCardProps> = ({ data, delay = 0 }) => {
               }
               style={styles.image}
             />
-            <View style={styles.statusContainer}>
-              {data.status.toLowerCase() === 'completed' ||
-              data.status.toLowerCase() === 'dispatched to courier' ? (
-                <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
-              ) : (
-                <Image source={icons.clock} style={styles.statusIcon} tintColor={statusColor} />
-              )}
-              <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
-            </View>
+            <View style={styles.statusRatingRow}>
+  {/* Status */}
+  <View style={styles.statusContainer}>
+    {data.status.toLowerCase() === 'completed' ||
+    data.status.toLowerCase() === 'dispatched to courier' ? (
+      <Image source={icons.tick} style={styles.statusIcon} tintColor={statusColor} />
+    ) : (
+      <Image source={icons.clock} style={styles.statusIcon} tintColor={statusColor} />
+    )}
+    <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+  </View>
+
+  {/* Rating */}
+ <View style={styles.inlineRating}>
+  {[1, 2, 3, 4, 5].map((star) => (
+    <TouchableOpacity
+      key={star}
+      activeOpacity={0.7}
+      onPress={() => handleRate(star)}
+      disabled={!!existingRating}
+    >
+      <FontAwesome
+        name={rating >= star ? 'star' : 'star-o'}
+        size={14}
+        color={rating >= star ? '#FACC15' : '#D1D5DB'}
+      />
+    </TouchableOpacity>
+  ))}
+
+  <TouchableOpacity
+    style={[
+      styles.inlineSubmitBtn,
+      Boolean(existingRating) && { opacity: 0.5 },
+    ]}
+    onPress={handleSubmitRating}
+    disabled={isSubmittingRating || !!existingRating}
+  >
+    <Text style={styles.inlineSubmitText}>
+      {existingRating ? 'Rated' : 'Submit'}
+    </Text>
+  </TouchableOpacity>
+</View>
+
+</View>
+
           </View>
 
           {/* Main Content Section */}
@@ -535,10 +660,67 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 8,
   },
+  statusRatingRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  width: '100%',
+},
+
+inlineRating: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 4,
+    marginLeft: 13,
+},
+
+inlineSubmitBtn: {
+  marginLeft: 6,
+  paddingHorizontal: 6,
+  paddingVertical: 2,
+  backgroundColor: COLORS.primary,
+  borderRadius: 4,
+
+},
+
+inlineSubmitText: {
+  fontSize: 10,
+  color: COLORS.white,
+},
+
+  ratingRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 5,
+},
+
+ratingLabel: {
+  ...FONTS.body5,
+  color: '#0050A5',
+  marginRight: 8,
+},
+
+starsRow: {
+  flexDirection: 'row',
+},
+
+submitRatingBtn: {
+  marginLeft: 12,
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  backgroundColor: '#0050A5',
+  borderRadius: 6,
+},
+
+submitRatingText: {
+  ...FONTS.body5,
+  color: COLORS.white,
+},
+
   card: {
     backgroundColor: COLORS.white2,
     borderRadius: SIZES.radius,
-    padding: 10,
+    padding: 5,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -547,6 +729,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     height: 100,
+
   },
   imageContainer: {
     width: 65,
@@ -566,7 +749,7 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     flexDirection: 'row',
-    gap: 2,
+    gap: 5,
     alignItems: 'center',
   },
   statusIcon: {
