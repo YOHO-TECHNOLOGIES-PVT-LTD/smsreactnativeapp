@@ -55,3 +55,28 @@ export const individualratinggetting = async () => {
     console.error("Error fetching rating data:", error);
   }
 };
+
+
+export const individualservicerating = async (data: ProductRatingPayload) => {
+  try {
+    const { productId, ...body } = data; 
+    const response = await new Client().user.IndividualServiceRating.post(
+      body,        
+      productId    
+    );
+    return response;
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+    throw error;
+  }
+};
+
+export const individualserviceratinggetting = async () => {
+  try {
+    const response = await new Client().user.IndividualServiceRating.get()
+    console.log(" Rating in services :",response)
+    return response;
+  } catch (error) {
+    console.error("Error fetching rating data:", error);
+  }
+};

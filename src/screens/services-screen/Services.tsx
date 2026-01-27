@@ -14,6 +14,7 @@ import {
   RefreshControl,
   Alert,
   Animated,
+  Pressable,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -37,7 +38,8 @@ import { selectProfile } from '~/features/profile/reducers/selector';
 import { getProfileDetailsThunk } from '~/features/profile/reducers/thunks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS1 } from '../profile-screen/Profile';
-import { updateUserProfileDetails } from '~/features/profile/service';
+import { getUserProfileDetails, updateUserProfileDetails } from '~/features/profile/service';
+import { individualservicerating, individualserviceratinggetting } from '~/features/Rating/rating';
 
 interface FormErrors {
   firstName?: string;
@@ -82,7 +84,15 @@ type Service = {
   warranty?: string;
   frequency?: string;
   image: string;
+  ratings?: Rating[];
 };
+
+interface Rating {
+  _id: string;
+  rating: number;
+  userId: string;
+  createdAt: string;
+}
 
 interface ProfileData {
   vehicleInfo: Array<{
@@ -123,6 +133,15 @@ const Services = () => {
   const [showTimePicker, setShowTimePicker] = useState<false | 'start' | 'end'>(false);
   const profileData = useSelector(selectProfile);
   const didFetch = useRef(false);
+
+  const [rating, setRating] = useState<number>(0);
+  const [existingRatings, setExistingRatings] = useState<Record<string, number>>({});
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [getUserId, setGetUserId] = useState<string | null>(null);
+  const existingRating = selectedService?.ratings?.[0];
+  const displayRating = existingRating?.rating || rating;
+  const isRated = !!existingRating;
+
   const [formData, setFormData] = useState<any>({
     firstName: '',
     lastName: '',
@@ -151,7 +170,7 @@ const Services = () => {
       setSelectedVehicleIndex(null);
       setSelectedBookingType('general');
 
-      return () => { };
+      return () => {};
     }, [])
   );
 
@@ -231,6 +250,87 @@ const Services = () => {
     fetchAllServices();
   }, [dispatch]);
 
+  const fetchUserProfileDetails = async () => {
+    try {
+      const profile = await getUserProfileDetails({});
+      console.log(' user details', profile);
+
+      if (profile) {
+        setGetUserId(profile._id);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile details:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserProfileDetails();
+  }, []);
+
+  const fetchRatings = async () => {
+    try {
+      const res = await individualserviceratinggetting(); // your API call
+      const list = res?.data || [];
+      const map: Record<string, number> = {};
+
+      list.forEach((item: any) => {
+        if (item._id && item.ratings?.length > 0) {
+          const avg =
+            item.ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / item.ratings.length;
+          map[item._id] = Math.round(avg);
+        }
+      });
+
+      setExistingRatings(map);
+      console.log('Ratings map:', map);
+    } catch (err) {
+      console.error('Rating API error:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRatings();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchRatings();
+    };
+
+    fetchData();
+  }, []);
+
+  const handleRate = (star: number) => {
+    setRating(star);
+  };
+
+  const handleSubmitRating = async (serviceId: string) => {
+    if (!rating) return;
+
+    setIsSubmittingRating(true);
+
+    try {
+      // await submitServiceRating({ serviceId, rating });
+      setExistingRatings((prev) => ({ ...prev, [serviceId]: rating }));
+    } catch (err) {
+      console.error('Error submitting rating:', err);
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
+  useEffect(() => {
+    const serviceId = selectedService?._id;
+
+    if (serviceId && existingRatings[serviceId]) {
+      // Show existing rating
+      setRating(existingRatings[serviceId]);
+    } else {
+      // Reset for new service
+      setRating(0);
+    }
+  }, [selectedService?._id, existingRatings]);
+
   const onRefreshCartCount = () => {
     const getCartCount = () => {
       if (cartItems?.length == 1) {
@@ -252,7 +352,6 @@ const Services = () => {
     onRefreshCartCount();
   }, [dispatch, cartItems]);
 
-  // Reset booking modal states when it opens/closes
   useEffect(() => {
     if (bookingModalVisible) {
       // Reset time states when booking modal opens
@@ -304,11 +403,11 @@ const Services = () => {
         schedule_date:
           selectedBookingType === 'schedule'
             ? selectedDate.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
             : null,
         preferredTime: selectedBookingType === 'schedule' ? { startTime, endTime } : null,
         vehicle: selectedVehicleIndex,
@@ -328,7 +427,7 @@ const Services = () => {
         setStartTime('');
         setEndTime('');
         dispatch(getBookingCartItems());
-        navigation.navigate("BookingCartScreen", { types: "Services" })
+        navigation.navigate('BookingCartScreen', { types: 'Services' });
       } else {
         toast.error('Error', 'Something went wrong. Try again.');
       }
@@ -341,85 +440,84 @@ const Services = () => {
   };
 
   const handleBuyNow = async (vehicleIndex: number | null) => {
-  if (!selectedService?.uuid) {
-    toast.error('Error', 'Please select a service.');
-    return;
-  }
-
-  if (selectedVehicleIndex === null) {
-    toast.error('Error', 'Please select a vehicle.');
-    return;
-  }
-
-  // Enhanced validation for schedule booking
-  if (selectedBookingType === 'schedule') {
-    if (!selectedDate) {
-      toast.error('Error', 'Please select a date.');
+    if (!selectedService?.uuid) {
+      toast.error('Error', 'Please select a service.');
       return;
     }
 
-    if (!startTime || !endTime) {
-      toast.error('Error', 'Please select both start and end time.');
+    if (selectedVehicleIndex === null) {
+      toast.error('Error', 'Please select a vehicle.');
       return;
     }
 
-    // Validate that end time is after start time
-    const [startHours, startMinutes] = startTime.split(':').map(Number);
-    const [endHours, endMinutes] = endTime.split(':').map(Number);
+    // Enhanced validation for schedule booking
+    if (selectedBookingType === 'schedule') {
+      if (!selectedDate) {
+        toast.error('Error', 'Please select a date.');
+        return;
+      }
 
-    if (endHours < startHours || (endHours === startHours && endMinutes <= startMinutes)) {
-      toast.error('Error', 'End time must be after start time.');
-      return;
+      if (!startTime || !endTime) {
+        toast.error('Error', 'Please select both start and end time.');
+        return;
+      }
+
+      // Validate that end time is after start time
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+
+      if (endHours < startHours || (endHours === startHours && endMinutes <= startMinutes)) {
+        toast.error('Error', 'End time must be after start time.');
+        return;
+      }
     }
-  }
 
-  try {
-    const data = {
-      service: selectedService._id,
-      type: 'service',
-      requestType: selectedBookingType,
-      schedule_date:
-        selectedBookingType === 'schedule'
-          ? selectedDate.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })
-          : null,
-      preferredTime: selectedBookingType === 'schedule' ? { startTime, endTime } : null,
-      vehicle: selectedVehicleIndex,
-    };
+    try {
+      const data = {
+        service: selectedService._id,
+        type: 'service',
+        requestType: selectedBookingType,
+        schedule_date:
+          selectedBookingType === 'schedule'
+            ? selectedDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            : null,
+        preferredTime: selectedBookingType === 'schedule' ? { startTime, endTime } : null,
+        vehicle: selectedVehicleIndex,
+      };
 
-    const response = await addBookingCartItem(data);
+      const response = await addBookingCartItem(data);
 
-    if (response?.message === 'services already added yoru cart' && response?.success === true) {
-      toast.info('Info', 'Service already in cart');
-      // Navigate to cart with Services tab
-      navigation.navigate('BookingCartScreen', { activeTab: 'Services' });
-    } else if (response?.data) {
-      toast.success('Success', `${selectedService?.service_name} added to cart`);
-      setBookingModalVisible(false);
-      setModalVisible(false);
-      setSelectedDate(new Date());
-      setSelectedVehicleIndex(null);
-      setStartTime('');
-      setEndTime('');
-      dispatch(getBookingCartItems());
-      
-      // Navigate to cart with Services tab
-      navigation.navigate('BookingCartScreen', { activeTab: 'Services' });
-    } else {
-      toast.error('Error', 'Something went wrong. Try again.');
+      if (response?.message === 'services already added yoru cart' && response?.success === true) {
+        toast.info('Info', 'Service already in cart');
+        // Navigate to cart with Services tab
+        navigation.navigate('BookingCartScreen', { activeTab: 'Services' });
+      } else if (response?.data) {
+        toast.success('Success', `${selectedService?.service_name} added to cart`);
+        setBookingModalVisible(false);
+        setModalVisible(false);
+        setSelectedDate(new Date());
+        setSelectedVehicleIndex(null);
+        setStartTime('');
+        setEndTime('');
+        dispatch(getBookingCartItems());
+
+        // Navigate to cart with Services tab
+        navigation.navigate('BookingCartScreen', { activeTab: 'Services' });
+      } else {
+        toast.error('Error', 'Something went wrong. Try again.');
+      }
+    } catch (error) {
+      console.log('Error adding to cart:', error);
+      toast.error('Error', 'Failed to add service to cart.');
+    } finally {
+      onRefreshCartCount();
     }
-  } catch (error) {
-    console.log('Error adding to cart:', error);
-    toast.error('Error', 'Failed to add service to cart.');
-  } finally {
-    onRefreshCartCount();
-  }
-};
-
+  };
 
   const handleSaveProfile = async () => {
     Animated.sequence([
@@ -436,7 +534,7 @@ const Services = () => {
     ]).start();
 
     try {
-      console.log(formData, "checking form")
+      console.log(formData, 'checking form');
       const response: any = await updateUserProfileDetails(formData);
       if (response) {
         setFormErrors({});
@@ -477,7 +575,6 @@ const Services = () => {
 
     return <View style={{ flexDirection: 'row', alignItems: 'center' }}>{stars}</View>;
   };
-  
 
   const renderTabContent = () => {
     if (!selectedService) return null;
@@ -675,7 +772,9 @@ const Services = () => {
                           keyboardType="email-address"
                           autoCapitalize="none"
                         />
-                        {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
+                        {formErrors.email && (
+                          <Text style={styles.errorText}>{formErrors.email}</Text>
+                        )}
                       </View>
 
                       <View style={styles.formSection}>
@@ -758,7 +857,9 @@ const Services = () => {
                           placeholder="Enter your state"
                           placeholderTextColor={COLORS.primary_03}
                         />
-                        {formErrors.state && <Text style={styles.errorText}>{formErrors.state}</Text>}
+                        {formErrors.state && (
+                          <Text style={styles.errorText}>{formErrors.state}</Text>
+                        )}
                       </View>
 
                       {/* Vehicle Information */}
@@ -791,7 +892,8 @@ const Services = () => {
                               <TextInput
                                 style={[
                                   styles.textInput,
-                                  formErrors.vehicles?.[index]?.registerNumber && styles.textInputError,
+                                  formErrors.vehicles?.[index]?.registerNumber &&
+                                    styles.textInputError,
                                 ]}
                                 value={vehicle.registerNumber}
                                 onChangeText={(text) => {
@@ -837,7 +939,9 @@ const Services = () => {
                                 placeholderTextColor={COLORS.primary_03}
                               />
                               {formErrors.vehicles?.[index]?.company && (
-                                <Text style={styles.errorText}>{formErrors.vehicles[index].company}</Text>
+                                <Text style={styles.errorText}>
+                                  {formErrors.vehicles[index].company}
+                                </Text>
                               )}
                             </View>
 
@@ -865,7 +969,9 @@ const Services = () => {
                                 placeholderTextColor={COLORS.primary_03}
                               />
                               {formErrors.vehicles?.[index]?.model && (
-                                <Text style={styles.errorText}>{formErrors.vehicles[index].model}</Text>
+                                <Text style={styles.errorText}>
+                                  {formErrors.vehicles[index].model}
+                                </Text>
                               )}
                             </View>
 
@@ -1028,7 +1134,10 @@ const Services = () => {
                         <View style={styles.formSection}>
                           <Text style={styles.fieldLabel}>First Name *</Text>
                           <TextInput
-                            style={[styles.textInput, formErrors.firstName && styles.textInputError]}
+                            style={[
+                              styles.textInput,
+                              formErrors.firstName && styles.textInputError,
+                            ]}
                             value={formData?.firstName}
                             onChangeText={(name) => {
                               setFormData({ ...formData, firstName: name });
@@ -1073,7 +1182,9 @@ const Services = () => {
                             keyboardType="email-address"
                             autoCapitalize="none"
                           />
-                          {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
+                          {formErrors.email && (
+                            <Text style={styles.errorText}>{formErrors.email}</Text>
+                          )}
                         </View>
 
                         <View style={styles.formSection}>
@@ -1137,7 +1248,9 @@ const Services = () => {
                             placeholder="Enter your city"
                             placeholderTextColor={COLORS.primary_03}
                           />
-                          {formErrors.city && <Text style={styles.errorText}>{formErrors.city}</Text>}
+                          {formErrors.city && (
+                            <Text style={styles.errorText}>{formErrors.city}</Text>
+                          )}
                         </View>
 
                         {/* State Field */}
@@ -1156,7 +1269,9 @@ const Services = () => {
                             placeholder="Enter your state"
                             placeholderTextColor={COLORS.primary_03}
                           />
-                          {formErrors.state && <Text style={styles.errorText}>{formErrors.state}</Text>}
+                          {formErrors.state && (
+                            <Text style={styles.errorText}>{formErrors.state}</Text>
+                          )}
                         </View>
 
                         {/* Vehicle Information */}
@@ -1189,7 +1304,8 @@ const Services = () => {
                                 <TextInput
                                   style={[
                                     styles.textInput,
-                                    formErrors.vehicles?.[index]?.registerNumber && styles.textInputError,
+                                    formErrors.vehicles?.[index]?.registerNumber &&
+                                      styles.textInputError,
                                   ]}
                                   value={vehicle.registerNumber}
                                   onChangeText={(text) => {
@@ -1235,7 +1351,9 @@ const Services = () => {
                                   placeholderTextColor={COLORS.primary_03}
                                 />
                                 {formErrors.vehicles?.[index]?.company && (
-                                  <Text style={styles.errorText}>{formErrors.vehicles[index].company}</Text>
+                                  <Text style={styles.errorText}>
+                                    {formErrors.vehicles[index].company}
+                                  </Text>
                                 )}
                               </View>
 
@@ -1263,7 +1381,9 @@ const Services = () => {
                                   placeholderTextColor={COLORS.primary_03}
                                 />
                                 {formErrors.vehicles?.[index]?.model && (
-                                  <Text style={styles.errorText}>{formErrors.vehicles[index].model}</Text>
+                                  <Text style={styles.errorText}>
+                                    {formErrors.vehicles[index].model}
+                                  </Text>
                                 )}
                               </View>
 
@@ -1334,7 +1454,7 @@ const Services = () => {
             onPress={() => {
               if (TokenSelector) {
                 if (profileData?.vehicleInfo?.length === 0) {
-                  handleSaveProfile()
+                  handleSaveProfile();
                   if (!selectedVehicleIndex) {
                     handleAddtoCart(selectedVehicleIndex);
                   }
@@ -1350,7 +1470,11 @@ const Services = () => {
               selectedBookingType === 'schedule' && (!startTime || !endTime)
             }>
             <Text style={styles.bookButtonText}>
-              {selectedBookingType === 'general' ? (profileData?.vehicleInfo?.length == 0 ? 'Submit' : 'BOOK NOW') : 'PRE-BOOK SERVICE'}
+              {selectedBookingType === 'general'
+                ? profileData?.vehicleInfo?.length == 0
+                  ? 'Submit'
+                  : 'BOOK NOW'
+                : 'PRE-BOOK SERVICE'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -1377,6 +1501,30 @@ const Services = () => {
     }
   };
 
+  const serviceId = selectedService?._id;
+
+  useEffect(() => {
+    setRating(0);
+  }, [selectedService?._id]);
+
+  const clearVehicleError = (index: number, field: string) => {
+    setFormErrors((prev) => {
+      const updated = { ...prev };
+
+      if (updated.vehicles?.[index]) {
+        const vehicleErrors = { ...updated.vehicles[index] };
+        delete vehicleErrors[field as keyof typeof vehicleErrors];
+
+        updated.vehicles = [...updated.vehicles];
+      }
+
+      return updated;
+    });
+  };
+
+  console.log('selected srvice :', selectedService);
+  console.log('display arting', displayRating);
+  console.log('exist', existingRating);
   return (
     <>
       <StatusBar backgroundColor={COLORS.black} barStyle="light-content" />
@@ -1399,9 +1547,11 @@ const Services = () => {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('BookingCartScreen' as never)}>
               <Ionicons name="cart-outline" size={26} color={COLORS.primary} />
-              {cartCount > 0 && <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{cartCount}</Text>
-              </View>}
+              {cartCount > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -1509,6 +1659,51 @@ const Services = () => {
                   </Text>
                   <Text style={styles.servicePrice}>₹{item.price.toLocaleString('en-IN')}</Text>
                 </View>
+                <View style={styles.modalRating}>
+                  <View style={styles.modalRatingRow}>
+                    <View style={styles.starsRow}>
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const existingRating = item?.ratings?.[0]?.rating;
+                        const displayRating =
+                          rating && selectedService?._id === item._id
+                            ? rating
+                            : existingRating || 0;
+                        const isRated = !!existingRating;
+
+                        return (
+                          <Pressable
+                            key={star}
+                            onPress={() => {
+                              if (selectedService?._id === item._id) handleRate(star);
+                            }}>
+                            <MaterialIcons
+                              name={displayRating >= star ? 'star' : 'star-outline'}
+                              size={25}
+                              color={displayRating >= star ? '#FFD700' : '#CFCFCF'}
+                            />
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  {/* Only show the rating text for this card */}
+                  {(existingRatings[item._id] || item?.ratings?.[0]?.rating) && (
+                    <Text
+                      style={{
+                        ...FONTS.body6,
+                        color: COLORS.grey,
+                        marginTop: -10,
+                        marginBottom: 10,
+                      }}>
+                      Your rating:{' '}
+                      {selectedService?._id === item._id
+                        ? rating || existingRatings[item._id]
+                        : existingRatings[item._id] || item?.ratings?.[0]?.rating}{' '}
+                      stars
+                    </Text>
+                  )}
+                </View>
               </TouchableOpacity>
             )}
             keyExtractor={(item) => item.uuid}
@@ -1536,7 +1731,9 @@ const Services = () => {
           animationType="slide"
           transparent={false}
           visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}>
+          onRequestClose={() => {
+            (setModalVisible(false), setSelectedService(null));
+          }}>
           <ScrollView style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <TouchableOpacity style={styles.backButton} onPress={() => setModalVisible(false)}>
@@ -1563,16 +1760,58 @@ const Services = () => {
                   ₹{selectedService?.price.toLocaleString('en-IN') || '0'}
                 </Text>
               </View>
-
               <Text style={styles.modalDescription}>
                 Duration: {selectedService?.duration || '1-2 hours'}
               </Text>
-
               <View style={styles.modalRating}>
-                {renderStars()}
-                <View style={styles.inStockBadge}>
-                  <Text style={styles.stockText}>Available</Text>
+                <View style={styles.modalRatingRow}>
+                  <View style={styles.starsRow}>
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const existingRating = selectedService?.ratings?.[0]?.rating;
+                      const displayRating = rating || existingRating || 0; // show new rating first if selected
+                      const isRated = !!existingRating;
+
+                      return (
+                        <Pressable
+                          key={star}
+                          // keep isRated just for display logic, NOT for disabling
+                          onPress={() => handleRate(star)}>
+                          <MaterialIcons
+                            name={displayRating >= star ? 'star' : 'star-outline'}
+                            size={25}
+                            color={displayRating >= star ? '#FFD700' : '#CFCFCF'}
+                          />
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => selectedService?._id && handleSubmitRating(selectedService._id)}
+                    disabled={
+                      !selectedService?._id || isSubmittingRating || !rating // disable if no new rating selected
+                    }
+                    style={[
+                      styles.submitButton,
+                      (!selectedService?._id || isSubmittingRating || !rating) && { opacity: 0.5 },
+                    ]}>
+                    <Text style={styles.submitButtonText}>
+                      {isSubmittingRating ? 'Submitting...' : rating ? 'Update Rating' : 'Submit'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
+
+                {selectedService?._id && (existingRatings[selectedService._id] || rating) && (
+                  <Text
+                    style={{
+                      ...FONTS.body6,
+                      color: COLORS.grey,
+                      marginTop: -10,
+                      marginBottom: 10,
+                    }}>
+                    Your rating: {rating || existingRatings[selectedService._id]} stars
+                  </Text>
+                )}
               </View>
 
               <View style={styles.tabsContainer}>
@@ -1601,9 +1840,7 @@ const Services = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
-
               <View style={styles.tabContentContainer}>{renderTabContent()}</View>
-
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => {
@@ -1648,6 +1885,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.white,
   },
+  modalRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  submitButton: {
+    marginLeft: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: 6,
+  },
+
+  submitButtonText: {
+    ...FONTS.body5,
+    color: COLORS.white,
+    fontWeight: '600',
+  },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2158,7 +2418,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     marginTop: 10,
-    flex:1,
+    flex: 1,
     marginBottom: 20,
   },
   bookButton: {

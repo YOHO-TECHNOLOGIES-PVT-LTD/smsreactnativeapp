@@ -316,11 +316,11 @@ const SparePartsCard = ({ part, onRefresh }: any) => {
             Warranty Period: {part?.warrantyPeriod || 'No warranty'}
           </Text>
 
-        <View style={{ alignItems: 'center', marginVertical: 4 }}>
-  <View style={[styles.stockBadge, part?.inStock ? styles.inStock : styles.outOfStock]}>
-    <Text style={styles.stockText}>{part?.inStock ? 'In Stock' : 'Out of Stock'}</Text>
-  </View>
-</View>
+          <View style={{ alignItems: 'center', marginVertical: 4 }}>
+            <View style={[styles.stockBadge, part?.inStock ? styles.inStock : styles.outOfStock]}>
+              <Text style={styles.stockText}>{part?.inStock ? 'In Stock' : 'Out of Stock'}</Text>
+            </View>
+          </View>
 
           <View style={styles.bottomRow}>
             {/* {renderStars(part?.rating)} */}
@@ -583,11 +583,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   starsAndValueRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between', 
-  alignItems: 'center',
-  width: '100%', 
-},
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
 
   ratingRow: {
     flexDirection: 'row',
@@ -660,17 +660,17 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 4,
-     width: '100%', 
-  alignItems: 'center',
+    width: '100%',
+    alignItems: 'center',
   },
   stockText: {
     ...FONTS.body5,
     color: COLORS.white,
     fontSize: 10,
     fontWeight: '500',
-    flexDirection:"row",
-    alignItems:"center",
-    justifyContent:"center"
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Modal Styles (same as before)

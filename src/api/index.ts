@@ -151,6 +151,17 @@ class Client {
         ),
 		get:()=>httpClient.get(API_END_POINTS.individualproduct_ratings.product_rating_get)
     },
+     IndividualServiceRating: {
+      post: (data: any, productId: string) =>
+        httpClient.post(
+          API_END_POINTS.individualservice_ratings.service_rating_post.replace(
+            ":id",
+            productId,
+          ),
+          data,
+        ),
+		get:()=>httpClient.get(API_END_POINTS.individualservice_ratings.service_rating_get)
+    },
   };
     externalVehicle: any;
     vehicle: any;
